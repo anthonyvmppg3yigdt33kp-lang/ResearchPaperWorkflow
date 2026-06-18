@@ -1,0 +1,2084 @@
+# =============================================================================
+# Research Paper Workflow v2 — Default Configuration
+# =============================================================================
+# This file defines the complete pipeline, quality gates, writing standards,
+# research domains, skills dispatching, agent routing, supervision, code library,
+# output interfaces, reproducibility, and extension points for the 18-stage
+# academic paper writing workflow.
+# =============================================================================
+
+# =============================================================================
+# 1. PIPELINE STAGES (18 stages)
+# =============================================================================
+pipeline:
+  version: "2.0.0"
+  description: "End-to-end academic research paper writing pipeline"
+  stages:
+    # --- STAGE 1: select_topic ---
+    - id: select_topic
+      name: "Select Research Topic"
+      layer: strategy
+      order: 1
+      agent: research_strategist
+      skills:
+        - topic_research
+        - deep-research
+      timeout_seconds: 1800
+      dependencies: []
+      artifacts_out:
+        - "topic_proposal.md"
+        - "feasibility_assessment.md"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: target_journal"
+        on_fail:
+          - "abort_pipeline"
+          - "notify_human: topic_not_feasible"
+
+    # --- STAGE 2: target_journal ---
+    - id: target_journal
+      name: "Select Target Journal"
+      layer: strategy
+      order: 2
+      agent: research_strategist
+      skills:
+        - deep-research
+        - nature-academic-search
+      timeout_seconds: 1200
+      dependencies:
+        - select_topic
+      artifacts_out:
+        - "journal_selection_report.md"
+        - "journal_requirements.yaml"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: literature_search"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: no_suitable_journal"
+
+    # --- STAGE 3: literature_search ---
+    - id: literature_search
+      name: "Literature Search & Review"
+      layer: execution
+      order: 3
+      agent: literature_reviewer
+      skills:
+        - deep-research
+        - nature-academic-search
+        - nature-citation
+      timeout_seconds: 3600
+      dependencies:
+        - target_journal
+      artifacts_out:
+        - "literature_review.md"
+        - "references.bib"
+        - "citation_map.yaml"
+      human_checkpoint: false
+      retry:
+        max_attempts: 3
+      gate_rules:
+        on_pass:
+          - "advance_to: formulate_hypotheses"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: literature_gaps"
+
+    # --- STAGE 4: formulate_hypotheses ---
+    - id: formulate_hypotheses
+      name: "Formulate Research Hypotheses"
+      layer: strategy
+      order: 4
+      agent: research_strategist
+      skills:
+        - scientific-writing
+        - topic_research
+      timeout_seconds: 900
+      dependencies:
+        - literature_search
+      artifacts_out:
+        - "hypotheses_document.md"
+        - "research_questions.yaml"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: data_audit"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: hypotheses_not_testable"
+
+    # --- STAGE 5: data_audit ---
+    - id: data_audit
+      name: "Data Audit & Validation"
+      layer: execution
+      order: 5
+      agent: data_auditor
+      skills:
+        - nature-data
+        - qc_pipeline
+      timeout_seconds: 2400
+      dependencies:
+        - formulate_hypotheses
+      artifacts_out:
+        - "data_audit_report.md"
+        - "data_availability_statement.md"
+      human_checkpoint: false
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: figure_planning"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: data_quality_issues"
+
+    # --- STAGE 6: figure_planning ---
+    - id: figure_planning
+      name: "Figure Planning & Design"
+      layer: strategy
+      order: 6
+      agent: figure_planner
+      skills:
+        - figure_planning
+        - nature-figure
+      timeout_seconds: 1800
+      dependencies:
+        - data_audit
+      artifacts_out:
+        - "figure_plan.md"
+        - "figure_specifications.yaml"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: run_analysis"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: figure_plan_incomplete"
+
+    # --- STAGE 7: run_analysis ---
+    - id: run_analysis
+      name: "Run Computational Analysis"
+      layer: execution
+      order: 7
+      agent: analysis_executor
+      skills:
+        - spatial_analysis
+        - statistical_testing
+        - pathway_inference
+        - qc_pipeline
+      timeout_seconds: 7200
+      dependencies:
+        - figure_planning
+      artifacts_out:
+        - "analysis_results.yaml"
+        - "statistical_outputs/"
+        - "figures/"
+      human_checkpoint: false
+      retry:
+        max_attempts: 3
+      gate_rules:
+        on_pass:
+          - "advance_to: verify_methods"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: analysis_failed"
+
+    # --- STAGE 8: verify_methods ---
+    - id: verify_methods
+      name: "Verify Methods & Reproducibility"
+      layer: decision
+      order: 8
+      agent: integrity_checker
+      skills:
+        - qc_pipeline
+        - statistical_testing
+      timeout_seconds: 1200
+      dependencies:
+        - run_analysis
+      artifacts_out:
+        - "methods_verification_report.md"
+      human_checkpoint: false
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: write_methods"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: reproducibility_failure"
+
+    # --- STAGE 9: write_methods ---
+    - id: write_methods
+      name: "Write Methods Section"
+      layer: execution
+      order: 9
+      agent: report_writer
+      skills:
+        - scientific-writing
+        - nature-writing
+      timeout_seconds: 2400
+      dependencies:
+        - verify_methods
+      artifacts_out:
+        - "methods_section.md"
+      human_checkpoint: true
+      retry:
+        max_attempts: 3
+      gate_rules:
+        on_pass:
+          - "advance_to: write_results"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: methods_incomplete"
+
+    # --- STAGE 10: write_results ---
+    - id: write_results
+      name: "Write Results Section"
+      layer: execution
+      order: 10
+      agent: report_writer
+      skills:
+        - scientific-writing
+        - nature-writing
+        - nature-polishing
+      timeout_seconds: 3600
+      dependencies:
+        - write_methods
+      artifacts_out:
+        - "results_section.md"
+      human_checkpoint: true
+      retry:
+        max_attempts: 3
+      gate_rules:
+        on_pass:
+          - "advance_to: write_introduction"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: results_incomplete"
+
+    # --- STAGE 11: write_introduction ---
+    - id: write_introduction
+      name: "Write Introduction Section"
+      layer: execution
+      order: 11
+      agent: report_writer
+      skills:
+        - scientific-writing
+        - nature-writing
+        - nature-academic-search
+      timeout_seconds: 2400
+      dependencies:
+        - literature_search
+        - formulate_hypotheses
+      artifacts_out:
+        - "introduction_section.md"
+      human_checkpoint: true
+      retry:
+        max_attempts: 3
+      gate_rules:
+        on_pass:
+          - "advance_to: write_discussion"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: introduction_incomplete"
+
+    # --- STAGE 12: write_discussion ---
+    - id: write_discussion
+      name: "Write Discussion Section"
+      layer: execution
+      order: 12
+      agent: report_writer
+      skills:
+        - scientific-writing
+        - nature-writing
+        - nature-polishing
+      timeout_seconds: 3000
+      dependencies:
+        - write_results
+        - literature_search
+      artifacts_out:
+        - "discussion_section.md"
+      human_checkpoint: true
+      retry:
+        max_attempts: 3
+      gate_rules:
+        on_pass:
+          - "advance_to: assemble_manuscript"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: discussion_incomplete"
+
+    # --- STAGE 13: assemble_manuscript ---
+    - id: assemble_manuscript
+      name: "Assemble Full Manuscript"
+      layer: execution
+      order: 13
+      agent: report_writer
+      skills:
+        - scientific-writing
+        - nature-writing
+        - nature-polishing
+        - nature-citation
+        - nature-figure
+        - nature-data
+      timeout_seconds: 3600
+      dependencies:
+        - write_introduction
+        - write_methods
+        - write_results
+        - write_discussion
+      artifacts_out:
+        - "manuscript_draft.md"
+        - "manuscript_draft.pdf"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: integrity_check"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: assembly_failed"
+
+    # --- STAGE 14: integrity_check ---
+    - id: integrity_check
+      name: "Integrity & Quality Check"
+      layer: decision
+      order: 14
+      agent: integrity_checker
+      skills:
+        - qc_pipeline
+        - nature-data
+        - nature-citation
+      timeout_seconds: 2400
+      dependencies:
+        - assemble_manuscript
+      artifacts_out:
+        - "integrity_report.yaml"
+        - "quality_gate_results.yaml"
+      human_checkpoint: false
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: internal_review"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: integrity_check_failed"
+
+    # --- STAGE 15: internal_review ---
+    - id: internal_review
+      name: "Internal Peer Review"
+      layer: decision
+      order: 15
+      agent: integrity_checker
+      skills:
+        - academic-paper-reviewer
+        - humanizer
+      timeout_seconds: 3600
+      dependencies:
+        - integrity_check
+      artifacts_out:
+        - "internal_review_report.md"
+        - "revision_roadmap.yaml"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: apply_revision"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: review_rejected"
+
+    # --- STAGE 16: apply_revision ---
+    - id: apply_revision
+      name: "Apply Revisions"
+      layer: execution
+      order: 16
+      agent: report_writer
+      skills:
+        - scientific-writing
+        - nature-writing
+        - nature-polishing
+        - humanizer
+        - nature-response
+      timeout_seconds: 3600
+      dependencies:
+        - internal_review
+      artifacts_out:
+        - "revised_manuscript.md"
+        - "revision_tracker.yaml"
+      human_checkpoint: true
+      retry:
+        max_attempts: 3
+      gate_rules:
+        on_pass:
+          - "advance_to: re_review"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: revision_incomplete"
+
+    # --- STAGE 17: re_review ---
+    - id: re_review
+      name: "Re-Review Revised Manuscript"
+      layer: decision
+      order: 17
+      agent: integrity_checker
+      skills:
+        - academic-paper-reviewer
+        - nature-citation
+      timeout_seconds: 2400
+      dependencies:
+        - apply_revision
+      artifacts_out:
+        - "re_review_report.md"
+        - "final_quality_gates.yaml"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: finalize"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: re_review_failed"
+
+    # --- STAGE 18: finalize ---
+    - id: finalize
+      name: "Finalize & Package Manuscript"
+      layer: supervision
+      order: 18
+      agent: team_orchestrator
+      skills:
+        - nature-polishing
+        - nature-data
+        - nature-citation
+        - nature-figure
+      timeout_seconds: 1800
+      dependencies:
+        - re_review
+      artifacts_out:
+        - "final_manuscript.md"
+        - "final_manuscript.pdf"
+        - "submission_package.yaml"
+        - "reproducibility_bundle.zip"
+      human_checkpoint: true
+      retry:
+        max_attempts: 1
+      gate_rules:
+        on_pass:
+          - "pipeline_complete"
+        on_fail:
+          - "notify_human: finalization_failed"
+
+# =============================================================================
+# 2. PAPER TYPES
+# =============================================================================
+paper_types:
+  original_research:
+    name: "Original Research Article"
+    pipeline_mode: full
+    required_stages:
+      - select_topic
+      - target_journal
+      - literature_search
+      - formulate_hypotheses
+      - data_audit
+      - figure_planning
+      - run_analysis
+      - verify_methods
+      - write_methods
+      - write_results
+      - write_introduction
+      - write_discussion
+      - assemble_manuscript
+      - integrity_check
+      - internal_review
+      - apply_revision
+      - re_review
+      - finalize
+    skipped_stages: []
+    structure:
+      sections:
+        - title_page
+        - abstract
+        - introduction
+        - methods
+        - results
+        - discussion
+        - acknowledgments
+        - references
+        - figures_tables
+        - supplementary
+      abstract_word_limit: 300
+      total_word_limit: 6000
+      figure_limit: 8
+      table_limit: 4
+
+  methods:
+    name: "Methods Paper"
+    pipeline_mode: methods_only
+    required_stages:
+      - select_topic
+      - target_journal
+      - literature_search
+      - data_audit
+      - run_analysis
+      - verify_methods
+      - write_methods
+      - assemble_manuscript
+      - integrity_check
+      - internal_review
+      - apply_revision
+      - re_review
+      - finalize
+    skipped_stages:
+      - formulate_hypotheses
+      - figure_planning
+      - write_results
+      - write_introduction
+      - write_discussion
+    structure:
+      sections:
+        - title_page
+        - abstract
+        - introduction
+        - methods
+        - validation
+        - discussion
+        - data_availability
+        - code_availability
+        - references
+        - supplementary
+      abstract_word_limit: 250
+      total_word_limit: 4500
+      figure_limit: 6
+      table_limit: 3
+
+  review:
+    name: "Literature Review"
+    pipeline_mode: review
+    required_stages:
+      - select_topic
+      - target_journal
+      - literature_search
+      - formulate_hypotheses
+      - write_introduction
+      - write_discussion
+      - assemble_manuscript
+      - integrity_check
+      - internal_review
+      - apply_revision
+      - re_review
+      - finalize
+    skipped_stages:
+      - data_audit
+      - figure_planning
+      - run_analysis
+      - verify_methods
+      - write_methods
+      - write_results
+    structure:
+      sections:
+        - title_page
+        - abstract
+        - introduction
+        - thematic_sections
+        - discussion
+        - conclusions
+        - references
+        - supplementary
+      abstract_word_limit: 250
+      total_word_limit: 10000
+      figure_limit: 4
+      table_limit: 6
+
+  clinical_research:
+    name: "Clinical Research Article"
+    pipeline_mode: full
+    required_stages:
+      - select_topic
+      - target_journal
+      - literature_search
+      - formulate_hypotheses
+      - data_audit
+      - figure_planning
+      - run_analysis
+      - verify_methods
+      - write_methods
+      - write_results
+      - write_introduction
+      - write_discussion
+      - assemble_manuscript
+      - integrity_check
+      - internal_review
+      - apply_revision
+      - re_review
+      - finalize
+    skipped_stages: []
+    structure:
+      sections:
+        - title_page
+        - abstract
+        - introduction
+        - methods
+        - results
+        - discussion
+        - ethics_statement
+        - data_availability
+        - references
+        - figures_tables
+        - supplementary
+      abstract_word_limit: 350
+      total_word_limit: 5000
+      figure_limit: 6
+      table_limit: 4
+      reporting_guideline: "STROBE"
+
+  data_resource:
+    name: "Data Resource / Database Article"
+    pipeline_mode: data_centric
+    required_stages:
+      - select_topic
+      - target_journal
+      - literature_search
+      - data_audit
+      - run_analysis
+      - verify_methods
+      - write_methods
+      - write_results
+      - write_introduction
+      - write_discussion
+      - assemble_manuscript
+      - integrity_check
+      - internal_review
+      - apply_revision
+      - re_review
+      - finalize
+    skipped_stages:
+      - formulate_hypotheses
+      - figure_planning
+    structure:
+      sections:
+        - title_page
+        - abstract
+        - introduction
+        - data_description
+        - methods
+        - validation
+        - usage_notes
+        - data_availability
+        - code_availability
+        - references
+        - supplementary
+      abstract_word_limit: 250
+      total_word_limit: 4000
+      figure_limit: 5
+      table_limit: 4
+
+  brief_communication:
+    name: "Brief Communication / Short Report"
+    pipeline_mode: abbreviated
+    required_stages:
+      - select_topic
+      - target_journal
+      - literature_search
+      - data_audit
+      - run_analysis
+      - verify_methods
+      - write_methods
+      - write_results
+      - write_introduction
+      - write_discussion
+      - assemble_manuscript
+      - integrity_check
+      - internal_review
+      - apply_revision
+      - re_review
+      - finalize
+    skipped_stages:
+      - formulate_hypotheses
+      - figure_planning
+    structure:
+      sections:
+        - title_page
+        - abstract
+        - main_text
+        - methods
+        - references
+        - figures
+        - supplementary
+      abstract_word_limit: 150
+      total_word_limit: 2500
+      figure_limit: 3
+      table_limit: 2
+
+# =============================================================================
+# 3. QUALITY GATES (16 gates)
+# =============================================================================
+quality_gates:
+
+  # --- CRITICAL gates (automatically block submission) ---
+  bibtex_citation_existence:
+    severity: CRITICAL
+    description: "Every BibTeX citation key in the manuscript must exist in references.bib"
+    check:
+      type: "citation_validation"
+      rule: "extract_citation_keys_from_manuscript AND validate_against_bib_file"
+    blocking: true
+    auto_fix: false
+
+  citation_evidence_traceability:
+    severity: CRITICAL
+    description: "Every factual claim must be traceable to at least one citation with evidence"
+    check:
+      type: "claim_evidence_mapping"
+      rule: "each_claim_must_have_citation_source AND cross_verify_doi_or_pmid_exists"
+    blocking: true
+    auto_fix: false
+
+  results_no_citations:
+    severity: CRITICAL
+    description: "Results section must not contain citations to external literature"
+    check:
+      type: "section_content_audit"
+      rule: "scan_results_section_for_citation_tokens AND flag_all_matches"
+    blocking: true
+    auto_fix: false
+
+  claim_artifact_binding:
+    severity: CRITICAL
+    description: "Every numeric result claimed in the paper must be traceable to a specific analysis artifact file"
+    check:
+      type: "numeric_claim_traceability"
+      rule: "extract_numeric_claims AND match_each_to_artifact_output"
+    blocking: true
+    auto_fix: false
+
+  figures_referenced:
+    severity: CRITICAL
+    description: "Every figure file in the figures/ directory must be referenced at least once in the manuscript"
+    check:
+      type: "figure_reference_audit"
+      rule: "list_figure_files AND grep_manuscript_for_each_figure_ref"
+    blocking: true
+    auto_fix: false
+
+  # --- HIGH gates (must be resolved before submission) ---
+  data_availability_statement:
+    severity: HIGH
+    description: "Manuscript must contain a complete Data Availability statement with repository accession numbers"
+    check:
+      type: "section_presence_audit"
+      rule: "find_data_availability_section AND validate_accession_format"
+    blocking: true
+    auto_fix: true
+
+  code_availability_statement:
+    severity: HIGH
+    description: "Manuscript must contain a Code Availability statement with repository DOI or URL"
+    check:
+      type: "section_presence_audit"
+      rule: "find_code_availability_section AND validate_repo_doi_format"
+    blocking: true
+    auto_fix: true
+
+  no_local_paths:
+    severity: HIGH
+    description: "Manuscript must not contain any local file paths (e.g., C:/Users/..., /home/...)"
+    check:
+      type: "pattern_scan"
+      rule: "scan_for_filesystem_path_patterns AND flag_matches"
+    blocking: true
+    auto_fix: true
+
+  methods_parameters_complete:
+    severity: HIGH
+    description: "Methods section must report all software versions, parameter values, and random seeds used"
+    check:
+      type: "completeness_audit"
+      rule: "parse_methods_section AND check_required_fields: [software_versions, parameters, random_seeds, thresholds]"
+    blocking: true
+    auto_fix: false
+
+  discussion_limitations:
+    severity: HIGH
+    description: "Discussion section must contain at least one dedicated limitations paragraph"
+    check:
+      type: "section_content_audit"
+      rule: "find_limitations_paragraph_in_discussion"
+    blocking: true
+    auto_fix: false
+
+  results_no_overinterpretation:
+    severity: HIGH
+    description: "Results section must not contain causal language for correlational findings or speculative interpretation"
+    check:
+      type: "language_audit"
+      rule: "scan_results_for_causal_claims AND scan_for_overinterpretation_signals"
+    blocking: true
+    auto_fix: false
+
+  statistics_reported:
+    severity: HIGH
+    description: "Every statistical test must report test statistic, effect size, confidence interval, and exact p-value"
+    check:
+      type: "statistical_reporting_audit"
+      rule: "parse_statistical_claims AND validate_fields: [test_statistic, effect_size, ci, p_value]"
+    blocking: true
+    auto_fix: false
+
+  pseudoreplication_check:
+    severity: HIGH
+    description: "Ensure no pseudoreplication: biological vs. technical replicates correctly handled"
+    check:
+      type: "experimental_design_audit"
+      rule: "identify_replicate_structure AND validate_independence"
+    blocking: true
+    auto_fix: false
+
+  # --- MEDIUM gates (warn but do not block) ---
+  section_length_minimum:
+    severity: MEDIUM
+    description: "Each required section must meet minimum word count threshold for the target paper type"
+    check:
+      type: "word_count_audit"
+      rule: "count_words_per_section AND compare_to_paper_type_minimums"
+    blocking: false
+    auto_fix: false
+
+  no_bullets_in_prose:
+    severity: MEDIUM
+    description: "Manuscript prose (excluding figure captions and tables) must not contain bullet points or numbered lists"
+    check:
+      type: "formatting_audit"
+      rule: "scan_prose_sections_for_bullet_or_list_markers"
+    blocking: false
+    auto_fix: true
+
+  figure_count_requirements:
+    severity: MEDIUM
+    description: "Figure and table counts must not exceed journal limits for the target paper type"
+    check:
+      type: "count_audit"
+      rule: "count_figures_and_tables AND compare_to_journal_limits"
+    blocking: false
+    auto_fix: false
+
+# =============================================================================
+# 4. WRITING STANDARDS
+# =============================================================================
+writing_standards:
+  structure: "IMRAD"
+  citation_style: "Vancouver"
+
+  sections:
+    title:
+      min_words: 10
+      max_words: 30
+      required: true
+      description: "Descriptive title conveying the main finding; avoid declarative statements"
+
+    abstract:
+      min_words: 200
+      max_words: 350
+      required: true
+      substructure:
+        - background
+        - methods
+        - results
+        - conclusions
+      description: "Structured abstract with objective quantitative results"
+
+    introduction:
+      min_words: 400
+      max_words: 1200
+      required: true
+      description: "Funnel structure: broad context -> knowledge gap -> hypothesis -> specific aims"
+
+    methods:
+      min_words: 600
+      max_words: 2500
+      required: true
+      description: "Complete, reproducible detail; subheadings by analysis type"
+
+    results:
+      min_words: 500
+      max_words: 2000
+      required: true
+      description: "Objective reporting; no interpretation; past tense; figures cross-referenced"
+
+    discussion:
+      min_words: 500
+      max_words: 2000
+      required: true
+      description: "Summarize findings -> compare literature -> limitations -> implications -> future directions"
+
+    acknowledgments:
+      min_words: 0
+      max_words: 200
+      required: false
+      description: "Funding sources, grant numbers, contributor thanks"
+
+    references:
+      min_count: 20
+      max_count: 80
+      required: true
+      description: "Vancouver numbered style; accuracy verified against PubMed/CrossRef"
+
+  formatting:
+    font: "Times New Roman"
+    font_size: 12
+    line_spacing: 2.0
+    margin_inches: 1.0
+    file_format: "markdown"
+    figure_format: "SVG"
+    figure_dpi: 300
+    table_style: "three-line"
+
+  language_rules:
+    - tense: "past tense for Methods and Results, present tense for established knowledge in Introduction and Discussion"
+    - voice: "active voice preferred; first person permitted ('we analyzed')"
+    - abbreviations: "define on first use; limit to 10 abbreviations total"
+    - numbers: "spell out numbers under 10; use numerals for 10 and above"
+    - statistical_reporting: "report exact p-values to 3 decimal places unless < 0.001; always include CI and effect size"
+    - gene_names: "human genes in uppercase (TP53); mouse genes title case (Tp53); italics for gene symbols"
+    - species: "scientific names in italics on first use with full binomial"
+    - units: "SI units; space between number and unit"
+    - prohibitions:
+        - "no bullet points or numbered lists in prose"
+        - "no 'data not shown' statements"
+        - "no 'interestingly' or 'surprisingly'"
+        - "no 'very', 'highly', 'extremely' without quantification"
+        - "no 'first', 'novel', 'pioneering' claims"
+
+# =============================================================================
+# 5. RESEARCH DOMAINS
+# =============================================================================
+research_domains:
+  bioinformatics:
+    name: "Bioinformatics"
+    keywords:
+      primary:
+        - "bioinformatics"
+        - "computational biology"
+        - "genomics"
+        - "transcriptomics"
+        - "proteomics"
+      secondary:
+        - "machine learning"
+        - "network analysis"
+        - "pathway enrichment"
+        - "differential expression"
+        - "multi-omics integration"
+    common_methods:
+      - "WGCNA"
+      - "Gene Set Enrichment Analysis (GSEA)"
+      - "Differential Expression (DESeq2/limma/edgeR)"
+      - "Machine Learning (Random Forest, SVM, XGBoost, deep learning)"
+      - "Network Analysis (STRING, Cytoscape, igraph)"
+      - "Pathway Analysis (KEGG, GO, Reactome, WikiPathways)"
+      - "Immune Infiltration (CIBERSORT, ESTIMATE, TIMER, xCell)"
+      - "Survival Analysis (Kaplan-Meier, Cox regression)"
+    common_pitfalls:
+      - "Multiple testing correction not applied"
+      - "Batch effects not accounted for"
+      - "Overfitting in ML models"
+      - "Confounding by cell-type composition"
+      - "Over-interpretation of correlative findings"
+      - "Ignoring effect size in favor of p-value"
+    key_journals:
+      - "Bioinformatics"
+      - "Nucleic Acids Research"
+      - "Genome Biology"
+      - "PLOS Computational Biology"
+      - "Briefings in Bioinformatics"
+      - "BMC Bioinformatics"
+
+  spatial_transcriptomics:
+    name: "Spatial Transcriptomics"
+    keywords:
+      primary:
+        - "spatial transcriptomics"
+        - "spatial gene expression"
+        - "spatial omics"
+        - "spatial biology"
+        - "in situ sequencing"
+      secondary:
+        - "tissue architecture"
+        - "cell-cell communication"
+        - "spatial deconvolution"
+        - "spatial autocorrelation"
+        - "regional heterogeneity"
+        - "tissue domains"
+    common_methods:
+      - "Spatial Deconvolution (RCTD, SPOTlight, cell2location, Stereoscope)"
+      - "Spatial Autocorrelation (Moran's I, Geary's C)"
+      - "Spatial Clustering (BayesSpace, SpaGCN, Giotto)"
+      - "Cell-Cell Communication (CellChat, NicheNet, COMMOT)"
+      - "Region Segmentation (graph-based, morphological)"
+      - "Spatial Differential Expression (SPARK-X, SpatialDE, nnSVG)"
+    common_pitfalls:
+      - "Ignoring spatial dependency in statistical tests"
+      - "Over-interpretation of spot-level resolution"
+      - "Batch effects between tissue sections"
+      - "Insufficient biological replicates"
+      - "Inappropriate reference dataset for deconvolution"
+    key_journals:
+      - "Nature Methods"
+      - "Nature Biotechnology"
+      - "Genome Biology"
+      - "Cell"
+      - "Science"
+      - "Nucleic Acids Research"
+
+  single_cell:
+    name: "Single-Cell Analysis"
+    keywords:
+      primary:
+        - "single-cell RNA-seq"
+        - "scRNA-seq"
+        - "single-cell ATAC-seq"
+        - "scATAC-seq"
+        - "single-cell multiomics"
+      secondary:
+        - "cell clustering"
+        - "cell-type annotation"
+        - "trajectory inference"
+        - "pseudotime"
+        - "RNA velocity"
+        - "cell state transition"
+    common_methods:
+      - "Clustering (Seurat, Scanpy, Monocle)"
+      - "Cell-type Annotation (SingleR, CellAssign, Azimuth)"
+      - "Trajectory Analysis (Monocle3, Slingshot, PAGA, velocyto)"
+      - "Integration (Harmony, scVI, Seurat CCA, scArches)"
+      - "Differential Expression (MAST, Wilcoxon, DESeq2)"
+      - "Gene Regulatory Networks (SCENIC, pySCENIC, CellOracle)"
+    common_pitfalls:
+      - "Doublet contamination not removed"
+      - "Over-clustering or under-clustering"
+      - "Ambiguous cell-type labels from automated annotation"
+      - "Batch correction distorting biological signal"
+      - "Insufficient read depth per cell"
+    key_journals:
+      - "Nature Methods"
+      - "Genome Biology"
+      - "Cell Systems"
+      - "Nature Communications"
+      - "Science"
+      - "Cell"
+
+  deep_learning_bio:
+    name: "Deep Learning in Biology"
+    keywords:
+      primary:
+        - "deep learning"
+        - "neural networks"
+        - "representation learning"
+        - "transfer learning"
+        - "self-supervised learning"
+      secondary:
+        - "graph neural networks"
+        - "transformers"
+        - "convolutional neural networks"
+        - "autoencoders"
+        - "generative models"
+        - "foundation models"
+    common_methods:
+      - "CNN (ResNet, EfficientNet for imaging)"
+      - "GNN (Graph Convolutional Networks, GAT)"
+      - "Transformer (DNABERT, Enformer, scGPT, Geneformer)"
+      - "VAE (scVI, ldVAE)"
+      - "Diffusion Models"
+      - "Interpretability (SHAP, Integrated Gradients, DeepLIFT)"
+    common_pitfalls:
+      - "Data leakage between train/val/test splits"
+      - "Overfitting due to small biological datasets"
+      - "Lack of external validation on independent cohorts"
+      - "Black-box predictions without mechanistic interpretation"
+      - "Computational irreproducibility (missing seeds, unrecorded hyperparameters)"
+    key_journals:
+      - "Nature Machine Intelligence"
+      - "Nature Methods"
+      - "Bioinformatics"
+      - "Cell Systems"
+      - "Genome Biology"
+
+  mendelian_randomization:
+    name: "Mendelian Randomization"
+    keywords:
+      primary:
+        - "Mendelian randomization"
+        - "instrumental variable analysis"
+        - "GWAS"
+        - "genetic epidemiology"
+        - "causal inference"
+      secondary:
+        - "two-sample MR"
+        - "multivariable MR"
+        - "mediation MR"
+        - "bidirectional MR"
+        - "MR-PRESSO"
+        - "colocalization"
+    common_methods:
+      - "Inverse-Variance Weighted (IVW)"
+      - "MR-Egger regression"
+      - "Weighted Median"
+      - "MR-PRESSO"
+      - "Multivariable MR (MVMR)"
+      - "Two-step Mediation MR"
+      - "Colocalization (coloc, eCAVIAR)"
+      - "Steiger Directionality Test"
+    common_pitfalls:
+      - "Weak instrument bias (F-statistic < 10)"
+      - "Horizontal pleiotropy not addressed"
+      - "Population stratification"
+      - "Winner's curse in SNP selection"
+      - "Reverse causation not tested"
+      - "Overlapping samples in two-sample MR"
+    key_journals:
+      - "International Journal of Epidemiology"
+      - "Genetic Epidemiology"
+      - "eLife"
+      - "Nature Communications"
+      - "PLOS Genetics"
+
+# =============================================================================
+# 6. SKILLS DISPATCHER
+# =============================================================================
+skills_dispatcher:
+
+  deep-research:
+    triggers:
+      - "literature search"
+      - "comprehensive review"
+      - "state of the art"
+      - "research background"
+      - "deep调研"
+      - "系统性检索"
+      - "文献综述"
+      - "find all papers"
+      - "search literature"
+    phase: "research"
+    agent: "literature_reviewer"
+
+  nature-academic-search:
+    triggers:
+      - "search PubMed"
+      - "find citations"
+      - "MeSH search"
+      - "citation file"
+      - ".nbib"
+      - ".ris"
+      - ".bib"
+      - "文献检索"
+      - "查文献"
+      - "引用文件"
+      - "convert citation"
+      - "reference management"
+      - "deduplicate references"
+    phase: "research"
+    agent: "literature_reviewer"
+
+  nature-citation:
+    triggers:
+      - "add citations"
+      - "insert references"
+      - "cite support"
+      - "Nature系列引用"
+      - "CNS子刊"
+      - "自动引用"
+      - "分段引用"
+      - "补引用"
+      - "配文献"
+      - "文献支撑"
+      - "add references to text"
+      - "citation mapping"
+    phase: "writing"
+    agent: "report_writer"
+
+  scientific-writing:
+    triggers:
+      - "write Methods"
+      - "write Results"
+      - "write Introduction"
+      - "write Discussion"
+      - "draft section"
+      - "IMRAD"
+      - "scientific manuscript"
+      - "paper section"
+      - "医学论文"
+      - "科研写作段落"
+      - "写论文段落"
+      - "draft manuscript"
+      - "reporting guidelines"
+      - "CONSORT"
+      - "STROBE"
+    phase: "writing"
+    agent: "report_writer"
+
+  nature-writing:
+    triggers:
+      - "write abstract"
+      - "draft introduction"
+      - "build manuscript"
+      - "Nature-style writing"
+      - "从零写论文"
+      - "搭论文框架"
+      - "起草论文"
+      - "写引言"
+      - "写讨论"
+      - "CNS风格"
+      - "structure paper"
+      - "paper argument"
+      - "outline paper"
+    phase: "writing"
+    agent: "report_writer"
+
+  nature-polishing:
+    triggers:
+      - "polish manuscript"
+      - "improve language"
+      - "academic prose"
+      - "language editing"
+      - "润色"
+      - "改写"
+      - "proofreading"
+      - "fix layout"
+      - "排版"
+      - "sentence flow"
+      - "clarity improvement"
+      - "manuscript polish"
+    phase: "writing"
+    agent: "report_writer"
+
+  humanizer:
+    triggers:
+      - "remove AI traces"
+      - "AI detection"
+      - "sound more human"
+      - "remove AI flavor"
+      - "去AI味"
+      - "不像AI写的"
+      - "更自然"
+      - "natural academic expression"
+      - "AI writing patterns"
+      - "machine-generated text"
+    phase: "polish"
+    agent: "report_writer"
+
+  nature-figure:
+    triggers:
+      - "create figure"
+      - "make plot"
+      - "journal-ready figure"
+      - "scientific visualization"
+      - "论文配图"
+      - "科研绘图"
+      - "画图"
+      - "出图"
+      - "论文图表"
+      - "multi-panel figure"
+      - "figure revision"
+      - "figure audit"
+      - "export SVG"
+      - "export TIFF"
+    phase: "visualization"
+    agent: "figure_planner"
+
+  nature-data:
+    triggers:
+      - "data availability"
+      - "数据可用性"
+      - "data sharing"
+      - "repository selection"
+      - "accession numbers"
+      - "FAIR data"
+      - "data statement"
+      - "代码可用性"
+      - "code sharing"
+      - "data deposition"
+      - "GEO submission"
+      - "Figshare"
+    phase: "writing"
+    agent: "data_auditor"
+
+  nature-response:
+    triggers:
+      - "reviewer response"
+      - "reviewer comments"
+      - "审稿意见"
+      - "逐点回复"
+      - "修回信"
+      - "rebuttal"
+      - "revision letter"
+      - "point-by-point response"
+      - "大修回复"
+      - "小修回复"
+      - "如何回复reviewer"
+      - "response to reviewers"
+    phase: "revision"
+    agent: "report_writer"
+
+  academic-paper-reviewer:
+    triggers:
+      - "review manuscript"
+      - "peer review"
+      - "审稿"
+      - "critique paper"
+      - "simulate review"
+      - "editorial review"
+      - "review my paper"
+      - "manuscript review"
+      - "internal review"
+    phase: "review"
+    agent: "integrity_checker"
+
+  topic_research:
+    triggers:
+      - "research topic"
+      - "topic feasibility"
+      - "novelty assessment"
+      - "research gap"
+      - "课题调研"
+      - "选题"
+      - "创新性评估"
+      - "feasibility check"
+      - "research question formulation"
+    phase: "research"
+    agent: "research_strategist"
+
+  qc_pipeline:
+    triggers:
+      - "quality control"
+      - "QC check"
+      - "data quality"
+      - "质量控制"
+      - "pipeline validation"
+      - "integrity check"
+      - "reproducibility audit"
+      - "output verification"
+      - "data integrity"
+    phase: "verification"
+    agent: "integrity_checker"
+
+  spatial_analysis:
+    triggers:
+      - "spatial transcriptomics"
+      - "spatial deconvolution"
+      - "spatial clustering"
+      - "spatial autocorrelation"
+      - "空间转录组"
+      - "空间解卷积"
+      - "spatial gene expression"
+      - "region segmentation"
+      - "spatial statistics"
+      - "tissue domain"
+    phase: "analysis"
+    agent: "analysis_executor"
+
+  statistical_testing:
+    triggers:
+      - "statistical test"
+      - "hypothesis testing"
+      - "p-value"
+      - "confidence interval"
+      - "effect size"
+      - "statistical significance"
+      - "multiple testing"
+      - "power analysis"
+      - "样本量计算"
+      - "统计检验"
+      - "FDR correction"
+      - "Bonferroni"
+    phase: "analysis"
+    agent: "statistician"
+
+  pathway_inference:
+    triggers:
+      - "pathway analysis"
+      - "gene set enrichment"
+      - "GO enrichment"
+      - "KEGG analysis"
+      - "Reactome"
+      - "GSEA"
+      - "通路富集"
+      - "功能注释"
+      - "functional annotation"
+      - "biological process"
+      - "network biology"
+    phase: "analysis"
+    agent: "analysis_executor"
+
+  figure_planning:
+    triggers:
+      - "figure plan"
+      - "figure layout"
+      - "panel design"
+      - "visual storytelling"
+      - "figure strategy"
+      - "图表规划"
+      - "figure organization"
+      - "visual hierarchy"
+      - "scientific illustration plan"
+    phase: "strategy"
+    agent: "figure_planner"
+
+# =============================================================================
+# 7. AGENT ROUTING (11 agents)
+# =============================================================================
+agent_routing:
+  routing_strategy: best_match_with_fallback
+  fallback_agent: team_orchestrator
+  agents:
+    research_strategist:
+      description: "Designs research strategy, formulates hypotheses, selects target journals, and assesses feasibility"
+      primary_skills:
+        - topic_research
+        - deep-research
+        - nature-academic-search
+      stages:
+        - select_topic
+        - target_journal
+        - formulate_hypotheses
+
+    literature_reviewer:
+      description: "Conducts systematic literature searches, manages reference databases, and synthesizes literature reviews"
+      primary_skills:
+        - deep-research
+        - nature-academic-search
+        - nature-citation
+      stages:
+        - literature_search
+
+    data_auditor:
+      description: "Audits input data quality, validates formats, checks completeness, and prepares data availability statements"
+      primary_skills:
+        - nature-data
+        - qc_pipeline
+      stages:
+        - data_audit
+
+    figure_planner:
+      description: "Plans figure strategy, designs multi-panel layouts, and ensures visual storytelling aligns with paper narrative"
+      primary_skills:
+        - figure_planning
+        - nature-figure
+      stages:
+        - figure_planning
+
+    analysis_executor:
+      description: "Executes computational analyses including spatial analysis, statistical testing, and pathway inference"
+      primary_skills:
+        - spatial_analysis
+        - statistical_testing
+        - pathway_inference
+        - qc_pipeline
+      stages:
+        - run_analysis
+
+    pipeline_engineer:
+      description: "Maintains analysis pipelines, ensures reproducibility, manages dependencies, and handles environment setup"
+      primary_skills:
+        - qc_pipeline
+        - spatial_analysis
+      stages:
+        - run_analysis
+        - verify_methods
+
+    report_writer:
+      description: "Writes and polishes all manuscript sections, applies scientific writing standards, and manages citations"
+      primary_skills:
+        - scientific-writing
+        - nature-writing
+        - nature-polishing
+        - humanizer
+        - nature-citation
+        - nature-response
+      stages:
+        - write_methods
+        - write_results
+        - write_introduction
+        - write_discussion
+        - assemble_manuscript
+        - apply_revision
+
+    statistician:
+      description: "Validates statistical methods, checks assumptions, ensures proper reporting of statistical results"
+      primary_skills:
+        - statistical_testing
+      stages:
+        - verify_methods
+
+    integrity_checker:
+      description: "Runs quality gates, verifies claim-evidence binding, ensures reproducibility, and conducts internal review"
+      primary_skills:
+        - qc_pipeline
+        - academic-paper-reviewer
+        - nature-data
+        - nature-citation
+      stages:
+        - verify_methods
+        - integrity_check
+        - internal_review
+        - re_review
+
+    team_orchestrator:
+      description: "Coordinates multi-agent workflows, manages dependencies between stages, and handles pipeline supervision"
+      primary_skills:
+        - deep-research
+      stages:
+        - finalize
+
+    code_librarian:
+      description: "Manages code library, tracks analysis scripts, handles plugin registration, and maintains code documentation"
+      primary_skills:
+        - qc_pipeline
+      stages:
+        - run_analysis
+        - verify_methods
+        - finalize
+
+supervision:
+  timeout:
+    global_timeout_seconds: 86400
+    stage_default_timeout_seconds: 3600
+    max_pipeline_duration_seconds: 172800
+    timeout_action: "graceful_abort_with_checkpoint"
+    checkpoint_interval_seconds: 300
+
+  retry:
+    strategy: "exponential_backoff"
+    exponential_backoff:
+      base_seconds: 60
+      multiplier: 2.0
+      max_delay_seconds: 900
+      jitter: true
+      jitter_factor: 0.1
+    max_cumulative_retries: 20
+    retryable_errors:
+      - "timeout"
+      - "transient_network"
+      - "api_rate_limit"
+      - "resource_unavailable"
+    non_retryable_errors:
+      - "invalid_parameter"
+      - "missing_dependency"
+      - "data_corruption"
+      - "permission_denied"
+
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    recovery_timeout_seconds: 600
+    half_open_max_attempts: 2
+    tracked_scopes:
+      - "per_stage"
+      - "per_agent"
+      - "per_skill"
+    on_open:
+      action: "skip_stage"
+      notification: "circuit_breaker_triggered"
+
+  logging:
+    level: "INFO"
+    format: "structured_json"
+    destinations:
+      - type: "file"
+        path: "logs/pipeline.log"
+        rotation: "daily"
+        retention_days: 30
+      - type: "console"
+        level: "WARNING"
+    fields:
+      - "timestamp"
+      - "stage_id"
+      - "agent_id"
+      - "event_type"
+      - "duration_ms"
+      - "status"
+      - "artifacts"
+      - "error_message"
+    redact:
+      - "api_key"
+      - "password"
+      - "token"
+      - "secret"
+
+# =============================================================================
+# 9. CODE LIBRARY
+# =============================================================================
+code_library:
+  auto_discover:
+    enabled: true
+    on_startup: true
+    on_stage_enter: true
+
+  scan_paths:
+    - "scripts/"
+    - "src/"
+    - "analysis/"
+    - "pipelines/"
+    - "utils/"
+    - "R/"
+    - "python/"
+    - "notebooks/"
+
+  plugin_registry:
+    enabled: true
+    registry_file: "config/plugin_registry.yaml"
+    auto_register_new_scripts: true
+    supported_languages:
+      - name: "R"
+        extension: ".R"
+        runner: "Rscript"
+        version_command: "Rscript --version"
+        min_version: "4.0.0"
+        package_manager: "renv"
+        lock_file: "renv.lock"
+        environment_file: "environment.yml"
+      - name: "Python"
+        extension: ".py"
+        runner: "python"
+        version_command: "python --version"
+        min_version: "3.9.0"
+        package_manager: "pip"
+        lock_file: "requirements.txt"
+        environment_file: "environment.yml"
+      - name: "Shell"
+        extension: ".sh"
+        runner: "bash"
+        version_command: "bash --version"
+        min_version: "5.0.0"
+      - name: "Jupyter"
+        extension: ".ipynb"
+        runner: "jupyter nbconvert --to notebook --execute"
+        version_command: "jupyter --version"
+        min_version: "6.0.0"
+
+# =============================================================================
+# 10. OUTPUT INTERFACES
+# =============================================================================
+output_interfaces:
+
+  stage_result:
+    description: "Schema for stage execution results"
+    schema:
+      type: "object"
+      required:
+        - stage_id
+        - status
+        - started_at
+        - completed_at
+        - artifacts
+        - quality_gate_results
+      properties:
+        stage_id:
+          type: "string"
+          description: "Unique stage identifier"
+        status:
+          type: "string"
+          enum:
+            - "passed"
+            - "failed"
+            - "skipped"
+            - "timed_out"
+            - "circuit_broken"
+        started_at:
+          type: "string"
+          format: "date-time"
+        completed_at:
+          type: "string"
+          format: "date-time"
+        duration_seconds:
+          type: "number"
+        agent:
+          type: "string"
+          description: "Agent that executed this stage"
+        attempts:
+          type: "integer"
+          minimum: 1
+        artifacts:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              path:
+                type: "string"
+              type:
+                type: "string"
+                enum:
+                  - "markdown"
+                  - "yaml"
+                  - "json"
+                  - "pdf"
+                  - "bib"
+                  - "svg"
+                  - "png"
+                  - "tiff"
+                  - "zip"
+                  - "csv"
+                  - "tsv"
+              size_bytes:
+                type: "integer"
+              checksum:
+                type: "string"
+        quality_gate_results:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              gate_id:
+                type: "string"
+              passed:
+                type: "boolean"
+              severity:
+                type: "string"
+                enum:
+                  - "CRITICAL"
+                  - "HIGH"
+                  - "MEDIUM"
+              message:
+                type: "string"
+        errors:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              code:
+                type: "string"
+              message:
+                type: "string"
+              recoverable:
+                type: "boolean"
+        human_decision:
+          type: "object"
+          properties:
+            approved:
+              type: "boolean"
+            comment:
+              type: "string"
+            timestamp:
+              type: "string"
+              format: "date-time"
+
+  integrity_report:
+    description: "Schema for the integrity check report"
+    schema:
+      type: "object"
+      required:
+        - pipeline_run_id
+        - generated_at
+        - overall_status
+        - gate_results
+        - claim_verification
+      properties:
+        pipeline_run_id:
+          type: "string"
+          format: "uuid"
+        generated_at:
+          type: "string"
+          format: "date-time"
+        overall_status:
+          type: "string"
+          enum:
+            - "pass"
+            - "pass_with_warnings"
+            - "fail"
+        gate_results:
+          type: "object"
+          description: "Map of gate_id to result"
+          additionalProperties:
+            type: "object"
+            properties:
+              passed:
+                type: "boolean"
+              severity:
+                type: "string"
+              details:
+                type: "string"
+              violations:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    location:
+                      type: "string"
+                    description:
+                      type: "string"
+                    fix_suggestion:
+                      type: "string"
+        claim_verification:
+          type: "object"
+          properties:
+            total_claims:
+              type: "integer"
+            verified_claims:
+              type: "integer"
+            unverifiable_claims:
+              type: "integer"
+            missing_citations:
+              type: "integer"
+            unverifiable_details:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  claim_text:
+                    type: "string"
+                  section:
+                    type: "string"
+                  reason:
+                    type: "string"
+        figure_audit:
+          type: "object"
+          properties:
+            figures_on_disk:
+              type: "integer"
+            figures_referenced:
+              type: "integer"
+            orphan_figures:
+              type: "array"
+              items:
+                type: "string"
+            unreferenced_figures:
+              type: "array"
+              items:
+                type: "string"
+        statistics_audit:
+          type: "object"
+          properties:
+            total_reported_tests:
+              type: "integer"
+            complete_reporting:
+              type: "integer"
+            incomplete_reporting:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  test_description:
+                    type: "string"
+                  missing_fields:
+                    type: "array"
+                    items:
+                      type: "string"
+
+  workflow_report:
+    description: "Schema for the final workflow execution report"
+    schema:
+      type: "object"
+      required:
+        - pipeline_run_id
+        - paper_type
+        - started_at
+        - completed_at
+        - stages_summary
+        - final_status
+        - artifacts_delivered
+      properties:
+        pipeline_run_id:
+          type: "string"
+          format: "uuid"
+        paper_type:
+          type: "string"
+        target_journal:
+          type: "string"
+        started_at:
+          type: "string"
+          format: "date-time"
+        completed_at:
+          type: "string"
+          format: "date-time"
+        total_duration_seconds:
+          type: "number"
+        final_status:
+          type: "string"
+          enum:
+            - "completed"
+            - "completed_with_issues"
+            - "aborted"
+            - "failed"
+        stages_summary:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              stage_id:
+                type: "string"
+              status:
+                type: "string"
+              duration_seconds:
+                type: "number"
+              attempts:
+                type: "integer"
+              artifacts_count:
+                type: "integer"
+        artifacts_delivered:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              path:
+                type: "string"
+              description:
+                type: "string"
+              checksum:
+                type: "string"
+        quality_summary:
+          type: "object"
+          properties:
+            critical_gates_passed:
+              type: "integer"
+            critical_gates_total:
+              type: "integer"
+            high_gates_passed:
+              type: "integer"
+            high_gates_total:
+              type: "integer"
+            medium_gates_passed:
+              type: "integer"
+            medium_gates_total:
+              type: "integer"
+        reproducibility_score:
+          type: "number"
+          minimum: 0
+          maximum: 100
+        human_review_points:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              stage:
+                type: "string"
+              decision:
+                type: "string"
+              timestamp:
+                type: "string"
+
+# =============================================================================
+# 11. REPRODUCIBILITY
+# =============================================================================
+reproducibility:
+  random_seeds:
+    default_seed: 42
+    enforce_global: true
+    per_component:
+      r_analyses: 42
+      python_analyses: 42
+      machine_learning:
+        data_split_seed: 42
+        model_init_seed: 42
+        hyperparameter_search_seed: 42
+    seed_logging: true
+    seed_verification: "on_stage_enter"
+
+  environment_tracking:
+    enabled: true
+    capture_on_stage_start: true
+    capture_items:
+      - system_info:
+          - "OS name and version"
+          - "CPU architecture"
+          - "total RAM"
+      - software_versions:
+          - "R version + loaded packages"
+          - "Python version + pip freeze"
+          - "System dependencies"
+      - git_info:
+          - "commit hash"
+          - "branch name"
+          - "dirty status"
+      - container_info:
+          - "Docker image digest"
+          - "Singularity image path"
+    output_format: "environment_snapshot.yaml"
+    compare_across_runs: true
+    alert_on_difference: true
+
+# =============================================================================
+# 12. EXTENSION POINTS
+# =============================================================================
+extension_points:
+
+  custom_analysis_scripts:
+    enabled: true
+    description: "User-provided analysis scripts that integrate into the pipeline"
+    scan_patterns:
+      - extension: ".py"
+        scan_dirs:
+          - "scripts/custom/"
+          - "extensions/python/"
+        registration:
+          auto_detect: true
+          require_manifest: false
+      - extension: ".R"
+        scan_dirs:
+          - "scripts/custom/"
+          - "extensions/R/"
+        registration:
+          auto_detect: true
+          require_manifest: false
+      - extension: ".sh"
+        scan_dirs:
+          - "scripts/custom/"
+          - "extensions/shell/"
+        registration:
+          auto_detect: true
+          require_manifest: false
+    validation:
+      check_syntax: true
+      check_imports: true
+      dry_run_available: true
+    execution:
+      sandbox: true
+      timeout_seconds: 3600
+      resource_limits:
+        max_memory_mb: 16384
+        max_cpu_cores: 8
+
+  custom_agents:
+    enabled: true
+    description: "User-defined agents that extend the default 11-agent roster"
+    registration:
+      method: "yaml_manifest"
+      manifest_path: "config/custom_agents.yaml"
+    capabilities:
+      - can_own_stages: true
+      - can_use_skills: true
+      - can_access_artifacts: true
+    constraints:
+      - must_declare_primary_skills
+      - must_declare_stages
+      - must_follow_supervision_rules
+
+  custom_skills:
+    enabled: true
+    description: "User-defined skills that extend the skill dispatcher"
+    registration:
+      method: "yaml_manifest"
+      manifest_path: "config/custom_skills.yaml"
+    capabilities:
+      - can_be_dispatched: true
+      - can_define_triggers: true
+      - can_define_phase: true
+    constraints:
+      - must_declare_triggers
+      - must_declare_phase
+      - must_declare_agent
+      - must_validate_before_registration
+    validation:
+      dry_run_on_register: true
+      conflict_detection: true

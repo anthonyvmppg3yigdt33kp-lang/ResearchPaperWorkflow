@@ -1,0 +1,113 @@
+schema_version: "1.0.0"
+updated_at: "2026-06-18T00:00:00"
+total_plugins: 11
+plugins:
+  mt_filter:
+    name: mt_filter
+    version: "1.0.0"
+    language: python
+    category: qc
+    entry_point: code_library.patterns.qc.mt_filter
+    description: "QC module: mitochondrial read percentage filtering for single-cell data"
+    file_path: code_library/patterns/qc/mt_filter.py
+    inputs:
+      - {name: adata, type: AnnData, description: "Input AnnData object", required: true}
+    outputs:
+      - {name: adata_filtered, type: AnnData, description: "Filtered AnnData object"}
+    parameters:
+      - {name: mt_threshold, type: float, default: 25.0, description: "Max MT% threshold"}
+      - {name: min_genes, type: int, default: 200, description: "Minimum genes per cell"}
+      - {name: min_cells, type: int, default: 3, description: "Minimum cells per gene"}
+
+  leiden_clustering:
+    name: leiden_clustering
+    version: "1.0.0"
+    language: python
+    category: clustering
+    entry_point: code_library.patterns.clustering.leiden_clustering
+    description: "Leiden community detection clustering for single-cell data"
+    file_path: code_library/patterns/clustering/leiden_clustering.py
+    parameters:
+      - {name: resolution, type: float, default: 0.6, description: "Leiden resolution parameter"}
+      - {name: n_neighbors, type: int, default: 15, description: "Number of neighbors for graph"}
+
+  multi_resolution:
+    name: multi_resolution
+    version: "1.0.0"
+    language: python
+    category: clustering
+    entry_point: code_library.patterns.clustering.multi_resolution
+    description: "Multi-resolution Leiden clustering for parameter sweep"
+    file_path: code_library/patterns/clustering/multi_resolution.py
+
+  cell_type_annotation:
+    name: cell_type_annotation
+    version: "1.0.0"
+    language: python
+    category: annotation
+    entry_point: code_library.modules.cell_type_annotation
+    description: "Marker-based cell type annotation module"
+    file_path: code_library/modules/cell_type_annotation.py
+
+  doublet_detection:
+    name: doublet_detection
+    version: "1.0.0"
+    language: python
+    category: qc
+    entry_point: code_library.solutions.doublet_detection
+    description: "Doublet detection for single-cell RNA-seq data"
+    file_path: code_library/solutions/doublet_detection.py
+
+  ambient_rna_removal:
+    name: ambient_rna_removal
+    version: "1.0.0"
+    language: python
+    category: qc
+    entry_point: code_library.solutions.ambient_rna_removal
+    description: "Ambient RNA removal for single-cell data"
+    file_path: code_library/solutions/ambient_rna_removal.py
+
+  ensembl_to_symbol:
+    name: ensembl_to_symbol
+    version: "1.0.0"
+    language: python
+    category: annotation
+    entry_point: code_library.solutions.ensembl_to_symbol
+    description: "Convert Ensembl gene IDs to HGNC symbols"
+    file_path: code_library/solutions/ensembl_to_symbol.py
+
+  h5ad_io:
+    name: h5ad_io
+    version: "1.0.0"
+    language: python
+    category: other
+    entry_point: code_library.snippets.h5ad_io
+    description: "I/O utilities for AnnData h5ad files"
+    file_path: code_library/snippets/h5ad_io.py
+
+  logging_setup:
+    name: logging_setup
+    version: "1.0.0"
+    language: python
+    category: other
+    entry_point: code_library.snippets.logging_setup
+    description: "Standardized logging configuration for analysis scripts"
+    file_path: code_library/snippets/logging_setup.py
+
+  yaml_config:
+    name: yaml_config
+    version: "1.0.0"
+    language: python
+    category: other
+    entry_point: code_library.snippets.yaml_config
+    description: "YAML configuration file loader with defaults"
+    file_path: code_library/snippets/yaml_config.py
+
+  bioinformatics_analysis:
+    name: bioinformatics_analysis
+    version: "1.0.0"
+    language: r
+    category: statistics
+    entry_point: code_library/r/bioinformatics_analysis.R
+    description: "R-based bioinformatics analysis pipeline (DESeq2, edgeR, WGCNA)"
+    file_path: code_library/r/bioinformatics_analysis.R

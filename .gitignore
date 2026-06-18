@@ -1,0 +1,54 @@
+# Research Paper Workflow Framework
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+
+# Generated paper projects
+papers/
+
+# Data (large files)
+*.h5ad
+*.rds
+*.Rds
+*.bam
+*.sam
+*.fastq
+*.fq
+*.tar.gz
+
+# Results (binary)
+*.pdf
+*.png
+*.csv
+*.tsv
+results/
+
+# Environment
+.venv/
+venv/
+*.conda/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Secrets
+.env
+credentials.*
+
+# Logs
+*.log

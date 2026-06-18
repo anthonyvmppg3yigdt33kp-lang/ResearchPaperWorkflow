@@ -1,0 +1,1147 @@
+# Research Paper Workflow Framework — Comprehensive Journal Database
+# 25 journals across 6 tiers. Auto-converted from bioinformatics_journals_database.yaml
+# Generated: 2026-06-18
+
+journals:
+  Nature Genetics:
+    full_name: Nature Genetics
+    impact_factor: 31.7
+    category: high-impact
+    format_type: Nature-style (Letter / Article / Brief Communication)
+    citation_style: Nature (superscript numbered, Vancouver-derived)
+    abstract_word_limit: 150
+    figure_limit: 8
+    main_text_word_limit: 3000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Manuscript Tracking System (mts-ng.nature.com)
+    special_requirements:
+    - Data availability statement mandatory
+    - Code availability statement mandatory for custom software
+    - Source data for all figures and tables required at submission
+    - Reporting Summary (checklist-based) required
+    - ORCID iD mandatory for corresponding author
+    - Competing interests declaration required
+    - Supplementary Information as separate PDF
+    - Genome-wide association studies must deposit summary statistics in GWAS Catalog
+    scope_keywords:
+    - genetics
+    - genomics
+    - human genetics
+    - complex traits
+    - Mendelian disease
+    - GWAS
+    - epigenetics
+    - gene regulation
+    - population genetics
+    - statistical genetics
+    - functional genomics
+    - single-cell genomics
+  Nature Medicine:
+    full_name: Nature Medicine
+    impact_factor: 58.7
+    category: high-impact
+    format_type: Nature-style (Letter / Article / Brief Communication)
+    citation_style: Nature (superscript numbered, Vancouver-derived)
+    abstract_word_limit: 150
+    figure_limit: 8
+    main_text_word_limit: 3000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Manuscript Tracking System (mts-ng.nature.com)
+    special_requirements:
+    - Clinical trial registration mandatory before enrollment
+    - CONSORT checklist for randomized trials
+    - Data availability statement mandatory
+    - Code availability statement mandatory
+    - Patient consent documentation required for clinical studies
+    - Reporting Summary (checklist-based) required
+    - IRB/ethics committee approval statement required
+    - Source data for all figures and tables required
+    - Competing interests declaration required
+    scope_keywords:
+    - translational medicine
+    - clinical trials
+    - biomedical research
+    - drug development
+    - personalized medicine
+    - biomarkers
+    - therapeutics
+    - vaccines
+    - immunotherapy
+    - precision medicine
+    - diagnostics
+    - public health
+  Nature Biotechnology:
+    full_name: Nature Biotechnology
+    impact_factor: 33.1
+    category: high-impact
+    format_type: Nature-style (Letter / Article / Brief Communication)
+    citation_style: Nature (superscript numbered, Vancouver-derived)
+    abstract_word_limit: 150
+    figure_limit: 8
+    main_text_word_limit: 3000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Manuscript Tracking System (mts-ng.nature.com)
+    special_requirements:
+    - Data availability statement mandatory
+    - Code availability statement mandatory for novel algorithms
+    - Source data for all figures and tables required
+    - Software must be deposited in a public repository
+    - Reporting Summary required
+    - Competing interests declaration (including patents) required
+    - Benchmarking against state-of-the-art methods expected
+    - Biomedical data privacy compliance required
+    scope_keywords:
+    - biotechnology
+    - computational biology
+    - bioinformatics methods
+    - omics technologies
+    - synthetic biology
+    - gene therapy
+    - genome editing
+    - single-cell technologies
+    - spatial omics
+    - protein engineering
+    - drug discovery platforms
+    - diagnostic technologies
+  Nature Methods:
+    full_name: Nature Methods
+    impact_factor: 36.1
+    category: high-impact
+    format_type: Nature-style (Article / Brief Communication / Correspondence)
+    citation_style: Nature (superscript numbered, Vancouver-derived)
+    abstract_word_limit: 150
+    figure_limit: 8
+    main_text_word_limit: 3000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Manuscript Tracking System (mts-ng.nature.com)
+    special_requirements:
+    - Software/tool must be freely available for academic use
+    - Code deposited in GitHub or equivalent with DOI
+    - Benchmarking on gold-standard datasets required
+    - Documentation and tutorial required for methods tools
+    - Data availability statement mandatory
+    - Source data for all figures required
+    - Reporting Summary required
+    - Competing interests declaration required
+    scope_keywords:
+    - methods
+    - techniques
+    - bioinformatics
+    - computational biology
+    - imaging
+    - proteomics
+    - genomics technologies
+    - single-cell methods
+    - spatial transcriptomics
+    - machine learning methods
+    - statistical methods
+    - software tools
+  Cell:
+    full_name: Cell
+    impact_factor: 45.5
+    category: high-impact
+    format_type: Cell-style (Article / Resource / Report)
+    citation_style: Cell Press (numbered, author-year in-text, full reference list)
+    abstract_word_limit: 150
+    figure_limit: 7
+    main_text_word_limit: 55000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Graphical Abstract mandatory
+    - Highlights (3-5 bullet points, max 85 chars each) required
+    - eTOC blurb (50 words) required
+    - Data and Code Availability section mandatory
+    - Key Resources Table required (antibodies, cell lines, software, reagents)
+    - Author Contributions in CRediT taxonomy
+    - Declaration of Interests required
+    - Supplemental Information as separate file
+    - Source data for all figures strongly recommended
+    scope_keywords:
+    - cell biology
+    - molecular biology
+    - genetics
+    - systems biology
+    - immunology
+    - neuroscience
+    - cancer biology
+    - developmental biology
+    - genomics
+    - epigenetics
+    - metabolism
+    - microbiome
+  Science:
+    full_name: Science
+    impact_factor: 44.6
+    category: high-impact
+    format_type: Science-style (Research Article / Report)
+    citation_style: Science (numbered references, AMA-derived)
+    abstract_word_limit: 125
+    figure_limit: 6
+    main_text_word_limit: 4500
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Science Manuscript Submission & Information Transfer (SMSIT)
+    special_requirements:
+    - One-sentence summary (max 125 characters) required
+    - Data and materials availability statement mandatory
+    - Code must be deposited in an approved repository
+    - All datasets must be publicly accessible upon publication
+    - Competing interests declaration required
+    - Supplementary Materials limited to ~50 pages
+    - References limited to ~50 citation
+    - AAAS data policy compliance mandatory
+    scope_keywords:
+    - multidisciplinary science
+    - genomics
+    - biomedicine
+    - evolutionary biology
+    - neuroscience
+    - immunology
+    - structural biology
+    - systems biology
+    - biotechnology
+    - computational biology
+    - epidemiology
+    - data science
+  New England Journal of Medicine:
+    full_name: New England Journal of Medicine (NEJM)
+    impact_factor: 96.2
+    category: high-impact
+    format_type: NEJM-style (Original Article / Special Article / Brief Report)
+    citation_style: NEJM (numbered references, Vancouver-derived)
+    abstract_word_limit: 250
+    figure_limit: 5
+    main_text_word_limit: 2700
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: ScholarOne Manuscripts
+    special_requirements:
+    - Clinical trial registration mandatory (ClinicalTrials.gov or equivalent)
+    - CONSORT checklist mandatory for RCTs
+    - Protocol must be submitted with manuscript
+    - IRB approval documentation required
+    - Patient consent forms required
+    - Data sharing statement required
+    - ICMJE authorship criteria must be met
+    - Competing interests disclosure (ICMJE Form)
+    - Supplementary Appendix as separate document
+    - Statistical analysis plan must be described in detail
+    scope_keywords:
+    - clinical medicine
+    - randomized controlled trials
+    - epidemiology
+    - public health
+    - therapeutics
+    - diagnostics
+    - clinical outcomes
+    - health policy
+    - medical innovation
+    - patient care
+    - evidence-based medicine
+    - global health
+  The Lancet:
+    full_name: The Lancet
+    impact_factor: 79.3
+    category: high-impact
+    format_type: Lancet-style (Article / Series / Health Policy)
+    citation_style: Lancet (numbered references, Vancouver)
+    abstract_word_limit: 300
+    figure_limit: 6
+    main_text_word_limit: 3500
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Clinical trial registration mandatory
+    - CONSORT checklist for RCTs
+    - STROBE checklist for observational studies
+    - PRISMA checklist for systematic reviews/meta-analyses
+    - Data sharing statement required
+    - Role of funding source must be stated
+    - 'Panel: Research in context (systematic review of existing evidence + added
+      value)'
+    - Ethics committee approval documentation required
+    - Patient consent documentation required
+    - Author contributions statement required
+    scope_keywords:
+    - global health
+    - clinical medicine
+    - public health
+    - epidemiology
+    - health policy
+    - clinical trials
+    - infectious disease
+    - non-communicable disease
+    - maternal and child health
+    - health systems
+    - environmental health
+    - mental health
+  JAMA:
+    full_name: JAMA (Journal of the American Medical Association)
+    impact_factor: 63.1
+    category: high-impact
+    format_type: JAMA-style (Original Investigation / Research Letter / Brief Report)
+    citation_style: AMA (numbered references, superscript in-text)
+    abstract_word_limit: 350
+    figure_limit: 5
+    main_text_word_limit: 3000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Structured abstract mandatory (Importance, Objective, Design, Setting, Participants,
+      Main Outcomes, Results, Conclusions, Trial Registration)
+    - Clinical trial registration mandatory
+    - CONSORT / STROBE / PRISMA / STARD checklist per study design
+    - Data sharing statement required
+    - Statistical Methods and Data Sharing section required
+    - IRB approval documentation required
+    - ICMJE authorship criteria
+    - Conflict of interest disclosures (ICMJE Form)
+    - Funding/support disclosure required
+    scope_keywords:
+    - clinical medicine
+    - evidence-based medicine
+    - randomized clinical trials
+    - meta-analysis
+    - clinical guidelines
+    - health outcomes
+    - preventive medicine
+    - diagnostics
+    - therapeutics
+    - health disparities
+    - quality improvement
+    - medical education
+  Nature Communications:
+    full_name: Nature Communications
+    impact_factor: 14.7
+    category: high-open
+    format_type: Nature-style (Article)
+    citation_style: Nature (superscript numbered)
+    abstract_word_limit: 150
+    figure_limit: 10
+    main_text_word_limit: 5000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Manuscript Tracking System (mts-ng.nature.com)
+    special_requirements:
+    - Open access (APC ~$6,790 USD, 2025)
+    - Data availability statement mandatory
+    - Code availability statement mandatory
+    - Source data for figures and tables required
+    - Reporting Summary required
+    - Competing interests declaration required
+    - ORCID iD mandatory for corresponding author
+    - Transparent peer review (reviewer reports published with accepted paper)
+    - No strict page/figure limits (guidelines only)
+    scope_keywords:
+    - multidisciplinary science
+    - genomics
+    - bioinformatics
+    - systems biology
+    - computational biology
+    - biomedical research
+    - data science
+    - materials science
+    - physics
+    - chemistry
+    - earth science
+    - health sciences
+  Science Advances:
+    full_name: Science Advances
+    impact_factor: 11.7
+    category: high-open
+    format_type: Science-style (Research Article)
+    citation_style: Science (numbered references)
+    abstract_word_limit: 250
+    figure_limit: 10
+    main_text_word_limit: 7000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Science Manuscript Submission System
+    special_requirements:
+    - Open access (APC ~$5,500 USD, 2025)
+    - Data and materials availability statement mandatory
+    - Code must be deposited in approved repository
+    - Supplementary Materials allowed (no strict limit)
+    - Competing interests declaration required
+    - AAAS open access license (CC BY or CC BY-NC)
+    - Author contributions statement required
+    scope_keywords:
+    - multidisciplinary science
+    - biomedicine
+    - genomics
+    - computational biology
+    - data science
+    - neuroscience
+    - immunology
+    - environmental science
+    - materials science
+    - physics
+    - chemistry
+    - engineering
+  Cell Reports:
+    full_name: Cell Reports
+    impact_factor: 7.5
+    category: high-open
+    format_type: Cell Press (Article / Report / Resource)
+    citation_style: Cell Press (numbered)
+    abstract_word_limit: 150
+    figure_limit: 8
+    main_text_word_limit: 50000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Editorial Manager
+    special_requirements:
+    - Open access (APC ~$5,600 USD, 2025)
+    - Graphical Abstract required
+    - Highlights (3-5 points, max 85 chars each) required
+    - eTOC blurb (50 words) required
+    - Data and Code Availability section mandatory
+    - Key Resources Table required
+    - Author contributions in CRediT taxonomy
+    - Declaration of Interests required
+    - Resource articles must demonstrate utility beyond the reported dataset
+    scope_keywords:
+    - cell biology
+    - molecular biology
+    - genomics
+    - neuroscience
+    - immunology
+    - cancer biology
+    - developmental biology
+    - systems biology
+    - bioinformatics
+    - computational biology
+    - epigenetics
+    - metabolism
+  Genome Biology:
+    full_name: Genome Biology
+    impact_factor: 10.5
+    category: specialty-high
+    format_type: BioMed Central (Research / Method / Software / Review)
+    citation_style: BioMed Central (numbered, Vancouver-derived)
+    abstract_word_limit: 350
+    figure_limit: 12
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Springer Nature Editorial Manager (SNAPP)
+    special_requirements:
+    - Open access (APC ~$4,390 USD, 2025)
+    - Data availability statement mandatory
+    - Availability of data and materials section required
+    - Software/tools must be deposited in public repository
+    - Reviewer reports published with accepted manuscript
+    - ORCID iD recommended for all authors
+    - Competing interests declaration required
+    - Funding acknowledgement required
+    scope_keywords:
+    - genomics
+    - transcriptomics
+    - epigenomics
+    - single-cell biology
+    - genome editing
+    - comparative genomics
+    - functional genomics
+    - systems biology
+    - computational biology
+    - bioinformatics methods
+    - population genomics
+    - evolutionary genomics
+  Cell Genomics:
+    full_name: Cell Genomics
+    impact_factor: 12.3
+    category: specialty-high
+    format_type: Cell Press (Article / Resource / Report / Method)
+    citation_style: Cell Press (numbered)
+    abstract_word_limit: 150
+    figure_limit: 7
+    main_text_word_limit: 45000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Editorial Manager
+    special_requirements:
+    - Open access (APC ~$5,600 USD, 2025)
+    - Graphical Abstract required
+    - Highlights required
+    - eTOC blurb required
+    - Data and Code Availability section mandatory
+    - Key Resources Table required
+    - Author contributions in CRediT taxonomy
+    - Genomic datasets must be deposited in public repositories
+    - Code must be available via GitHub or equivalent with DOI
+    scope_keywords:
+    - genomics
+    - functional genomics
+    - population genomics
+    - single-cell genomics
+    - spatial genomics
+    - statistical genetics
+    - genome engineering
+    - computational genomics
+    - genomic medicine
+    - systems genetics
+    - epigenomics
+    - evolutionary genomics
+  Nucleic Acids Research:
+    full_name: Nucleic Acids Research
+    impact_factor: 11.1
+    category: specialty-high
+    format_type: OUP-style (Research Article / Database Issue / Web Server Issue /
+      Survey and Summary)
+    citation_style: Oxford University Press (numbered, Vancouver-derived)
+    abstract_word_limit: 200
+    figure_limit: 8
+    main_text_word_limit: 7000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: ScholarOne Manuscripts
+    special_requirements:
+    - Open access (APC ~$4,100 USD, 2025; Database/Web Server issues have separate
+      submission track)
+    - Data availability statement mandatory
+    - Database submissions must demonstrate functionality and utility
+    - Web Server submissions require public URL active during review
+    - Competing interests declaration required
+    - Funding acknowledgement required
+    - Annual Database and Web Server special issues (separate deadlines)
+    - Methods section must include detailed protocol for reproducibility
+    scope_keywords:
+    - nucleic acids
+    - genomics
+    - bioinformatics
+    - databases
+    - web servers
+    - gene regulation
+    - transcriptomics
+    - computational biology
+    - RNA biology
+    - DNA repair
+    - chromatin biology
+    - molecular biology methods
+  Genome Research:
+    full_name: Genome Research
+    impact_factor: 9.4
+    category: specialty-high
+    format_type: CSH Press (Research / Method / Resource)
+    citation_style: Cold Spring Harbor Press (numbered, author-year in-text)
+    abstract_word_limit: 250
+    figure_limit: 10
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: BenchPress (CSH Press)
+    special_requirements:
+    - Data access statement mandatory
+    - All sequencing data must be deposited in public repository
+    - Code for novel methods must be publicly available
+    - Competing interests declaration required
+    - Author contributions statement required
+    - Methods section must be reproducible
+    - Supplementary material accepted
+    - 'Embargo period: 6-month free access after publication'
+    scope_keywords:
+    - genomics
+    - transcriptomics
+    - epigenomics
+    - comparative genomics
+    - population genomics
+    - functional genomics
+    - genome assembly
+    - genome evolution
+    - chromatin biology
+    - computational biology
+    - bioinformatics methods
+    - systems biology
+  PLOS Biology:
+    full_name: PLOS Biology
+    impact_factor: 7.8
+    category: specialty-high
+    format_type: PLOS-style (Research Article / Methods and Resources / Meta-Research)
+    citation_style: PLOS (numbered, Vancouver)
+    abstract_word_limit: 300
+    figure_limit: 10
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Editorial Manager (PLOS)
+    special_requirements:
+    - Open access (APC ~$5,500 USD, 2025)
+    - Data Availability Statement mandatory (PLOS data policy)
+    - Code must be deposited in public repository with DOI
+    - All underlying data for figures must be provided
+    - Author Summary (non-technical, ~150 words) required
+    - Competing interests declaration required
+    - Funding statement required
+    - ORCID iD mandatory for corresponding author
+    - PLOS requires CC BY license
+    scope_keywords:
+    - biology
+    - genetics
+    - genomics
+    - neuroscience
+    - cell biology
+    - evolution
+    - ecology
+    - biochemistry
+    - bioinformatics
+    - computational biology
+    - meta-research
+    - systems biology
+  American Journal of Human Genetics:
+    full_name: American Journal of Human Genetics (AJHG)
+    impact_factor: 8.1
+    category: specialty-high
+    format_type: Cell Press (Article / Report)
+    citation_style: Cell Press (numbered)
+    abstract_word_limit: 200
+    figure_limit: 7
+    main_text_word_limit: 45000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Data availability statement mandatory
+    - GWAS summary statistics must be deposited in GWAS Catalog or dbGaP
+    - Code for novel methods must be publicly available
+    - Graphical Abstract recommended
+    - Key Resources Table required
+    - Competing interests declaration required
+    - ASHG membership not required but encouraged
+    - Patient consent required for identifiable genetic data
+    - Variant classification must follow ACMG guidelines
+    scope_keywords:
+    - human genetics
+    - statistical genetics
+    - Mendelian disease
+    - complex disease genetics
+    - population genetics
+    - genetic epidemiology
+    - genomic medicine
+    - variant interpretation
+    - GWAS
+    - rare disease genetics
+    - pharmacogenomics
+    - genetic counseling
+  Communications Biology:
+    full_name: Communications Biology
+    impact_factor: 5.2
+    category: specialty-open
+    format_type: Nature Communications-style (Article)
+    citation_style: Nature (superscript numbered)
+    abstract_word_limit: 150
+    figure_limit: 10
+    main_text_word_limit: 5000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: SNAPP (Springer Nature)
+    special_requirements:
+    - Open access (APC ~$3,190 USD, 2025)
+    - Data availability statement mandatory
+    - Code availability statement mandatory
+    - Source data for figures required
+    - Reporting Summary required
+    - Competing interests declaration required
+    - ORCID iD mandatory for corresponding author
+    - Transparent peer review optional
+    scope_keywords:
+    - biology
+    - genetics
+    - genomics
+    - cell biology
+    - molecular biology
+    - physiology
+    - ecology
+    - evolution
+    - biochemistry
+    - bioinformatics
+    - computational biology
+    - biotechnology
+  eLife:
+    full_name: eLife
+    impact_factor: 6.4
+    category: specialty-open
+    format_type: eLife-style (Research Article / Tools and Resources / Short Report)
+    citation_style: eLife (numbered, author-year in-text)
+    abstract_word_limit: 300
+    figure_limit: 10
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: eLife Submission System (eJP)
+    special_requirements:
+    - Open access (APC ~$3,000 USD, 2025)
+    - eLife Assessment mandatory (editorial summary of reviewer consensus)
+    - Public Reviews published with accepted article
+    - Author Response to reviews published
+    - Data availability statement mandatory
+    - Code must be publicly available with DOI
+    - Competing interests declaration required
+    - 'eLife new publishing model (2023+): no accept/reject, only ''reviewed preprint''
+      status'
+    - Funding statement required
+    scope_keywords:
+    - life sciences
+    - genetics
+    - genomics
+    - neuroscience
+    - cell biology
+    - developmental biology
+    - biochemistry
+    - microbiology
+    - immunology
+    - computational biology
+    - structural biology
+    - evolutionary biology
+  eBioMedicine:
+    full_name: eBioMedicine
+    impact_factor: 9.6
+    category: specialty-open
+    format_type: Lancet-family (Article / Review)
+    citation_style: Lancet (numbered, Vancouver)
+    abstract_word_limit: 300
+    figure_limit: 6
+    main_text_word_limit: 4000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Editorial Manager
+    special_requirements:
+    - Open access (APC ~$4,000 USD, 2025)
+    - Research in Context panel required
+    - Data sharing statement required
+    - Clinical studies require ethics approval documentation
+    - STROBE/CONSORT/PRISMA checklists per study design
+    - Competing interests declaration required
+    - Funding statement required
+    - Author contributions statement required
+    scope_keywords:
+    - translational medicine
+    - biomedical research
+    - clinical research
+    - biomarkers
+    - diagnostics
+    - therapeutics
+    - digital health
+    - health technology assessment
+    - genomic medicine
+    - precision medicine
+    - clinical trials
+    - epidemiology
+  BMC Biology:
+    full_name: BMC Biology
+    impact_factor: 4.4
+    category: specialty-open
+    format_type: BioMed Central (Research Article / Method / Software)
+    citation_style: BioMed Central (numbered, Vancouver-derived)
+    abstract_word_limit: 350
+    figure_limit: 12
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: SNAPP (Springer Nature)
+    special_requirements:
+    - Open access (APC ~$3,290 USD, 2025)
+    - Data availability statement mandatory
+    - Availability of data and materials section required
+    - Competing interests declaration required
+    - Funding acknowledgement required
+    - Ethics approval statement required for animal/human studies
+    - No strict length limits (guidelines only)
+    scope_keywords:
+    - biology
+    - genetics
+    - genomics
+    - cell biology
+    - developmental biology
+    - evolutionary biology
+    - ecology
+    - systems biology
+    - bioinformatics
+    - computational biology
+    - plant biology
+    - microbiology
+  Briefings in Bioinformatics:
+    full_name: Briefings in Bioinformatics
+    impact_factor: 9.5
+    category: methods
+    format_type: OUP-style (Review / Problem Solving Protocol / Method Review)
+    citation_style: Oxford University Press (numbered, Vancouver-derived)
+    abstract_word_limit: 200
+    figure_limit: 10
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: ScholarOne Manuscripts
+    special_requirements:
+    - Primarily publishes review articles (not primary research)
+    - Problem Solving Protocols provide step-by-step bioinformatics workflows
+    - Code examples must be reproducible
+    - Benchmarking against alternatives expected
+    - Data availability statement required
+    - Competing interests declaration required
+    - Funding statement required
+    scope_keywords:
+    - bioinformatics reviews
+    - computational biology methods
+    - genomics analysis pipelines
+    - machine learning in bioinformatics
+    - systems biology methods
+    - statistical methods for omics
+    - database reviews
+    - software reviews
+    - workflow protocols
+    - data integration methods
+    - network biology
+    - multi-omics methods
+  Bioinformatics:
+    full_name: Bioinformatics
+    impact_factor: 4.4
+    category: methods
+    format_type: OUP-style (Original Paper / Application Note / Discovery Note)
+    citation_style: Oxford University Press (numbered, Vancouver-derived)
+    abstract_word_limit: 200
+    figure_limit: 8
+    main_text_word_limit: 7000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: ScholarOne Manuscripts
+    special_requirements:
+    - 'Application Notes: max 4 pages, software must be freely available'
+    - Software must have documentation and example data
+    - Code deposited in GitHub/GitLab or equivalent
+    - Benchmarking against existing tools required for new methods
+    - Data availability statement mandatory
+    - Competing interests declaration required
+    - 'Discovery Notes: concise reports on novel biological insights from computational
+      analysis'
+    - Availability and Implementation subsection mandatory
+    scope_keywords:
+    - bioinformatics algorithms
+    - computational biology software
+    - sequence analysis
+    - structural bioinformatics
+    - systems biology tools
+    - phylogenetics
+    - gene expression analysis
+    - database tools
+    - text mining
+    - image analysis
+    - workflow systems
+    - data visualization
+  PLOS Computational Biology:
+    full_name: PLOS Computational Biology
+    impact_factor: 3.8
+    category: methods
+    format_type: PLOS-style (Research Article / Method / Software / Education)
+    citation_style: PLOS (numbered, Vancouver)
+    abstract_word_limit: 300
+    figure_limit: 10
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: Editorial Manager (PLOS)
+    special_requirements:
+    - Open access (APC ~$3,200 USD, 2025)
+    - Data Availability Statement mandatory
+    - Code must be deposited in public repository with DOI
+    - Author Summary (non-technical) required
+    - 'Software section: Availability and requirements subsection required'
+    - Education articles must include pedagogical framework
+    - Competing interests declaration required
+    - ISCB membership discount on APC
+    scope_keywords:
+    - computational biology
+    - bioinformatics
+    - systems biology
+    - mathematical biology
+    - machine learning
+    - network analysis
+    - biophysical modeling
+    - evolutionary modeling
+    - population genetics
+    - computational neuroscience
+    - education in computational biology
+    - software tools
+  BMC Bioinformatics:
+    full_name: BMC Bioinformatics
+    impact_factor: 2.9
+    category: methods
+    format_type: BioMed Central (Research Article / Software / Database)
+    citation_style: BioMed Central (numbered, Vancouver-derived)
+    abstract_word_limit: 350
+    figure_limit: 12
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: SNAPP (Springer Nature)
+    special_requirements:
+    - Open access (APC ~$2,590 USD, 2025)
+    - Availability of data and materials section mandatory
+    - Software submissions require public repository with documentation
+    - Database submissions require public URL and update plan
+    - Competing interests declaration required
+    - Funding acknowledgement required
+    - No strict length limits
+    - Scope limited to bioinformatics methodology (not biological discoveries without
+      method novelty)
+    scope_keywords:
+    - bioinformatics methods
+    - computational biology
+    - sequence analysis
+    - structural bioinformatics
+    - gene expression analysis
+    - proteomics bioinformatics
+    - systems biology
+    - phylogenetics
+    - database development
+    - software tools
+    - data integration
+    - statistical methods for omics
+  GigaScience:
+    full_name: GigaScience
+    impact_factor: 5.8
+    category: methods
+    format_type: GigaScience-style (Data Note / Research / Technical Note / Commentary)
+    citation_style: GigaScience (numbered, Vancouver-derived)
+    abstract_word_limit: 350
+    figure_limit: 10
+    main_text_word_limit: 8000
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: true
+    submission_system: SNAPP (Springer Nature)
+    special_requirements:
+    - Open access (APC ~$2,900 USD, 2025)
+    - All supporting data must be hosted in GigaDB repository
+    - Code must be deposited with DOI (GitHub + Zenodo integration)
+    - Computational workflows must be reproducible (Docker/Singularity/Nextflow)
+    - Data Note format for dataset descriptions
+    - FAIR data principles compliance required
+    - Data availability statement mandatory
+    - Reviewer access to data and code during review
+    scope_keywords:
+    - big data
+    - data science
+    - reproducible research
+    - genomics
+    - imaging data
+    - computational workflows
+    - open science
+    - data standards
+    - cloud computing
+    - FAIR data
+    - workflow reproducibility
+    - scientific databases
+  Journal of the American Society of Nephrology:
+    full_name: Journal of the American Society of Nephrology (JASN)
+    impact_factor: 11.4
+    category: clinical
+    format_type: ASN-style (Original Research / Brief Communication / Review)
+    citation_style: AMA (numbered references, superscript in-text)
+    abstract_word_limit: 300
+    figure_limit: 8
+    main_text_word_limit: 4000
+    requires_data_availability: true
+    requires_code_availability: false
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Structured abstract required (Background, Methods, Results, Conclusions)
+    - Clinical trial registration mandatory
+    - CONSORT/STROBE/PRISMA checklist per study design
+    - Data sharing statement encouraged
+    - IRB approval documentation required
+    - Competing interests disclosure (ICMJE form)
+    - Author contributions required
+    - Significance Statement (120 words) required
+    scope_keywords:
+    - nephrology
+    - kidney disease
+    - renal physiology
+    - dialysis
+    - kidney transplantation
+    - glomerular disease
+    - acute kidney injury
+    - chronic kidney disease
+    - hypertension
+    - renal pathology
+    - clinical nephrology
+    - translational nephrology
+  Kidney International:
+    full_name: Kidney International
+    impact_factor: 14.8
+    category: clinical
+    format_type: KI-style (Original Article / Translational Science / Clinical Investigation
+      / Basic Research)
+    citation_style: AMA (numbered references, superscript in-text)
+    abstract_word_limit: 250
+    figure_limit: 8
+    main_text_word_limit: 4000
+    requires_data_availability: true
+    requires_code_availability: false
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Structured abstract required
+    - Translational Science section for bench-to-bedside studies
+    - Data sharing statement required per ISN policy
+    - Clinical trial registration mandatory
+    - IRB/Animal ethics approval required
+    - Competing interests declaration required (ISN form)
+    - Lay Summary (non-technical) recommended
+    - Graphical Abstract recommended
+    - Supplemental material capped
+    scope_keywords:
+    - nephrology
+    - kidney research
+    - renal immunology
+    - kidney pathology
+    - dialysis research
+    - kidney transplantation
+    - renal genetics
+    - fluid and electrolyte disorders
+    - glomerulonephritis
+    - acute kidney injury
+    - chronic kidney disease
+    - translational nephrology
+  Clinical Chemistry:
+    full_name: Clinical Chemistry
+    impact_factor: 7.1
+    category: clinical
+    format_type: AACC-style (Original Article / Review / Case Report / Letter)
+    citation_style: AMA (numbered references, superscript in-text)
+    abstract_word_limit: 250
+    figure_limit: 6
+    main_text_word_limit: 5000
+    requires_data_availability: true
+    requires_code_availability: false
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Structured abstract required (Background, Methods, Results, Conclusions)
+    - STARD checklist for diagnostic accuracy studies
+    - Data availability statement encouraged
+    - Clinical trial registration required for interventional studies
+    - Competing interests declaration required
+    - Role of sponsor statement required
+    - Impact Statement (1-2 sentences) required
+    scope_keywords:
+    - clinical chemistry
+    - laboratory medicine
+    - biomarkers
+    - diagnostic testing
+    - mass spectrometry
+    - immunoassays
+    - molecular diagnostics
+    - clinical metabolomics
+    - clinical proteomics
+    - point-of-care testing
+    - quality control
+    - reference intervals
+  European Urology:
+    full_name: European Urology
+    impact_factor: 21.4
+    category: clinical
+    format_type: EU-style (Original Article / Review / Surgery in Motion / Brief Correspondence)
+    citation_style: AMA (numbered references, superscript in-text)
+    abstract_word_limit: 300
+    figure_limit: 6
+    main_text_word_limit: 3000
+    requires_data_availability: true
+    requires_code_availability: false
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Structured abstract required
+    - Clinical trial registration mandatory
+    - CONSORT/STROBE/PRISMA per study design
+    - Take Home Message (2-3 sentences) required
+    - Patient Summary (plain language) required
+    - Data sharing statement encouraged
+    - Ethics approval and consent documentation required
+    - Competing interests disclosure required
+    scope_keywords:
+    - urology
+    - urologic oncology
+    - prostate cancer
+    - bladder cancer
+    - kidney cancer
+    - urinary stone disease
+    - benign prostatic hyperplasia
+    - robotic surgery
+    - minimally invasive surgery
+    - andrology
+    - urinary incontinence
+    - translational urology
+  Radiology:
+    full_name: Radiology
+    impact_factor: 12.1
+    category: clinical
+    format_type: RSNA-style (Original Research / Technical Developments / Review /
+      Images in Radiology)
+    citation_style: AMA (numbered references, superscript in-text)
+    abstract_word_limit: 300
+    figure_limit: 10
+    main_text_word_limit: 3500
+    requires_data_availability: true
+    requires_code_availability: true
+    open_access: false
+    submission_system: Editorial Manager
+    special_requirements:
+    - Structured abstract required
+    - STARD checklist for diagnostic accuracy studies
+    - QUADAS-2 for diagnostic test accuracy systematic reviews
+    - Clinical trial registration required
+    - Data sharing statement required
+    - 'AI/ML studies: checklist for Artificial Intelligence in Medical Imaging (CLAIM)'
+    - Code availability required for AI/imaging analysis studies
+    - IRB approval and informed consent documentation required
+    - Competing interests declaration required
+    - Summary Statement (1-2 sentences) required
+    - Implications for Patient Care statement required
+    scope_keywords:
+    - radiology
+    - medical imaging
+    - diagnostic imaging
+    - AI in radiology
+    - MRI
+    - CT imaging
+    - ultrasound
+    - nuclear medicine
+    - interventional radiology
+    - radiomics
+    - image-guided therapy
+    - imaging biomarkers

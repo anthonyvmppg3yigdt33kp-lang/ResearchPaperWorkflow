@@ -1,0 +1,110 @@
+# =============================================================================
+# Dockerfile.template — Research Paper Workflow Framework
+# Multi-stage build for reproducible computational research.
+#
+# Usage:
+#   docker build -t paper-workflow -f Dockerfile.template .
+#   docker run --rm -v $(pwd)/output:/workspace/output paper-workflow
+#
+# Customize:
+#   - PYTHON_VERSION as build arg (default: 3.10)
+#   - INSTALL_EXTRAS to add optional dependency groups
+# =============================================================================
+
+ARG PYTHON_VERSION=3.10
+
+# ---------------------------------------------------------------------------
+# Stage 0: Base image with pinned Python
+# ---------------------------------------------------------------------------
+FROM python:${PYTHON_VERSION}-slim AS base
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+# System libraries required for numpy/scipy/matplotlib and common bioinfo tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libopenblas-dev \
+    liblapack-dev \
+    libgomp1 \
+    libxml2-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libpng-dev \
+    libhdf5-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---------------------------------------------------------------------------
+# Stage 1: Dependency resolution (cache-friendly layer)
+# ---------------------------------------------------------------------------
+FROM base AS dependencies
+
+WORKDIR /deps
+
+# Copy dependency manifests first — this layer is cached unless they change
+COPY pyproject.toml setup.cfg setup.py* /deps/
+COPY src/ /deps/src/
+
+# Install the paper-workflow package with plotting extras
+# Use --editable during build so entry points resolve; the COPY below
+# brings the full source tree at runtime.
+RUN pip install --no-cache-dir -e ".[plotting]"
+
+# If a requirements.txt exists, also install pinned deps on top
+# (requirements.txt is optional — if absent, the COPY is a no-op that
+#  won't break the build because we use a glob-style COPY)
+COPY requirements*.txt /deps/ 2>/dev/null || true
+RUN if [ -f /deps/requirements.txt ]; then \
+        pip install --no-cache-dir -r /deps/requirements.txt; \
+    fi
+
+# ---------------------------------------------------------------------------
+# Stage 2: Full-featured runtime with plotting support
+# ---------------------------------------------------------------------------
+FROM dependencies AS runtime
+
+ARG INSTALL_EXTRAS="full"
+
+WORKDIR /workspace
+
+# Install additional optional dependency groups (e.g., "full" for ML/statistics)
+RUN if [ -f /deps/pyproject.toml ]; then \
+        pip install --no-cache-dir -e "/deps[${INSTALL_EXTRAS}]"; \
+    fi
+
+# Copy the full project tree
+COPY . /workspace/
+
+# Create output directories expected by the pipeline
+RUN mkdir -p /workspace/output /workspace/figures /workspace/results /workspace/logs
+
+# Verify the package is importable
+RUN python -c "import paper_workflow; print(f'paper-workflow v{paper_workflow.__version__} ready')"
+
+# ---------------------------------------------------------------------------
+# Stage 3: Minimal production image (optional — use runtime for development)
+# ---------------------------------------------------------------------------
+FROM base AS production
+
+COPY --from=runtime /usr/local/lib/python${PYTHON_VERSION}/site-packages /usr/local/lib/python${PYTHON_VERSION}/site-packages
+COPY --from=runtime /usr/local/bin /usr/local/bin
+
+WORKDIR /workspace
+COPY . /workspace/
+
+RUN mkdir -p /workspace/output /workspace/figures /workspace/results /workspace/logs
+
+# Default entry point: execute the pipeline
+# Override with: docker run ... paper-workflow <subcommand>
+ENTRYPOINT ["python", "-m", "paper_workflow.cli.main"]
+CMD ["run", "--all"]
