@@ -209,4 +209,3 @@ If you use this framework in your research, please cite:
 
 ---
 
-*Built on the loop-engineering principles of Draftpaper_loop and the three-layer architecture pattern.*
