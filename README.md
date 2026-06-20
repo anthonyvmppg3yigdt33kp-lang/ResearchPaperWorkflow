@@ -59,8 +59,8 @@ This is NOT a "smarter chatbot"—it's a **project execution system** that reads
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/ResearchPaperWorkflow_v2.git
-cd ResearchPaperWorkflow_v2
+git clone https://github.com/anthonyvmppg3yigdt33kp-lang/ResearchPaperWorkflow.git
+cd ResearchPaperWorkflow
 
 # Install
 pip install -e .
@@ -204,7 +204,7 @@ If you use this framework in your research, please cite:
 @software{research_paper_workflow_2026,
   title = {Research Paper Workflow Framework},
   year = {2026},
-  url = {https://github.com/your-org/ResearchPaperWorkflow}
+  url = {https://github.com/anthonyvmppg3yigdt33kp-lang/ResearchPaperWorkflow}
 }
 ```
 
