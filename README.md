@@ -48,12 +48,19 @@ This is NOT a "smarter chatbot"—it's a **project execution system** that reads
 └──────────────────────────────────────────────────────────┘
 ```
 
+## 📖 Documentation
+
+- **[USER_GUIDE.md](USER_GUIDE.md)** — 完整操作指南（从零到投稿）
+- **[docs/ResearchPaperWorkflow_v2_Complete_Documentation.pdf](docs/ResearchPaperWorkflow_v2_Complete_Documentation.pdf)** — 完整设计文档PDF
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — 四层系统架构
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** — 一页速查卡
+
 ## Quick Start
 
 ```bash
 # Clone
-git clone https://github.com/your-org/ResearchPaperWorkflow.git
-cd ResearchPaperWorkflow
+git clone https://github.com/YOUR_USERNAME/ResearchPaperWorkflow_v2.git
+cd ResearchPaperWorkflow_v2
 
 # Install
 pip install -e .
