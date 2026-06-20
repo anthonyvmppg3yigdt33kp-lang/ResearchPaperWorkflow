@@ -1,0 +1,40 @@
+# Project Brief: {{PROJECT_TITLE}}
+**Created**: {{DATE}} | **Version**: 1.0 | **Status**: Draft
+
+## Clinical Problem
+{{CLINICAL_PROBLEM}}
+
+## Research Question
+{{RESEARCH_QUESTION}}
+
+## Hypothesis Summary (3-Layer Evidence Chain)
+### Layer 1 — Clinical Hypothesis (H-C1)
+{{CLINICAL_HYPOTHESIS}}
+### Layer 2 — Mechanistic Hypothesis (H-M1, H-M2)
+{{MECHANISTIC_HYPOTHESES}}
+### Layer 3 — Testable Hypothesis (H-T1, H-T2)
+{{TESTABLE_HYPOTHESES}}
+
+## Study Design
+- **Type**: {{STUDY_DESIGN_TYPE}}
+- **Population**: {{TARGET_POPULATION}}
+- **Primary Endpoint**: {{PRIMARY_ENDPOINT}}
+- **Sample Size**: {{SAMPLE_SIZE}}
+- **Reporting Guideline**: {{GUIDELINE}}
+
+## Data Sources
+| Data | Source | Accession | N |
+|------|--------|-----------|----|
+
+## Planned Analyses
+1. **Primary**: {{PRIMARY_ANALYSIS}}
+2. **Secondary**: {{SECONDARY_ANALYSIS}}
+3. **Sensitivity**: {{SENSITIVITY_ANALYSES}}
+4. **External Validation**: {{EXTERNAL_VALIDATION_PLAN}}
+
+## Expected Impact
+{{EXPECTED_IMPACT}}
+
+## AI Disclosure (ICMJE Compliance)
+AI-assisted technologies used: {{AI_TOOLS_USED}}
+Human authors reviewed and take full responsibility for all content.

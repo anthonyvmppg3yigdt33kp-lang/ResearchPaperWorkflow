@@ -25,11 +25,11 @@ papers/
 *.fq
 *.tar.gz
 
-# Results (binary)
-*.pdf
-*.png
-*.csv
-*.tsv
+# Results (binary) — only in results/ directories
+results/*.pdf
+results/*.png
+results/*.csv
+results/*.tsv
 results/
 
 # Environment

@@ -1,0 +1,82 @@
+domain: functional_neurosurgery
+version: 1.0.0
+evidence_chain: Clinical Phenotype → Imaging/Electrophysiology → Pathology → Single-Cell/Spatial
+  → Mechanism → Outcome Validation
+clinical_modalities:
+  structural_imaging:
+  - MRI
+  - DTI
+  - PET
+  - SPECT
+  - MEG
+  electrophysiology:
+  - scalp_EEG
+  - SEEG
+  - ECoG
+  - LFP
+  pathology:
+  - H_and_E
+  - IHC
+  - special_stains
+  surgical_outcomes:
+  - Engel_class
+  - ILAE_class
+  - follow_up_min_12mo
+  medication_response:
+  - drug_resistant
+  - drug_responsive
+omics_layers:
+  transcriptomics:
+  - bulk_RNA_seq
+  - scRNA_seq
+  - snRNA_seq
+  - spatial_transcriptomics
+  epigenomics:
+  - ATAC_seq
+  - methylation_array
+  proteomics:
+  - mass_spectrometry
+  - targeted_panel
+  metabolomics:
+  - untargeted_LC_MS
+  - targeted_neurotransmitter_panel
+alignment_required:
+- patient_id
+- lesion_region
+- electrode_contact
+- histological_region
+- spatial_barcode_or_spot
+key_questions:
+- question: Do SEEG HF discharge zones overlap with MRI abnormalities, FCD regions,
+    and spatial high-inflammation areas?
+  modalities_required:
+  - SEEG
+  - MRI
+  - pathology
+  - spatial_transcriptomics
+- question: Are hyperexcitable neuronal states co-localized with reactive glial neighborhoods?
+  modalities_required:
+  - scRNA_seq
+  - spatial_transcriptomics
+  - SEEG
+- question: Does the molecular spatial niche explain post-surgical Engel outcomes?
+  modalities_required:
+  - spatial_transcriptomics
+  - surgical_outcomes
+study_design_specific:
+  seeg_required: true
+  mri_field_strength: 3T recommended
+  spatial_resolution: single-cell preferred
+  sample_size_minimum: 10
+  external_validation_required: true
+reporting_requirements:
+- STROBE
+- FAIR
+- ICMJE_AI_disclosure
+domain_specific_gates:
+- spatial_region_registration
+- patient_level_independence
+- batch_confounding_audit
+- cell_annotation_evidence
+- de_pseudobulk_required
+- external_validation_or_limitation

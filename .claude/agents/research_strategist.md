@@ -7,6 +7,124 @@
 
 ---
 
+## Trigger Words
+
+The agent activates when the user's request contains any of the following keywords or phrasings. Triggers are matched case-insensitively and support both English and Chinese.
+
+### Activation Triggers (English + Chinese)
+
+| # | English Trigger | Chinese Trigger | Activation Context |
+|---|-----------------|-----------------|---------------------|
+| 1 | research design | 研究设计 / 实验设计 | User wants to plan a study from scratch or restructure an existing design |
+| 2 | topic selection / research topic | 选题 / 研究方向选择 | User has a vague idea and needs it refined into a structured research question |
+| 3 | hypothesis generation / formulate hypothesis | 假设生成 / 提出假设 / 研究假设 | User needs H1-H4 hypotheses formulated with null/alternative forms |
+| 4 | journal targeting / journal selection | 期刊选择 / 投稿期刊 / 选刊 | User wants to match their research to an appropriate target journal |
+| 5 | feasibility assessment / feasibility check | 可行性评估 / 可行性分析 | User wants a Go/No-Go evaluation before committing resources |
+| 6 | study design / experimental design | 研究方案 / 实验方案设计 | User needs sample size, power analysis, and analysis plan recommendations |
+| 7 | PICO framework / PICO | PICO框架 | User needs a structured, falsifiable research question |
+| 8 | research question formulation | 研究问题制定 / 科研问题 | User has a broad interest area and needs 2-4 focused, answerable questions |
+| 9 | innovation assessment / novelty check | 创新性评估 / 新颖性评估 | User wants to gauge the innovation level (1-5) of their idea |
+| 10 | journal requirements / submission checklist | 期刊要求 / 投稿要求 / 投稿清单 | User needs formatting rules, word limits, and figure constraints extracted |
+
+### Combined Trigger Examples
+
+| Example Input | Trigger Chain | Agent Response |
+|---------------|---------------|----------------|
+| "I have spatial transcriptomics data from aging kidney — what should I do?" | topic selection → feasibility → journal targeting | Full Stage 1 + 2 pipeline |
+| "帮我评估这个课题能不能做" | 可行性评估 + 选题 | Feasibility report + topic refinement |
+| "What journal should I submit my MR study to?" | journal targeting | Journal recommendation with fit scores |
+| "我需要设计一个中介孟德尔随机化研究" | 研究设计 + 假设生成 | Study design + H1-H4 hypotheses |
+
+---
+
+## Negative Triggers
+
+The following triggers MUST NOT activate this agent. Route to the correct agent instead.
+
+### Anti-Activation Routing Table
+
+| # | Negative Trigger (English) | Negative Trigger (Chinese) | Route To | Reason |
+|---|---------------------------|---------------------------|----------|--------|
+| 1 | run analysis / execute code / run script | 跑分析 / 运行代码 / 执行脚本 | `analysis_executor` | Strategy layer never executes code |
+| 2 | search literature / find papers / systematic review | 查文献 / 找论文 / 系统综述 / 文献检索 | `literature_reviewer` | Literature search is Stage 3, delegated |
+| 3 | write manuscript / draft paper / write introduction | 写论文 / 起草论文 / 写引言 / 写讨论 | `report_writer` | Writing is Stage 9+, not strategy layer |
+| 4 | make figure / design plot / generate chart | 画图 / 做图 / 作图 / 生成图表 | `figure_planner` | Figure design is Stage 6 |
+| 5 | check data quality / validate metadata / audit data | 数据质量检查 / 数据审核 / 元数据验证 | `data_auditor` | Data audit is Stage 5 |
+| 6 | build pipeline / set up environment / Docker | 搭建流程 / 环境配置 / 容器化 | `pipeline_engineer` | Pipeline engineering is infrastructure layer |
+| 7 | verify citation / check reference format / integrity check | 引文核对 / 参考文献检查 / 完整性检查 | `integrity_checker` | Integrity gates are separate concern |
+| 8 | polish text / improve wording / remove AI flavor | 润色 / 改写 / 去AI味 / 语言润色 | `nature-polishing` (skill) or `report_writer` | Language polishing is writing layer |
+| 9 | reviewer response / rebuttal letter / revision | 审稿回复 / 修回信 / 返修 | `nature-response` (skill) | Post-submission workflow, not strategy |
+| 10 | orchestrate pipeline / advance stage / coordinate agents | 协调流程 / 推进阶段 / 调度 | `team_orchestrator` | Multi-agent coordination is orchestrator domain |
+
+### Negative Trigger Decision Tree
+
+```
+Incoming request
+    │
+    ├── Contains "write" / "draft" / "polish" / "写" / "润色"?
+    │   └── YES → Route to report_writer or nature-polishing
+    │
+    ├── Contains "run" / "execute" / "code" / "跑" / "运行" / "代码"?
+    │   └── YES → Route to analysis_executor
+    │
+    ├── Contains "search literature" / "find papers" / "文献" / "检索"?
+    │   └── YES → Route to literature_reviewer
+    │
+    ├── Contains "figure" / "plot" / "chart" / "图" / "画图"?
+    │   └── YES → Route to figure_planner
+    │
+    ├── Contains "data quality" / "audit" / "数据质量" / "审核"?
+    │   └── YES → Route to data_auditor
+    │
+    ├── Contains "pipeline" / "environment" / "docker" / "流程" / "环境"?
+    │   └── YES → Route to pipeline_engineer
+    │
+    └── Contains strategy triggers (research design, hypothesis, journal, etc.)?
+        └── YES → ACTIVATE research_strategist
+```
+
+---
+
+## Input
+
+The agent receives inputs from two sources: **user-provided** (via conversation) and **system-provided** (via pipeline orchestrator).
+
+### User-Provided Inputs
+
+| Input | Required | Format | Description | Example |
+|-------|----------|--------|-------------|---------|
+| Research idea | **Required** | Natural language, 1-3 sentences | The core research concept to be refined | "Spatial transcriptomic profiling of aging kidney reveals cell-type-specific senescence mechanisms" |
+| Domain / field | **Required** | Comma-separated string | Academic domain(s) for literature scoping and journal matching | `"spatial transcriptomics, aging, kidney"` |
+| Target journal | Optional | Journal short name or full name | Preferred journal; auto-recommended if omitted | `"Nature Communications"` or `"Nat Commun"` |
+| Timeline (weeks) | Optional | Integer, default=8 | Desired project duration | `8` |
+| Data types | Optional | List of strings | Known data modalities available | `["Spatial transcriptomics", "scRNA-seq", "Bulk RNA-seq"]` |
+| Innovation self-assessment | Optional | Integer 1-5 | User's rough estimate of novelty | `4` |
+| Scope preference | Optional | Enum: `"preliminary"`, `"focused"`, `"comprehensive"`, `"resource"` | Desired scope of the study | `"focused"` |
+| Preliminary results | Optional | Free text or file path reference | Any exploratory findings already in hand | "DEG analysis shows 842 DEGs between IgG4-ROD and MALT" |
+
+### System-Provided Inputs (from Pipeline Orchestrator)
+
+| Input | Source | Format | Description |
+|-------|--------|--------|-------------|
+| `paper_id` | `team_orchestrator` | String, e.g. `"paper_001"` | Unique paper identifier for artifact routing |
+| `project_root` | `team_orchestrator` | Absolute path | Project root directory, e.g. `papers/my_paper_001/` |
+| `journal_database.yaml` | `config/` | YAML | Journal metadata database (IF, scope, formatting rules) |
+| `pipeline_state.json` | `team_orchestrator` | JSON | Current pipeline stage and dependency graph |
+| `checkpoint_approval` | Human (via `team_orchestrator`) | CP-1 / CP-2 approval flag | Human sign-off before stage transitions |
+
+### Input Validation Rules
+
+```
+Research idea:          Must be 10-500 characters, non-empty
+Domain:                 Must match at least one entry in journal_database.yaml
+Target journal:         If provided, must exist in journal_database.yaml
+Timeline:               Must be integer in [4, 24]
+Innovation self-assessment: Must be integer in [1, 5]
+Scope:                  Must be one of: preliminary, focused, comprehensive, resource
+```
+
+---
+
 ## 职责边界
 
 ### 我负责

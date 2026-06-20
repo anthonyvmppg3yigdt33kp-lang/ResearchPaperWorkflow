@@ -65,15 +65,15 @@ class StageDefinition:
         }
 
     # ------------------------------------------------------------------
-    # Phase derivation — order integer (1–18) → phase integer (1–6)
+    # Phase derivation — order integer (1–19) → phase integer (1–6)
     # ------------------------------------------------------------------
-    # The 6-phase grouping per ARCHITECTURE.md:
-    #   1. Research & Planning   → stages order 1–4
-    #   2. Data & Methods        → stages order 5–8
-    #   3. Writing               → stages order 9–12
-    #   4. Assembly & Review     → stages order 13–15
-    #   5. Revision              → stages order 16–17
-    #   6. Finalize              → stages order 18
+    # The 6-phase grouping per ARCHITECTURE.md (v3.0 — 19 stages):
+    #   1. Research & Planning   → stages order 1–5
+    #   2. Data & Methods        → stages order 6–9
+    #   3. Writing               → stages order 10–13
+    #   4. Assembly & Review     → stages order 14–16
+    #   5. Revision              → stages order 17–18
+    #   6. Finalize              → stages order 19
     # ------------------------------------------------------------------
     # Legacy fallback — layer string → phase integer (deprecated; prefer
     # explicit ``phase`` or ``order``-based derivation).
@@ -92,22 +92,23 @@ class StageDefinition:
 
     @staticmethod
     def _order_to_phase(order: int) -> int:
-        """Map a pipeline stage *order* (1–18) to its phase (1–6).
+        """Map a pipeline stage *order* (1–19) to its phase (1–6).
 
         This is the canonical mapping used when stages are loaded from the
         YAML config (which uses ``order``, not ``phase``).
+        v3.0: Research & Planning now includes design_analysis_plan (order 5).
         """
-        if order <= 4:
-            return 1   # Research & Planning
-        if order <= 8:
-            return 2   # Data & Methods
-        if order <= 12:
-            return 3   # Writing
-        if order <= 15:
-            return 4   # Assembly & Review
-        if order <= 17:
-            return 5   # Revision
-        return 6       # Finalize
+        if order <= 5:
+            return 1   # Research & Planning (v3: orders 1-5)
+        if order <= 9:
+            return 2   # Data & Methods (v3: orders 6-9)
+        if order <= 13:
+            return 3   # Writing (v3: orders 10-13)
+        if order <= 16:
+            return 4   # Assembly & Review (v3: orders 14-16)
+        if order <= 18:
+            return 5   # Revision (v3: orders 17-18)
+        return 6       # Finalize (v3: order 19)
 
     @classmethod
     def _resolve_gate_severities(cls, quality_gates: dict[str, Any]) -> None:
@@ -229,7 +230,7 @@ class StageState:
 
 
 class PaperLoopEngine:
-    """Core paper loop orchestrator — 18-stage pipeline with state management."""
+    """Core paper loop orchestrator — 19-stage pipeline with state management (v3.0)."""
 
     PIPELINE_STAGES = [
         # Phase 1: Research & Planning
@@ -255,15 +256,22 @@ class PaperLoopEngine:
                         produces_artifacts=["research_plan/research_plan.md", "research_plan/hypotheses.yaml"],
                         agent="research_strategist", skill="topic_research",
                         human_checkpoint=True, timeout_minutes=20),
+        StageDefinition(name="design_analysis_plan", phase=1, category="research",
+                        description="Design and freeze Statistical Analysis Plan BEFORE primary analysis (v3.0)",
+                        upstream=["formulate_hypotheses"],
+                        produces_artifacts=["research_plan/statistical_analysis_plan.yaml",
+                                          "research_plan/study_design_protocol.yaml"],
+                        agent="statistician", skill="statistical_testing",
+                        human_checkpoint=True, timeout_minutes=30),
         # Phase 2: Data & Methods
         StageDefinition(name="data_audit", phase=2, category="analysis",
                         description="Audit data quality, completeness, and metadata",
-                        upstream=["formulate_hypotheses"],
+                        upstream=["design_analysis_plan"],
                         produces_artifacts=["data/data_audit_report.md", "data/data_inventory.yaml"],
                         agent="data_auditor", skill="qc_pipeline", timeout_minutes=20),
         StageDefinition(name="figure_planning", phase=2, category="analysis",
                         description="Design Figure 1-6 layout and identify needed analyses",
-                        upstream=["formulate_hypotheses", "data_audit"],
+                        upstream=["design_analysis_plan", "data_audit"],
                         produces_artifacts=["results/figure_plan.json", "results/figure_plan.html"],
                         agent="figure_planner", skill="figure_planning",
                         human_checkpoint=True, timeout_minutes=20),

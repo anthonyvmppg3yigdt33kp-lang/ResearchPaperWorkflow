@@ -7,6 +7,55 @@
 
 ---
 
+## Trigger Words
+
+The integrity_checker activates when user messages or pipeline events contain any of the following keywords or phrases.
+
+| English Trigger | Chinese Trigger | Context |
+|-----------------|-----------------|---------|
+| integrity check | 完整性检查 | Full 16-gate scan across all severity levels |
+| verify citations | 验证引用 | Citation gate subset (C1, C2) |
+| gate check | 门控检查 | Gate-specific verification or full scan |
+| quality gate | 质量门 | Pipeline quality gate invocation point |
+| run gates | 运行门控 | Execute all gates or a named subset |
+| integrity report | 完整性报告 | Generate structured integrity report |
+| check manuscript | 检查稿件 | Full manuscript integrity scan |
+| validate references | 参考文献校验 | Cross-check in-text citations against BibTeX |
+| cross-reference claims | 交叉验证声明 | Claim-to-artifact binding verification (C4) |
+| pre-submission check | 投稿前检查 | Full pre-submission integrity sweep |
+| figure-reference check | 图表引用检查 | Figure/table reference existence validation (C5) |
+| methods audit | 方法审核 | Methods parameter completeness inspection (H4) |
+| statistics audit | 统计审核 | Statistics reporting compliance check (H7, H8) |
+| data-code audit | 数据代码审核 | Data/code availability statement check (H1, H2) |
+| 引用完整性 | citation integrity | Citation existence + evidence traceability |
+| 论文自检 | paper self-check | Comprehensive pre-submission self-audit |
+| 交叉校对 | cross-proof | Claim-to-artifact cross-referencing sweep |
+
+---
+
+## Negative Triggers (Routing Table)
+
+The following requests resemble integrity checking but should be routed to the appropriate specialist agent. The integrity_checker **diagnoses** problems; it does **NOT prescribe or apply fixes**.
+
+| If the user asks to... | Route to... | Reason |
+|------------------------|-------------|--------|
+| Fix a broken citation or add a missing BibTeX entry | `literature_reviewer` | Citation repair is a write action; integrity_checker is read-only |
+| Rewrite the Results section to remove citations | `report_writer` | Prose modification is outside integrity_checker scope |
+| Polish, restructure, or reword any manuscript section | `report_writer` or `nature_polishing` | Text editing is a writing-agent responsibility |
+| Generate a new figure or modify an existing figure | `figure_planner` or `nature_figure` | Figure creation/modification is not a check operation |
+| Reformat the reference list for a different journal style | `literature_reviewer` | Reference formatting is a citation management task |
+| Add or edit a Data Availability or Code Availability statement | `report_writer` or `nature_data` | Statement insertion is a write action |
+| Run a new statistical test or re-analyze data | `statistician` | Statistical computation is not an integrity check |
+| Search for new literature to support a claim | `literature_reviewer` or `deep-research` | Literature discovery is a research task |
+| Convert manuscript between formats (LaTeX, DOCX, PDF) | `academic-paper` | Format conversion is a document engineering task |
+| Write or restructure the Limitations paragraph | `report_writer` | Discussion writing is a prose generation task |
+| Audit the code repository for reproducibility | `data_auditor` | Code/environment auditing is a data infrastructure task |
+| Validate that the correct statistical methodology was chosen | `statistician` | Method selection review requires statistical domain expertise |
+
+**Rule of thumb**: If the request contains verbs like "fix", "add", "write", "generate", "modify", "rewrite", "insert", "create", or "edit" — it is a **write action** and should NOT route to integrity_checker. The integrity_checker only performs **read, scan, validate, check, and report** operations.
+
+---
+
 ## Gate Hierarchy (16 Gates, 3 Severity Levels)
 
 ### CRITICAL — Blocks Pipeline Progress
@@ -68,7 +117,98 @@ For each gate:
 
 ---
 
-## Output Files
+## Input
+
+The integrity_checker consumes the following artifacts. All paths are relative to `papers/{paper_id}/` unless otherwise noted.
+
+### Required Inputs (CRITICAL gates cannot run without these)
+
+| File / Artifact | Format | Source Agent | Purpose |
+|-----------------|--------|-------------|---------|
+| `manuscript/abstract.md` | Markdown | `report_writer` | C1, M1, M2 checks |
+| `manuscript/introduction.md` | Markdown | `report_writer` | C1, C2, M1, M2 checks |
+| `manuscript/methods.md` | Markdown | `report_writer` | C1, H4, M1, M2 checks |
+| `manuscript/results.md` | Markdown | `report_writer` | C1, C3, C4, H6, H7, H8, M1, M2 checks |
+| `manuscript/discussion.md` | Markdown | `report_writer` | C1, H5, M1, M2 checks |
+| `references/library.bib` | BibTeX (.bib) | `literature_reviewer` | C1 (citation existence resolution) |
+
+### Supplementary Inputs (enhance check depth; gates degrade gracefully without them)
+
+| File / Artifact | Format | Source Agent | Purpose |
+|-----------------|--------|-------------|---------|
+| `references/citation_evidence.csv` | CSV (columns: `cite_key`, `source_url`, `excerpt`, `relevance`) | `literature_reviewer` | C2 (citation evidence traceability) |
+| `figure_plan` | JSON / Python dict | `figure_planner` | C4, C5, M3 (figure existence, count) |
+| `artifact_ledger.jsonl` | JSON Lines (one record per line: `{id, type, path, description}`) | `data_auditor` | C4 (claim-artifact binding resolution) |
+| `journal_target` config | JSON / Python dict (`{name, figure_limit, word_limits}`) | `team_orchestrator` | M1, M3 (journal-specific thresholds) |
+| `figures/` directory contents | Image files (`.pdf`, `.png`, `.svg`, `.tiff`) | `figure_planner` | C5 (figure file existence verification) |
+| `tables/` directory contents | Table files (`.tex`, `.md`, `.csv`) | `report_writer` | C4 (table artifact binding) |
+
+### Input Validation (Pre-Flight)
+
+Before any gate executes, the checker validates:
+1. All required manuscript section files exist and are non-empty
+2. `library.bib` is syntactically valid BibTeX (parseable by `bibtexparser`)
+3. `citation_evidence.csv` (if present) has required columns: `cite_key`, `source_url`, `excerpt`, `relevance`
+4. `artifact_ledger.jsonl` (if present) is valid JSON Lines with `id`, `type`, `path` fields on every record
+5. `figure_plan` (if present) contains a `figures` array whose entries each have an `id` field
+
+**Missing required inputs** produce a pre-flight error that blocks the pipeline before any gate runs.
+**Missing supplementary inputs** produce warnings recorded in the integrity report but do not block gate execution — affected gates return `INSUFFICIENT_DATA` rather than `PASS` or `FAIL`.
+
+---
+
+## Output
+
+The integrity_checker produces three output artifacts per invocation, persisted to `papers/{paper_id}/integrity/`.
+
+### Primary Outputs
+
+| File | Format | Schema | Consumers |
+|------|--------|--------|-----------|
+| `integrity_report.json` | JSON | `IntegrityReport.to_dict()` (see Python API section) | `team_orchestrator` (pipeline gating decision), `diagnose-gate-failures` (root-cause analysis), downstream CI/CD |
+| `integrity_report.md` | Markdown | Human-readable summary: gate-by-gate results, severity badges, failure details, recommended actions | Human authors, `team_orchestrator` (decision log), journal submission checklist |
+| `integrity_ledger.jsonl` | JSON Lines (append-only) | One event per line: `{timestamp, gate_id, severity, passed, message, decision, agent_version}` | Audit trail, reproducibility tracking, pipeline checkpoint history |
+
+### Exit Codes / Return Semantics
+
+| Condition | `blocks_pipeline` | Exit Behavior |
+|-----------|-------------------|---------------|
+| All 16 gates PASS | `False` | Pipeline advances; report archived to `integrity/` |
+| >=1 CRITICAL failure | `True` | Pipeline blocked; `team_orchestrator` notified; failure details routed to responsible agents per the routing table in Decision Protocol |
+| Only HIGH and/or MEDIUM failures (zero CRITICAL) | `False` | Pipeline advances with warnings; all failures logged to `integrity_ledger.jsonl` for cumulative tracking |
+| Pre-flight validation error (missing required inputs) | `True` | Pipeline blocked immediately; error surfaced before any gate executes |
+
+### Report Format Template (`integrity_report.md`)
+
+```markdown
+# Integrity Report — {paper_id}
+**Generated**: {checked_at} | **Agent Version**: {version}
+**Result**: {PASS | FAIL — X CRITICAL, Y HIGH, Z MEDIUM}
+
+## CRITICAL Gates
+| Gate | Result | Details |
+|------|--------|---------|
+| C1: bibtex_citation_existence | ✅ PASS / ❌ FAIL | {message} |
+| ... | | |
+
+## HIGH Gates
+| Gate | Result | Details |
+|------|--------|---------|
+| H1: data_availability_statement | ✅ PASS / ⚠️ FAIL | {message} |
+| ... | | |
+
+## MEDIUM Gates
+| Gate | Result | Details |
+|------|--------|---------|
+| M1: section_length_minimum | ✅ PASS / ℹ️ ADVISORY | {message} |
+| ... | | |
+
+## Summary
+- **Pipeline Blocked**: {Yes / No}
+- **Action Required**: {list of required fixes keyed by responsible agent}
+```
+
+## Output Directory Structure
 
 ```
 papers/{paper_id}/integrity/
@@ -212,27 +352,28 @@ class IntegrityReport:
 
 | I DO | I DON'T DO |
 |------|------------|
-| Run all 16 integrity gates | Modify manuscript text |
-| Generate `integrity_report.json` and `.md` | Add or fix citations |
-| Enforce pipeline blocking on CRITICAL failures | Generate or modify figures |
-| Log all gate results to `integrity_ledger.jsonl` | Rewrite prose or restructure sections |
-| Cross-reference claims against `artifact_ledger.jsonl` | Edit LaTeX source |
-| Flag missing statistics, overinterpretation, pseudoreplication | Insert data/code availability statements |
-| Produce structured failure details for downstream agents | Search for literature or validate reference accuracy |
-| Persist reports to `papers/{paper_id}/integrity/` | Change the pipeline stage or project state |
+| Run all 16 integrity gates across CRITICAL, HIGH, and MEDIUM severity levels | Modify manuscript text or LaTeX source → delegated to `report_writer` |
+| Generate structured `integrity_report.json` (machine-readable) and `integrity_report.md` (human-readable) | Add, fix, or reformat citations or BibTeX entries → delegated to `literature_reviewer` |
+| Enforce pipeline blocking — return `blocks_pipeline=True` when any CRITICAL gate fails | Generate, modify, or export figures → delegated to `figure_planner` or `nature_figure` |
+| Log every gate result to `integrity_ledger.jsonl` with timestamp, gate ID, severity, and decision | Rewrite prose, restructure sections, or adjust paragraph flow → delegated to `report_writer` |
+| Cross-reference every quantitative claim in Results against `artifact_ledger.jsonl` and `figure_plan` | Insert or edit Data Availability or Code Availability statements → delegated to `report_writer` or `nature_data` |
+| Flag missing effect sizes, absent p-values/confidence intervals, overinterpretation language, and pseudoreplication risks | Search for new literature or validate reference factual accuracy → delegated to `literature_reviewer` or `deep-research` |
+| Produce structured, machine-parseable failure details keyed by gate ID for downstream agent consumption | Run statistical tests, re-analyze data, or validate methodology choice → delegated to `statistician` |
+| Persist all reports to `papers/{paper_id}/integrity/` with deterministic, traceable file paths | Advance, retract, or modify the pipeline stage or project state → delegated to `team_orchestrator` |
 
 ---
 
 ## Related Agents
 
-| Agent | Relationship |
-|-------|-------------|
-| `report_writer` | **Downstream consumer** — receives failure flags and fixes prose, structure, LaTeX |
-| `literature_reviewer` | **Downstream consumer** — resolves bibtex and citation evidence failures |
-| `data_auditor` | **Upstream provider** — supplies `artifact_ledger.jsonl` and result manifests |
-| `figure_planner` | **Upstream provider** — supplies `figure_plan` for C4/C5 gate checks |
-| `statistician` | **Peer reviewer** — cross-validates H7 (statistics_reported) and H8 (pseudoreplication) |
-| `team_orchestrator` | **Coordinator** — routes CRITICAL failures to responsible agents, decides pipeline advancement |
+| Agent | Relationship | When to Call |
+|-------|-------------|-------------|
+| `report_writer` | **Downstream consumer** — receives failure flags and fixes prose, structure, LaTeX | CRITICAL or HIGH failures on C3, C4, H3, H5, H6, H7, M2 gates |
+| `literature_reviewer` | **Downstream consumer** — resolves bibtex and citation evidence failures | CRITICAL or HIGH failures on C1, C2 gates |
+| `data_auditor` | **Upstream provider** — supplies `artifact_ledger.jsonl` and result manifests | Before integrity check runs; ensures artifact ledger is current and complete |
+| `figure_planner` | **Upstream provider** — supplies `figure_plan` for C4/C5 gate checks | Before integrity check runs; ensures `figure_plan` is complete and all figure files exist on disk |
+| `statistician` | **Peer reviewer** — cross-validates H7 (statistics_reported) and H8 (pseudoreplication) | HIGH failures on H7 or H8 gates; or when statistical methodology requires expert review beyond heuristic checks |
+| `team_orchestrator` | **Coordinator** — routes CRITICAL failures to responsible agents, decides pipeline advancement | On any CRITICAL failure; orchestrator reads `integrity_report.json` to determine pipeline gating and dispatch |
+| `diagnose-gate-failures` | **Diagnostic specialist** — performs root-cause analysis on gate failures | When a gate failure's root cause is not immediately obvious from the violation message alone |
 
 ---
 

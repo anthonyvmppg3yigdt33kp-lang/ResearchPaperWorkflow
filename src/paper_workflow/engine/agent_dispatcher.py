@@ -95,7 +95,7 @@ class AgentDispatcher:
             print(f"[ERROR] {stage}: {type(exc).__name__}: {exc}", flush=True)
 
     def _register_default_handlers(self) -> None:
-        """Register default handlers for all 18 pipeline stages."""
+        """Register default handlers for all 19 pipeline stages."""
         # Phase 1: Research & Planning
         self._handlers["select_topic"] = self._execute_research_stage
         self._handlers["target_journal"] = self._execute_research_stage

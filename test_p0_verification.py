@@ -15,7 +15,7 @@ def test_config_loader():
     assert cl.is_loaded, "Config should be loaded"
 
     stages = cl.get_pipeline_stages()
-    assert len(stages) == 18, f"Expected 18 stages, got {len(stages)}"
+    assert len(stages) == 19, f"Expected 18 stages, got {len(stages)}"
     print(f"Config loaded: {len(stages)} pipeline stages from config")
 
     ws = cl.get_writing_standards()
@@ -41,13 +41,13 @@ def test_config_loader():
     print(f"Research domain 'bioinformatics' loaded OK")
 
     sd = cl.get_skills_dispatcher_rules()
-    skills = sd.get("skills", {})
-    assert len(skills) >= 10, f"Expected >=10 skills, got {len(skills)}"
-    print(f"Skills dispatcher: {len(skills)} skills")
+    # Skills are direct keys (not nested under 'skills') in v2 config
+    assert len(sd) >= 10, f"Expected >=10 skills, got {len(sd)}"
+    print(f"Skills dispatcher: {len(sd)} skills")
 
     ar = cl.get_agent_routing()
     agents = ar.get("agents", {})
-    assert len(agents) == 11, f"Expected 11 agents, got {len(agents)}"
+    assert len(agents) == 12, f"Expected 12 agents, got {len(agents)}"
     print(f"Agent routing: {len(agents)} agents")
 
     sup = cl.get_supervision()
@@ -95,11 +95,11 @@ def test_engine_backward_compat():
         # No config_path — should use hardcoded PIPELINE_STAGES
     )
     expected_hardcoded = [
-        "create_project", "search_literature", "research_plan",
+        "select_topic", "target_journal", "literature_search", "formulate_hypotheses",
         "data_audit", "figure_planning", "run_analysis", "verify_methods",
         "write_methods", "write_results", "write_introduction", "write_discussion",
         "assemble_manuscript", "integrity_check", "internal_review",
-        "apply_revision", "re_review", "quality_check", "finalize",
+        "apply_revision", "re_review", "finalize",
     ]
     actual_ids = list(engine.stages.keys())
     assert actual_ids == expected_hardcoded, (

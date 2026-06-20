@@ -1,0 +1,181 @@
+# STUDY_PROTOCOL.yaml — Master Protocol Definition
+#
+# Every research paper project must have a STUDY_PROTOCOL.yaml.
+# It serves as the single source of truth for study design, objectives,
+# endpoints, and ethics. The Statistical Analysis Plan (SAP) is a separate
+# document referenced from here.
+#
+# Fill in all fields. Delete sections that are genuinely not applicable,
+# but leave a comment explaining why (e.g., "# Not applicable: purely
+# computational study with no human subjects").
+
+# =============================================================================
+# STUDY METADATA
+# =============================================================================
+study_metadata:
+  title: "Full descriptive title of the study"
+  short_title: "Running title (max 50 chars)"
+  id: "PROTOCOL-YYYY-NNN"             # Unique protocol identifier
+  version: "1.0"                       # Semantic version; increment on amendments
+  date: "YYYY-MM-DD"                   # Date of this version
+  status: "draft"                      # draft | under_review | approved | amended
+  design_type: "observational_retrospective"  # rct | observational_prospective | observational_retrospective | cross_sectional | case_control | cohort | meta_analysis | simulation | computational_benchmark
+  registration:                        # Leave empty if not registered
+    registry: ""                       # ClinicalTrials.gov | PROSPERO | OSF | etc.
+    identifier: ""                     # NCT number, CRD number, OSF DOI
+    date_registered: ""
+
+# =============================================================================
+# CLINICAL CONTEXT
+# =============================================================================
+clinical_context:
+  population: "Brief description of the target patient or study population"
+  condition: "Disease, phenotype, or biological process under investigation"
+  unmet_need: "What gap in current knowledge or practice does this study address?"
+  gold_standard: "Current best diagnostic / prognostic / therapeutic approach"
+  decision_bottleneck: "The specific clinical or scientific decision this study could inform"
+
+# =============================================================================
+# OBJECTIVES
+# =============================================================================
+objectives:
+  primary: "Primary research question, phrased as a testable statement"
+  secondary:
+    - "Secondary question 1"
+    - "Secondary question 2"
+  exploratory:
+    - "Exploratory question 1"
+    - "Exploratory question 2"
+
+# =============================================================================
+# STUDY DESIGN
+# =============================================================================
+design:
+  type: "retrospective_cohort"         # See design_type options above
+  setting: "Single-center | Multi-center (N sites) | Population-based cohort | In silico"
+  timeline:
+    enrollment_start: "YYYY-MM"
+    enrollment_end: "YYYY-MM"
+    follow_up_end: "YYYY-MM"           # Omit if no follow-up
+  arms:                                # For interventional studies; delete if observational
+    - id: "arm_a"
+      label: "Treatment"
+      description: ""
+      n_target: 0
+    - id: "arm_b"
+      label: "Control"
+      description: ""
+      n_target: 0
+  groups:                              # For observational studies; delete if interventional
+    - id: "group_a"
+      label: "Case"
+      definition: ""
+      n_available: 0
+    - id: "group_b"
+      label: "Control"
+      definition: ""
+      n_available: 0
+
+# =============================================================================
+# ENDPOINTS
+# =============================================================================
+endpoints:
+  primary:
+    name: "Primary endpoint name"
+    variable: "Variable name in dataset"
+    measurement: "How the variable is measured or derived"
+    timepoint: "When the measurement is taken"
+    analysis_metric: "Mean difference | OR | HR | AUC | correlation coefficient"
+  secondary:
+    - name: ""
+      variable: ""
+      measurement: ""
+      timepoint: ""
+      analysis_metric: ""
+
+# =============================================================================
+# ELIGIBILITY
+# =============================================================================
+eligibility:
+  inclusion:
+    - "Criterion 1"
+    - "Criterion 2"
+  exclusion:
+    - "Criterion 1"
+    - "Criterion 2"
+  rationale: "Why these criteria were chosen (e.g., prior literature, clinical relevance)"
+
+# =============================================================================
+# SAMPLE SIZE
+# =============================================================================
+sample_size:
+  target: 0                            # Target N after eligibility
+  actual: 0                            # Actual N after exclusions (fill after data lock)
+  rationale: "How the target was determined"
+  power_analysis:
+    performed: false                   # true | false
+    software: ""                       # G*Power | pwr (R) | statsmodels (Python) | PASS
+    parameters:
+      alpha: 0.05
+      power: 0.80
+      effect_size: ""                  # e.g., "Cohen's d = 0.5"
+      test: ""                         # two-sided t-test | chi-squared | etc.
+      required_n_per_group: 0
+
+# =============================================================================
+# STATISTICAL ANALYSIS PLAN
+# =============================================================================
+# The SAP is detailed in a separate document. Provide a pointer here.
+statistical_analysis_plan_ref:
+  path: "config/SAP.yaml"              # Relative path from project root
+  version: "1.0"
+  date: "YYYY-MM-DD"
+
+# =============================================================================
+# DATA MANAGEMENT
+# =============================================================================
+data_management:
+  sources:
+    - name: ""
+      type: "public"                   # public | institutional | generated | collaborator
+      accession: ""                    # GEO/ArrayExpress/dbGaP accession
+      url: ""
+      access_date: ""
+  storage:
+    raw_path: "data/raw/"
+    processed_path: "data/processed/"
+    backup_policy: ""
+  privacy:
+    deidentification_method: ""        # Safe Harbor | Expert Determination | N/A
+    data_use_agreement: false          # true if DUA/MTA is required
+  sharing:
+    public_release: ""                 # Zenodo | Figshare | Dryad | GEO | N/A
+    embargo_until: ""                  # Date or "on publication"
+
+# =============================================================================
+# ETHICS
+# =============================================================================
+ethics:
+  irb_status: "exempt"                 # approved | exempt | waived | not_applicable
+  irb_institution: ""
+  irb_protocol_number: ""
+  consent: "waived"                    # written | verbal | waived | not_applicable
+  consent_rationale: ""                # Required if waived
+  registration:
+    required: false                    # true for clinical trials and systematic reviews
+    registry: ""
+    identifier: ""
+  conflicts_of_interest:
+    - author: ""
+      disclosure: ""
+  funding:
+    - source: ""
+      grant_number: ""
+
+# =============================================================================
+# REPORTING GUIDELINE
+# =============================================================================
+reporting_guideline:
+  guideline_name: "STROBE"             # CONSORT | STROBE | PRISMA | STREGA | TRIPOD | REMARK | ARRIVE | N/A
+  version: "2010"
+  checklist_ref: "config/STROBE_checklist.docx"  # Path to filled checklist

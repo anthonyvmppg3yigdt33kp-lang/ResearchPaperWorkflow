@@ -8,7 +8,7 @@
 
 This is a **full-stack bioinformatics research workflow system** that transforms the research paper writing process from ad-hoc scripting into a deterministic, auditable, multi-agent pipeline. The framework spans the complete lifecycle: ideation, literature review, data analysis, manuscript drafting, figure generation, citation management, peer review simulation, revision, and final submission.
 
-**Architecture**: 4-layer (Strategy -> Decision -> Execution -> Supervision), 18-stage pipeline, 6 phases, 8-step loop engine, 4-file passport system, 16 integrity gates.
+**Architecture**: 4-layer (Strategy -> Decision -> Execution -> Supervision), **19-stage pipeline** (v3.0), 6 phases, 8-step loop engine, 5-file passport system, **41 integrity gates** (17 CRITICAL + 21 HIGH + 3 MEDIUM).
 
 **The user is the final scientific decision maker.** The framework must never invent data, results, clinical facts, or references.
 
@@ -275,7 +275,7 @@ Provides agent-callable, parameter-documented, reproducible R functions covering
 - **Section 5**: clusterProfiler GO/KEGG enrichment
 - **Section 6**: Publication-quality visualization (ggplot2 + Nature palettes)
 
-Loading: `source("C:/Users/HP/Desktop/ResearchPaperWorkflow/code_library/r/bioinformatics_analysis.R")`
+Loading: `source("C:/Users/HP/Desktop/ResearchPaperWorkflow_v2/code_library/r/bioinformatics_analysis.R")`
 
 ### Usage Conventions
 
@@ -391,7 +391,7 @@ ResearchPaperWorkflow/
 ├── src/paper_workflow/          # Core Python package
 │   ├── strategy/                # Topic, journal, feasibility, hypothesis
 │   ├── engine/                  # Paper loop engine (18-stage state machine)
-│   ├── supervision/             # Passport system + 16 integrity gates
+│   ├── supervision/             # Passport system + 41 integrity gates (v3.0)
 │   ├── cli/                     # 12 CLI commands
 │   └── workflow.py              # Unified orchestrator
 ├── .claude/                     # Agent/skill/team definitions

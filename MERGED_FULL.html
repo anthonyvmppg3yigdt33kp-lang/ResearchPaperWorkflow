@@ -1,0 +1,4666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResearchPaperWorkflow v2 — 完整设计文档</title>
+<style>
+
+* { box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.65;
+    color: #1a1a1a;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== COVER PAGE ===== */
+.cover-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    page-break-after: always;
+}
+.cover-content h1 {
+    font-size: 32pt;
+    color: #1a3a5c;
+    border-bottom: 4px solid #1a3a5c;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+.cover-content h2 {
+    font-size: 16pt;
+    color: #2d5a87;
+    font-weight: 400;
+    margin-bottom: 30px;
+}
+.cover-content .cover-subtitle {
+    font-size: 12pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 40px;
+}
+.cover-content .cover-date {
+    font-size: 11pt;
+    color: #777;
+    margin-bottom: 8px;
+}
+.cover-content .cover-desc {
+    font-size: 10pt;
+    color: #888;
+    max-width: 550px;
+    margin: 20px auto 0;
+    line-height: 1.6;
+}
+
+/* ===== TOC ===== */
+.toc { page-break-after: always; padding: 20px 0; }
+.toc h1 {
+    font-size: 22pt;
+    color: #1a3a5c;
+    border-bottom: 2.5px solid #1a3a5c;
+    padding-bottom: 8px;
+}
+.toc ul { list-style: none; padding-left: 0; }
+.toc li {
+    padding: 8px 0;
+    border-bottom: 1px dotted #ccc;
+    font-size: 12pt;
+}
+.toc li a {
+    color: #2d5a87;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* ===== HEADINGS ===== */
+h1 {
+    font-size: 20pt;
+    color: #1a3a5c;
+    border-bottom: 2.5px solid #1a3a5c;
+    padding-bottom: 8px;
+    margin: 32px 0 16px 0;
+    page-break-before: always;
+}
+h1.no-break { page-break-before: avoid; }
+h2 {
+    font-size: 15pt;
+    color: #2d5a87;
+    border-bottom: 1px solid #c0d0e0;
+    padding-bottom: 4px;
+    margin: 24px 0 12px 0;
+}
+h3 {
+    font-size: 12.5pt;
+    color: #3d6a97;
+    margin: 18px 0 10px 0;
+}
+h4 {
+    font-size: 11.5pt;
+    color: #4a7aA7;
+    margin: 14px 0 8px 0;
+}
+
+/* ===== CODE ===== */
+code {
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    font-size: 9pt;
+    background: #f4f6f8;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: #c7254e;
+}
+pre {
+    background: #f7f9fb;
+    border: 1px solid #dde3ea;
+    border-left: 4px solid #2d5a87;
+    padding: 12px 14px;
+    font-size: 8pt;
+    line-height: 1.4;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+pre code {
+    background: transparent;
+    padding: 0;
+    color: #333;
+}
+
+/* ===== TABLES ===== */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+}
+th {
+    background: #1a3a5c;
+    color: white;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+}
+td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #dde3ea;
+}
+tr:nth-child(even) td { background: #f7f9fb; }
+
+/* ===== OTHERS ===== */
+blockquote {
+    border-left: 4px solid #1a3a5c;
+    margin: 12px 0;
+    padding: 8px 16px;
+    background: #f0f4f8;
+    color: #444;
+}
+hr { border: none; border-top: 1.5px solid #d0d8e0; margin: 24px 0; }
+ul, ol { margin: 6px 0; padding-left: 24px; }
+li { margin: 3px 0; }
+a { color: #2d5a87; text-decoration: none; }
+strong { color: #1a3a5c; }
+.page-break { page-break-after: always; }
+.section-anchor { scroll-margin-top: 20px; }
+
+@media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: A4; margin: 2cm 2.2cm 2cm 2.2cm; }
+}
+</style>
+</head>
+<body>
+<div class="cover-page">
+<div class="cover-content">
+<h1>ResearchPaperWorkflow v2</h1>
+<h2>科研论文多智能体协作工作流<br>完整设计文档</h2>
+<p class="cover-subtitle">4层架构 · 12类Agent · 18阶段管线 · 16质量门 · 5工作流模式</p>
+<p class="cover-date">Version 2.0.0 &mdash; June 20, 2026</p>
+<p class="cover-desc">本文档由 9 份设计文档合并生成，涵盖系统架构、Agent协作、管线调度、质量门、工作流模式、技能集成与案例研究等完整内容。适用于科研论文写作工作流的设计评审、技术选型与团队培训。</p>
+</div>
+</div>
+<div class="page-break"></div>
+
+<div class="toc">
+
+<h1>目 录</h1>
+<ul>
+
+<li><a href="#readme">README — 工作流概述与快速开始</a></li>
+
+<li><a href="#architecture">ARCHITECTURE — 4层系统架构</a></li>
+
+<li><a href="#agent_roles">AGENT_ROLES — 12类Agent协作体系</a></li>
+
+<li><a href="#pipeline_design">PIPELINE_DESIGN — 18阶段调度管线</a></li>
+
+<li><a href="#quality_gates">QUALITY_GATES — 16规则质量门体系</a></li>
+
+<li><a href="#workflow_patterns">WORKFLOW_PATTERNS — 5种工作流模式</a></li>
+
+<li><a href="#integration_map">INTEGRATION_MAP — 技能集成与工具矩阵</a></li>
+
+<li><a href="#case_studies">CASE_STUDIES — 3个真实项目案例</a></li>
+
+<li><a href="#quick_reference">QUICK_REFERENCE — 一页速查卡</a></li>
+
+</ul>
+</div>
+<div class="page-break"></div>
+
+<div id="readme" class="section-anchor">
+
+<h1>README — 工作流概述与快速开始</h1>
+
+<p><strong>A general-purpose, agent-driven research paper workflow system for bioinformatics and clinical research — upgraded to evidence-centric medical evidence generation.</strong></p>
+<p><a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.9+-blue.svg" alt="Python 3.9+" /></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License" /></a>
+<a href="tests/"><img src="https://img.shields.io/badge/Tests-5/5%20Pass-brightgreen.svg" alt="Tests" /></a>
+<a href=""><img src="https://img.shields.io/badge/Version-3.0.0-orange.svg" alt="Version" /></a></p>
+<hr />
+<h2>What It Does</h2>
+<p>This framework transforms the research paper writing process from ad-hoc scripting and manual coordination into a <strong>deterministic, auditable, multi-agent pipeline</strong> with medical evidence quality assurance:</p>
+<ul>
+<li><strong>4-layer architecture</strong>: Strategy → Decision → Execution → Supervision</li>
+<li><strong>19-stage paper pipeline</strong>: Including new Statistical Analysis Plan (SAP) pre-specification stage</li>
+<li><strong>7-framework skills + 28 external skills</strong>: Covering every research phase via the skill registry</li>
+<li><strong>18 domain-specific agents</strong>: With clear responsibility boundaries (6 new medical agents in v3.0)</li>
+<li><strong>1 collaborative team</strong> (<code>paper_writing_team</code>): For full-cycle manuscript production</li>
+<li><strong>Passport system</strong>: 5-ledger hash-based artifact tracking, claim binding, and stale detection</li>
+<li><strong>41 integrity gates</strong>: Automated quality enforcement (17 CRITICAL, 21 HIGH, 3 MEDIUM)
+<ul>
+<li>Including clinical design, data bias, statistics/model, single-cell/spatial omics, and AI/ML categories</li>
+</ul>
+</li>
+<li><strong>Evidence Graph</strong>: Full claim→statistics→artifact→code→parameter traceability</li>
+<li><strong>CLI surface</strong>: 10 commands for full pipeline control</li>
+</ul>
+<h2>Design Philosophy</h2>
+<blockquote>
+<p><strong>Main thread plans &amp; integrates. Subagents explore, review, and execute in parallel. Skills provide reusable workflows. The loop engine manages state and iteration.</strong></p>
+</blockquote>
+<p>This is NOT a &quot;smarter chatbot&quot;—it's a <strong>project execution system</strong> that reads files, runs code, spawns parallel subagents, and enforces scientific quality gates.</p>
+<h2>Architecture</h2>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│  STRATEGY LAYER                                          │
+│  Topic → Journal → Feasibility → Hypotheses               │
+├──────────────────────────────────────────────────────────┤
+│  DECISION LAYER                                          │
+│  Skills Dispatcher + MCP Router + Paper Loop Engine       │
+├──────────────────────────────────────────────────────────┤
+│  EXECUTION LAYER                                         │
+│  Pipeline Orchestrator + Quality Gates + CLI              │
+├──────────────────────────────────────────────────────────┤
+│  SUPERVISION LAYER                                       │
+│  Passport + Provenance + Integrity + Stale Detection      │
+└──────────────────────────────────────────────────────────┘
+</code></pre>
+<h2>Quick Start</h2>
+<pre><code class="language-bash"># Clone
+git clone https://github.com/your-org/ResearchPaperWorkflow.git
+cd ResearchPaperWorkflow
+
+# Install
+pip install -e .
+
+# Create your first paper project
+python -m paper_workflow.cli create-project \
+  --idea &quot;Your research idea&quot; \
+  --field &quot;your field, keywords&quot; \
+  --journal &quot;Genome Biology&quot;
+
+# Check status
+python -m paper_workflow.cli status --paper &lt;paper_id&gt;
+
+# Run pipeline
+python -m paper_workflow.cli run-pipeline --paper &lt;paper_id&gt;
+
+# Run tests
+python tests/test_all.py
+</code></pre>
+<h2>Usage Patterns</h2>
+<h3>Pattern 1: New Paper from Scratch</h3>
+<pre><code>create-project → search-literature → research-plan → data-audit
+→ figure-planning → run-analysis → verify-methods
+→ write-methods → write-results → write-introduction → write-discussion
+→ assemble-manuscript → integrity-check → internal-review
+→ apply-revision → re-review → quality-check → finalize
+</code></pre>
+<h3>Pattern 2: From Existing Results</h3>
+<pre><code>create-project → record-artifacts → figure-planning
+→ write-results → ... → finalize
+</code></pre>
+<h3>Pattern 3: Revision Cycle</h3>
+<pre><code>diagnose-gate-failures → generate-revision-plan
+→ apply-revision → re-review → quality-check
+</code></pre>
+<h2>Key Features</h2>
+<h3>Loop Engine</h3>
+<ul>
+<li><strong>observe → decide → run → verify → record → mark_stale → diagnose → repeat</strong></li>
+<li>18 pipeline stages with dependency tracking</li>
+<li>Automatic stale detection when upstream artifacts change</li>
+<li>Human checkpoints at critical decision points</li>
+</ul>
+<h3>Passport System</h3>
+<ul>
+<li><code>project_passport.yaml</code> — Project identity and metadata</li>
+<li><code>artifact_ledger.jsonl</code> — Append-only artifact hash log</li>
+<li><code>checkpoint_ledger.jsonl</code> — User-approved checkpoints</li>
+<li><code>integrity_ledger.jsonl</code> — Integrity gate events</li>
+</ul>
+<h3>Integrity Gates (16 rules)</h3>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Rules</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CRITICAL</strong></td>
+<td>BibTeX existence, citation traceability, Results no-citations, claim-artifact binding, figure references</td>
+</tr>
+<tr>
+<td><strong>HIGH</strong></td>
+<td>Data availability, code availability, no local paths, parameters complete, limitations discussed, no overinterpretation, statistics reported, pseudoreplication check</td>
+</tr>
+<tr>
+<td><strong>MEDIUM</strong></td>
+<td>Section length minimum, no bullets in prose, figure count, journal format</td>
+</tr>
+</tbody>
+</table>
+<h3>Agent System (10 agents)</h3>
+<p><code>research_strategist</code> · <code>literature_reviewer</code> · <code>data_auditor</code> · <code>figure_planner</code> · <code>analysis_executor</code> · <code>pipeline_engineer</code> · <code>statistician</code> · <code>report_writer</code> · <code>integrity_checker</code> · <code>team_orchestrator</code></p>
+<h3>Framework Skills (5 skills)</h3>
+<p><code>topic_research</code> · <code>paper_loop</code> · <code>figure_planning</code> · <code>paper_writing</code> · <code>revision_routing</code></p>
+<h3>External Skills (28 skills, see <code>.claude/SKILL_REGISTRY.md</code>)</h3>
+<p>Covering: research · writing · polishing · figures · citations · review · data compliance · detection · presentation · orchestration · domain analysis · meta</p>
+<h2>Project Structure</h2>
+<pre><code>ResearchPaperWorkflow/
+├── src/paper_workflow/          # Core Python package
+│   ├── strategy/                # Strategy layer (topic, journal, feasibility, hypothesis)
+│   ├── engine/                  # Paper loop engine
+│   ├── supervision/             # Passport, integrity gates
+│   ├── cli/                     # CLI surface
+│   └── workflow.py              # Unified workflow orchestrator
+├── .claude/                     # Agent/skill/team definitions
+│   ├── SKILL_REGISTRY.md        # 28-skill mapping with trigger words
+│   ├── skills/ (5) + agents/ (10) + teams/ (1)
+├── config/                      # Configuration files
+│   ├── default_config.yaml      # Pipeline configuration
+│   ├── journal_database.yaml    # Journal profiles
+│   └── templates/               # Paper section templates
+├── code_library/                # Reusable analysis code
+│   ├── modules/                 # Full analysis modules
+│   ├── patterns/                # QC, clustering patterns
+│   ├── snippets/                # I/O, logging, config utilities
+│   └── solutions/               # Common problem solutions
+├── docs/                        # Documentation
+├── tests/                       # Integration tests
+├── examples/                    # Example project
+└── papers/                      # Generated paper projects (gitignored)
+</code></pre>
+<h2>Supported Paper Types</h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Typical Pipeline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>original_research</code></td>
+<td>Primary research article</td>
+<td>Full 18-stage pipeline</td>
+</tr>
+<tr>
+<td><code>methods</code></td>
+<td>Methods/tool paper</td>
+<td>Emphasizes verification + benchmarking</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td>Literature review</td>
+<td>Emphasizes literature search + synthesis</td>
+</tr>
+<tr>
+<td><code>clinical_research</code></td>
+<td>Clinical/translational study</td>
+<td>Adds ethics + clinical statistics gates</td>
+</tr>
+<tr>
+<td><code>data_resource</code></td>
+<td>Data/resource descriptor</td>
+<td>Emphasizes data audit + availability</td>
+</tr>
+<tr>
+<td><code>brief_communication</code></td>
+<td>Short report</td>
+<td>Condensed pipeline, stricter limits</td>
+</tr>
+</tbody>
+</table>
+<h2>Supported Research Domains</h2>
+<p>The framework is domain-agnostic but pre-configured for:</p>
+<ul>
+<li><strong>Bioinformatics &amp; Computational Biology</strong></li>
+<li><strong>Spatial Transcriptomics &amp; Single-Cell Genomics</strong></li>
+<li><strong>Clinical &amp; Translational Research</strong></li>
+<li><strong>Multi-Omics Integration</strong></li>
+<li><strong>Machine Learning in Biomedicine</strong></li>
+</ul>
+<p>Configuration is fully externalized — adapt to any research domain by modifying <code>config/default_config.yaml</code> and <code>config/journal_database.yaml</code>.</p>
+<h2>Integration with AI Assistants</h2>
+<p>This framework is designed to work with AI coding assistants (Claude Code, Codex, etc.):</p>
+<ol>
+<li><strong>AGENTS.md</strong>: Assistant reads this on startup — defines project rules</li>
+<li><strong>Skills</strong>: Assistant invokes skills for specialized tasks</li>
+<li><strong>MCP Tools</strong>: Connects to PubMed, Consensus, Context7, etc.</li>
+<li><strong>Subagents</strong>: Assistant spawns specialized subagents for parallel work</li>
+</ol>
+<h2>License</h2>
+<p>MIT License — See <a href="LICENSE">LICENSE</a></p>
+<h2>Citation</h2>
+<p>If you use this framework in your research, please cite:</p>
+<pre><code>@software{research_paper_workflow_2026,
+  title = {Research Paper Workflow Framework},
+  year = {2026},
+  url = {https://github.com/your-org/ResearchPaperWorkflow}
+}
+</code></pre>
+<hr />
+<p><em>Built on the loop-engineering principles of Draftpaper_loop and the three-layer architecture pattern.</em></p>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="architecture" class="section-anchor">
+
+<h1>ARCHITECTURE — 4层系统架构</h1>
+
+<hr />
+<h2>1. 架构全景</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                          ResearchPaperWorkflow v2 Architecture                          │
+│                                                                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                         LAYER 4: SUPERVISION                                      │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐   │  │
+│  │  │   Passport   │  │  Integrity   │  │  Provenance  │  │  Stale Detection   │   │  │
+│  │  │   System     │  │  Gate Checker│  │  Tracker     │  │  Engine            │   │  │
+│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └────────┬───────────┘   │  │
+│  │         │                 │                 │                   │               │  │
+│  │         └─────────────────┴─────────────────┴───────────────────┘               │  │
+│  │                                    │                                             │  │
+│  └────────────────────────────────────┼─────────────────────────────────────────────┘  │
+│                                       │                                                │
+│  ┌────────────────────────────────────┼─────────────────────────────────────────────┐  │
+│  │                         LAYER 3: EXECUTION                                        │  │
+│  │  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐    │  │
+│  │  │   Pipeline           │  │   Quality Gates      │  │   CLI Surface        │    │  │
+│  │  │   Orchestrator       │  │   Engine (16 rules)  │  │   (10 commands)      │    │  │
+│  │  │   (18 stages)        │  │                      │  │                      │    │  │
+│  │  └──────────┬───────────┘  └──────────┬───────────┘  └──────────┬───────────┘    │  │
+│  │             │                         │                         │                │  │
+│  └─────────────┼─────────────────────────┼─────────────────────────┼────────────────┘  │
+│                │                         │                         │                   │
+│  ┌─────────────┼─────────────────────────┼─────────────────────────┼────────────────┐  │
+│  │             │           LAYER 2: DECISION                       │                │  │
+│  │  ┌──────────▼───────────┐  ┌──────────▼───────────┐  ┌─────────▼───────────┐    │  │
+│  │  │   Skills Dispatcher  │  │   MCP Router          │  │   Paper Loop        │    │  │
+│  │  │   (17 skills)        │  │   (PubMed/Consensus/  │  │   Engine            │    │  │
+│  │  │                      │  │    Context7/Grok)     │  │   (observe→decide→  │    │  │
+│  │  │                      │  │                       │  │    run→verify→      │    │  │
+│  │  │                      │  │                       │  │    record→repeat)   │    │  │
+│  │  └──────────┬───────────┘  └──────────┬───────────┘  └─────────┬───────────┘    │  │
+│  │             │                         │                         │                │  │
+│  └─────────────┼─────────────────────────┼─────────────────────────┼────────────────┘  │
+│                │                         │                         │                   │
+│  ┌─────────────┼─────────────────────────┼─────────────────────────┼────────────────┐  │
+│  │             │           LAYER 1: STRATEGY                       │                │  │
+│  │  ┌──────────▼───────────┐  ┌──────────▼───────────┐  ┌─────────▼───────────┐    │  │
+│  │  │   Topic Selector     │  │   Journal Targeter   │  │   Feasibility        │    │  │
+│  │  │   + PICO Framework   │  │   + Requirements DB  │  │   Assessor           │    │  │
+│  │  └──────────────────────┘  └──────────────────────┘  └──────────────────────┘    │  │
+│  │                                                                                   │  │
+│  │  ┌──────────────────────┐  ┌──────────────────────┐                               │  │
+│  │  │   Hypothesis         │  │   Research Strategy  │                               │  │
+│  │  │   Framework          │  │   Manager            │                               │  │
+│  │  └──────────────────────┘  └──────────────────────┘                               │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                        │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2>2. 四层架构详解</h2>
+<h3>2.1 Layer 1: Strategy（策略层）</h3>
+<p><strong>职责</strong>: 研究问题定义、期刊选择、可行性评估、假设生成</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>源码位置</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TopicSelector</code></td>
+<td><code>src/paper_workflow/strategy/topic_selector.py</code></td>
+<td>从研究想法生成结构化主题，评估创新度</td>
+</tr>
+<tr>
+<td><code>JournalTargeter</code></td>
+<td><code>src/paper_workflow/strategy/journal_targeter.py</code></td>
+<td>匹配目标期刊，生成格式要求清单</td>
+</tr>
+<tr>
+<td><code>FeasibilityAssessor</code></td>
+<td><code>src/paper_workflow/strategy/feasibility.py</code></td>
+<td>多维度可行性评分（数据/方法/期刊/时间线）</td>
+</tr>
+<tr>
+<td><code>HypothesisFramework</code></td>
+<td><code>src/paper_workflow/strategy/hypothesis_framework.py</code></td>
+<td>结构化假设生成（category + type + statement）</td>
+</tr>
+<tr>
+<td><code>ResearchStrategyManager</code></td>
+<td><code>src/paper_workflow/strategy/research_strategy.py</code></td>
+<td>策略持久化、加载、版本管理</td>
+</tr>
+</tbody>
+</table>
+<p><strong>数据流</strong>:</p>
+<pre><code>idea + field → TopicSelector → Topic (innovation_level, scope, knowledge_gaps)
+                                    ↓
+                            JournalTargeter → Journal (IF, fit_score, requirements)
+                                    ↓
+                            HypothesisFramework → [Hypothesis] (PICO-structured)
+                                    ↓
+                            FeasibilityAssessor → FeasibilityReport (go/no-go)
+</code></pre>
+<h3>2.2 Layer 2: Decision（决策层）</h3>
+<p><strong>职责</strong>: 技能调度、MCP路由、管线循环控制</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>源码位置</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SkillsDispatcher</code></td>
+<td><code>config/default_config.yaml §6</code></td>
+<td>触发词→技能映射，17技能覆盖6阶段</td>
+</tr>
+<tr>
+<td><code>MCP Router</code></td>
+<td>内置（Claude Code harness）</td>
+<td>PubMed/Consensus/Context7/Grok 路由</td>
+</tr>
+<tr>
+<td><code>PaperLoopEngine</code></td>
+<td><code>src/paper_workflow/engine/loop_engine.py</code></td>
+<td>observe→decide→run→verify→record→sync 循环</td>
+</tr>
+<tr>
+<td><code>AgentDispatcher</code></td>
+<td><code>src/paper_workflow/engine/agent_dispatcher.py</code></td>
+<td>Stage→Agent→Skill 三级调度</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Loop Engine 状态机</strong>:</p>
+<pre><code>                    ┌──────────┐
+                    │ PENDING  │
+                    └────┬─────┘
+                         │ upstream_ready()
+                         ▼
+                    ┌──────────┐
+               ┌───▶│ RUNNING  │
+               │    └────┬─────┘
+               │         │ run_stage()
+               │         ▼
+               │    ┌──────────────┐
+               │    │ VERIFY       │◀── integrity gate checks
+               │    └──┬───────┬───┘
+               │       │       │
+               │   pass│       │fail (retry_count &lt; max)
+               │       │       ▼
+               │       │  ┌──────────┐
+               │       │  │  FAILED  │──retry──┐
+               │       │  └──────────┘         │
+               │       ▼                       │
+               │  ┌──────────┐                 │
+               │  │COMPLETED │                 │
+               │  └────┬─────┘                 │
+               │       │ upstream_changed()    │
+               │       ▼                       │
+               │  ┌──────────┐                 │
+               └───│  STALE   │                │
+                  └──────────┘                 │
+                                               │
+                  ┌────────────────────────────┘
+                  │ retry_count &lt; max_retries
+                  ▼
+             (back to RUNNING)
+</code></pre>
+<p><strong>Pipeline State 转换</strong>:</p>
+<pre><code>CLEAN → IN_PROGRESS → CLEAN (all stages OK)
+CLEAN → IN_PROGRESS → GATE_FAILURE (integrity check failed)
+CLEAN → IN_PROGRESS → STALE_STAGES (upstream artifact changed)
+CLEAN → IN_PROGRESS → BLOCKED (unresolvable dependency)
+CLEAN → IN_PROGRESS → DRIFT_DETECTED (artifact hash mismatch)
+</code></pre>
+<h3>2.3 Layer 3: Execution（执行层）</h3>
+<p><strong>职责</strong>: 18阶段管线编排、质量门执行、CLI命令接口</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>源码位置</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PaperWorkflow</code></td>
+<td><code>src/paper_workflow/workflow.py</code></td>
+<td>统一工作流编排器（初始化→运行→诊断）</td>
+</tr>
+<tr>
+<td><code>E2EWorkflow</code></td>
+<td><code>src/paper_workflow/e2e_workflow.py</code></td>
+<td>5阶段端到端主控（含回调+检查点+报告）</td>
+</tr>
+<tr>
+<td><code>IntegrityGateChecker</code></td>
+<td><code>src/paper_workflow/supervision/integrity.py</code></td>
+<td>16规则完整性检查（5C+8H+3M）</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>src/paper_workflow/cli/main.py</code></td>
+<td>10命令CLI界面</td>
+</tr>
+</tbody>
+</table>
+<p><strong>E2E 5-Phase 结构</strong>:</p>
+<pre><code>Phase 1: Topic Research (4 stages)
+  deep_research → topic_research → journal_targeting → feasibility_assessment
+  [CHECKPOINT: Review research question and approve]
+
+Phase 2: Data Analysis (7 stages)
+  data_audit → qc_filtering → clustering → cell_annotation
+  → statistical_testing → pathway_inference → figure_planning
+  [CHECKPOINT: Review analysis outputs and approve]
+
+Phase 3: Paper Writing (4 stages)
+  scientific_writing_plan → nature_writing → nature_citation → research_paper_writing
+  [CHECKPOINT: Review complete manuscript draft]
+
+Phase 4: Polish &amp; Review (6 stages)
+  academic_polish → humanizer → nature_figure → academic_review
+  → nature_data → ai_writing_detection
+  [CHECKPOINT: Review polished manuscript + review feedback]
+
+Phase 5: Submission (3 stages)
+  cover_letter → integrity_check → presentation (optional)
+  [CHECKPOINT: Final review before submission]
+</code></pre>
+<h3>2.4 Layer 4: Supervision（监督层）</h3>
+<p><strong>职责</strong>: 护照追踪、完整性验证、溯源审计、过期检测</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>源码位置</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PaperPassport</code></td>
+<td><code>src/paper_workflow/supervision/passport.py</code></td>
+<td>Hash-based artifact ledger + checkpoint记录</td>
+</tr>
+<tr>
+<td><code>IntegrityGateChecker</code></td>
+<td><code>src/paper_workflow/supervision/integrity.py</code></td>
+<td>16-rule 完整检查套件</td>
+</tr>
+<tr>
+<td><code>ErrorTracker</code></td>
+<td><code>src/paper_workflow/utils/error_tracker.py</code></td>
+<td>结构化错误日志 + 分级</td>
+</tr>
+<tr>
+<td><code>Reproducibility</code></td>
+<td><code>src/paper_workflow/utils/reproducibility.py</code></td>
+<td>种子验证 + 环境快照</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Passport 数据结构</strong>:</p>
+<pre><code>papers/&lt;paper_id&gt;/
+├── project_passport.yaml        # 项目身份 + 元数据
+├── artifact_ledger.jsonl        # Append-only 制品哈希日志
+├── checkpoint_ledger.jsonl      # 用户批准的检查点
+└── integrity_ledger.jsonl       # 完整性门事件
+</code></pre>
+<hr />
+<h2>3. 核心数据流</h2>
+<h3>3.1 论文生产全流程数据流</h3>
+<pre><code>Research Idea
+     │
+     ▼
+[TopicSelector] ──→ Topic (innovation_level, scope, gaps)
+     │
+     ▼
+[JournalTargeter] ──→ Journal (IF, fit_score, formatting reqs)
+     │
+     ▼
+[Literature Searcher] ──→ references.bib + citation_evidence.csv
+     │
+     ▼
+[HypothesisFramework] ──→ hypotheses.yaml + research_questions
+     │
+     ▼
+[Data Auditor] ──→ data_audit_report.md + data_inventory.yaml
+     │
+     ▼
+[Figure Planner] ──→ figure_plan.json + figure_specs.yaml
+     │
+     ▼
+[Analysis Executor] ──→ results/* + run_manifest.yaml
+     │
+     ▼
+[Method Verifier] ──→ methods/run_manifest.yaml (verified)
+     │
+     ▼
+[Report Writer] ×4 ──→ manuscript/{intro,methods,results,discussion}.md
+     │
+     ▼
+[Assembler] ──→ manuscript/manuscript.tex + manuscript.pdf
+     │
+     ▼
+[Integrity Checker] ──→ integrity/integrity_report.json
+     │
+     ▼
+[Internal Reviewer] ──→ review/review_report.md
+     │
+     ▼
+[Revision Applier] ──→ manuscript/manuscript_revised.tex
+     │
+     ▼
+[Re-Reviewer] ──→ review/re_review_report.md
+     │
+     ▼
+[Finalizer] ──→ submission/manuscript_final.pdf + cover_letter.pdf
+</code></pre>
+<h3>3.2 Agent 间通信数据流</h3>
+<pre><code>research_strategist ──(topic, hypotheses)──▶ literature_reviewer
+        │                                            │
+        │                                    (citation_evidence)
+        │                                            │
+        ▼                                            ▼
+  data_auditor ◀──────────────▶ figure_planner
+        │                            │
+   (data_inventory)           (figure_plan)
+        │                            │
+        ▼                            ▼
+  analysis_executor ──(results)──▶ pipeline_engineer
+        │                                │
+        │                         (verified_manifest)
+        │                                │
+        ▼                                ▼
+  report_writer ◀────────────────────────┘
+        │
+   (manuscript sections)
+        │
+        ▼
+  integrity_checker ──(integrity_report)──▶ team_orchestrator
+        │                                        │
+        │                                 (review_report)
+        │                                        │
+        ▼                                        ▼
+  report_writer (revision) ◀─────────────────────┘
+        │
+   (revised_manuscript)
+        │
+        ▼
+  integrity_checker (final) ──▶ submission_package
+</code></pre>
+<hr />
+<h2>4. 状态管理</h2>
+<h3>4.1 StageState（管线阶段状态）</h3>
+<pre><code class="language-python">@dataclass
+class StageState:
+    definition: StageDefinition    # 阶段定义（不可变）
+    status: StageStatus            # PENDING|RUNNING|COMPLETED|FAILED|STALE|SKIPPED|BLOCKED
+    started_at: Optional[str]
+    completed_at: Optional[str]
+    retry_count: int
+    artifacts_produced: list[str]  # 产出文件路径
+    artifact_hashes: dict[str, str]  # SHA-256 哈希
+    errors: list[str]
+    gate_results: list[dict]       # 质量门检查结果
+</code></pre>
+<h3>4.2 WorkflowState（工作流状态）</h3>
+<pre><code class="language-python">@dataclass
+class WorkflowState:
+    paper_id: str
+    started_at: str
+    completed_at: Optional[str]
+    strategy: Optional[ResearchStrategy]
+    pipeline_state: str            # clean|drift_detected|stale_stages|gate_failure|in_progress|blocked
+    stages_completed: int
+    stages_failed: int
+    errors: list[dict]
+    decisions: list[dict]          # 每个阶段的决策记录
+</code></pre>
+<h3>4.3 状态持久化</h3>
+<pre><code>每次 run() 调用后:
+  ┌─ _execute_stage(stage) → self.engine.run_stage()
+  │   └─ 写入 project_passport.yaml (updated_at + stages snapshot)
+  ├─ verify_stage(stage) → self.engine.verify_stage()
+  │   └─ integrity gate checks
+  ├─ passport.record_artifact(art, stage=stage)
+  │   └─ Append to artifact_ledger.jsonl (SHA-256 hash + timestamp)
+  ├─ engine.record_and_sync()
+  │   └─ _update_passport() + _sync_stale()
+  └─ state.decisions.append(...)
+      └─ 内存中累积，save_state() 时写入 workflow_state/*.json
+</code></pre>
+<hr />
+<h2>5. 可扩展性设计</h2>
+<h3>5.1 扩展点（来自 <code>default_config.yaml §12</code>）</h3>
+<table>
+<thead>
+<tr>
+<th>扩展类型</th>
+<th>注册方式</th>
+<th>约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>自定义分析脚本</td>
+<td>放入 <code>scripts/custom/</code> 自动发现</td>
+<td>语法检查 + 导入验证</td>
+</tr>
+<tr>
+<td>自定义 Agent</td>
+<td><code>config/custom_agents.yaml</code> 清单</td>
+<td>必须声明 primary_skills + stages</td>
+</tr>
+<tr>
+<td>自定义 Skill</td>
+<td><code>config/custom_skills.yaml</code> 清单</td>
+<td>必须声明 triggers + phase + agent</td>
+</tr>
+<tr>
+<td>自定义 Gate Rule</td>
+<td>在 quality_gates 块添加</td>
+<td>声明 severity + check type + rule</td>
+</tr>
+</tbody>
+</table>
+<h3>5.2 配置覆盖链</h3>
+<pre><code>default_config.yaml (基線)
+    ↓
+&lt;paper_dir&gt;/paper_config.yaml (项目级覆盖)
+    ↓
+环境变量 PAPER_WORKFLOW_* (运行时覆盖)
+    ↓
+CLI --config 参数 (命令行覆盖)
+</code></pre>
+<hr />
+<h2>6. 技术栈</h2>
+<table>
+<thead>
+<tr>
+<th>层面</th>
+<th>技术选择</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语言</td>
+<td>Python 3.9+ (核心管线) + R 4.0+ (分析模块)</td>
+</tr>
+<tr>
+<td>配置</td>
+<td>YAML (default_config.yaml, 2100+ 行)</td>
+</tr>
+<tr>
+<td>状态持久化</td>
+<td>JSONL (append-only ledgers) + YAML (passport)</td>
+</tr>
+<tr>
+<td>制品哈希</td>
+<td>SHA-256</td>
+</tr>
+<tr>
+<td>包管理</td>
+<td>pip (Python) + renv (R)</td>
+</tr>
+<tr>
+<td>容器化</td>
+<td>Docker (Dockerfile.template)</td>
+</tr>
+<tr>
+<td>测试</td>
+<td>pytest (test_all.py + test_integration.py)</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td>argparse (10 命令)</td>
+</tr>
+<tr>
+<td>输出格式</td>
+<td>Markdown, LaTeX, PDF, SVG, JSON, YAML</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>7. 关键设计决策</h2>
+<h3>决策 1: 硬编码 + 配置双轨制</h3>
+<ul>
+<li><strong>选择</strong>: <code>loop_engine.py</code> 内置 <code>PIPELINE_STAGES</code> 硬编码回退 + YAML 配置覆盖</li>
+<li><strong>理由</strong>: 配置损坏时管线仍可运行；配置可用时灵活调整阶段定义</li>
+<li><strong>实现</strong>: <code>PaperLoopEngine.__init__</code> 的 <code>config_path</code> 参数</li>
+</ul>
+<h3>决策 2: Append-Only Ledger</h3>
+<ul>
+<li><strong>选择</strong>: <code>artifact_ledger.jsonl</code> 和 <code>checkpoint_ledger.jsonl</code> 使用 append-only 模式</li>
+<li><strong>理由</strong>: 完整审计追踪；支持时间旅行调试；不可篡改</li>
+<li><strong>代价</strong>: 文件持续增长（通过 checkpoint 归档管理）</li>
+</ul>
+<h3>决策 3: 阶段级 Gate 而非管线级 Gate</h3>
+<ul>
+<li><strong>选择</strong>: 每个 StageDefinition 携带自己的 gate_rules</li>
+<li><strong>理由</strong>: 不同阶段有不同质量要求；失败隔离更精确</li>
+<li><strong>实现</strong>: <code>StageDefinition.gate_rules: list[dict]</code></li>
+</ul>
+<h3>决策 4: Human Checkpoint 而非全自动</h3>
+<ul>
+<li><strong>选择</strong>: 关键阶段（select_topic, formulate_hypotheses, figure_planning, internal_review, finalize）标记 <code>human_checkpoint: true</code></li>
+<li><strong>理由</strong>: 科研决策不能全自动化；人在回路保证质量</li>
+<li><strong>实现</strong>: <code>stop_at_checkpoint=True</code> 时在 checkpoint 阶段暂停</li>
+</ul>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="agent_roles" class="section-anchor">
+
+<h1>AGENT_ROLES — 12类Agent协作体系</h1>
+
+<hr />
+<h2>1. Agent 体系总览</h2>
+<pre><code>                          ┌─────────────────────┐
+                          │  team_orchestrator   │  ← 总调度
+                          │  (Lead Agent)        │
+                          └──────────┬──────────┘
+                                     │
+        ┌────────────┬───────────────┼───────────────┬────────────┐
+        │            │               │               │            │
+        ▼            ▼               ▼               ▼            ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ research_    │ │ literature_  │ │ data_        │ │ figure_      │ │ analysis_    │
+│ strategist   │ │ reviewer     │ │ auditor      │ │ planner      │ │ executor     │
+│ [Strategy]   │ │ [Research]   │ │ [Data]       │ │ [Visual]     │ │ [Compute]    │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+        │            │               │               │            │
+        └────────────┴───────────────┼───────────────┴────────────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    │                │                │
+                    ▼                ▼                ▼
+            ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+            │ pipeline_    │ │ statistician │ │ code_        │
+            │ engineer     │ │ [Stats]      │ │ librarian    │
+            │ [Infra]      │ │              │ │ [Code]       │
+            └──────────────┘ └──────────────┘ └──────────────┘
+                    │                │                │
+                    └────────────────┼────────────────┘
+                                     │
+                                     ▼
+            ┌──────────────────────────────────────────────┐
+            │              report_writer                    │
+            │  [Writing] × IMRAD sections                   │
+            └──────────────────┬───────────────────────────┘
+                               │
+                               ▼
+            ┌──────────────────────────────────────────────┐
+            │          integrity_checker                    │
+            │  [Quality] × 16 gates                         │
+            └──────────────────┬───────────────────────────┘
+                               │
+                               ▼
+            ┌──────────────────────────────────────────────┐
+            │       multi_omics_integrator                  │
+            │  [Integration] × cross-platform               │
+            └──────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2>2. Agent 详细定义</h2>
+<h3>2.1 research_strategist（研究策略师）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Strategy Layer 核心，定义研究方向</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>select_topic, target_journal, formulate_hypotheses</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>topic_research, deep-research, nature-academic-search</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>研究想法 (idea), 领域 (field)</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>Topic对象, Journal推荐, Hypothesis列表, Feasibility报告</td>
+</tr>
+<tr>
+<td><strong>协作对象</strong></td>
+<td>→ literature_reviewer（传递研究问题和知识空白）</td>
+</tr>
+<tr>
+<td><strong>人机交互</strong></td>
+<td>select_topic + formulate_hypotheses 需要人工 checkpoint</td>
+</tr>
+</tbody>
+</table>
+<p><strong>决策能力</strong>:</p>
+<ul>
+<li>评估创新度 (innovation_level: 1-5)</li>
+<li>推荐匹配期刊 (fit_score: 1-5)</li>
+<li>Go/No-Go 可行性判断</li>
+<li>PICO 框架假设结构化</li>
+</ul>
+<p><strong>配置片段</strong> (来自 <code>default_config.yaml</code>):</p>
+<pre><code class="language-yaml">research_strategist:
+  description: &quot;Designs research strategy, formulates hypotheses, selects target journals&quot;
+  primary_skills: [topic_research, deep-research, nature-academic-search]
+  stages: [select_topic, target_journal, formulate_hypotheses]
+</code></pre>
+<h3>2.2 literature_reviewer（文献审阅者）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Research Layer 核心，系统性文献检索与综合</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>literature_search</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>deep-research, nature-academic-search, nature-citation</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>研究主题、知识空白列表</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>references.bib, citation_evidence.csv, literature_review.md</td>
+</tr>
+<tr>
+<td><strong>协作对象</strong></td>
+<td>research_strategist →（接收假设）→ report_writer（传递引用证据）</td>
+</tr>
+<tr>
+<td><strong>超时设置</strong></td>
+<td>3600秒（文献检索耗时最长）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键工作流</strong>:</p>
+<ol>
+<li>多源检索 (PubMed + Semantic Scholar + Scopus + arXiv)</li>
+<li>去重与质量管理</li>
+<li>引文证据映射 (claim → citation evidence)</li>
+<li>BibTeX 库生成与验证</li>
+</ol>
+<h3>2.3 data_auditor（数据审计师）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Data Layer，数据质量守门人</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>data_audit</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>nature-data, qc_pipeline</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>数据路径、格式声明</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>data_audit_report.md, data_inventory.yaml, data_availability_statement.md</td>
+</tr>
+<tr>
+<td><strong>协作对象</strong></td>
+<td>analysis_executor → figure_planner →</td>
+</tr>
+</tbody>
+</table>
+<p><strong>审计维度</strong>:</p>
+<ul>
+<li>完整性: 所有声明文件存在且可读</li>
+<li>格式: 符合预期 schema (h5ad, CSV, FASTQ...)</li>
+<li>质量: 基本 QC 指标 (MT%, 基因数, UMI数)</li>
+<li>合规: 人类/动物数据伦理声明</li>
+<li>可复现: 原始数据来源记录 (GEO/SRA accession)</li>
+</ul>
+<h3>2.4 figure_planner（图表规划师）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Visual Layer，论文叙事视觉化</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>figure_planning</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>figure_planning, nature-figure</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>假设列表、分析结果预览</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>figure_plan.json, figure_plan.html, figure_specs.yaml</td>
+</tr>
+<tr>
+<td><strong>协作对象</strong></td>
+<td>data_auditor →（接收数据概况）→ analysis_executor（传递图表需求）</td>
+</tr>
+<tr>
+<td><strong>人机交互</strong></td>
+<td>checkpoint: 审核图表规划</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Figure Plan 结构</strong> (6-8 图标准):</p>
+<pre><code class="language-json">{
+  &quot;Figure 1&quot;: {&quot;title&quot;: &quot;Study overview and data landscape&quot;, &quot;panels&quot;: [&quot;A-D&quot;], &quot;type&quot;: &quot;schematic + UMAP&quot;},
+  &quot;Figure 2&quot;: {&quot;title&quot;: &quot;Differential expression analysis&quot;, &quot;panels&quot;: [&quot;A-F&quot;], &quot;type&quot;: &quot;volcano + heatmap&quot;},
+  &quot;Figure 3&quot;: {&quot;title&quot;: &quot;WGCNA module discovery&quot;, &quot;panels&quot;: [&quot;A-E&quot;], &quot;type&quot;: &quot;dendrogram + heatmap&quot;},
+  &quot;Figure 4&quot;: {&quot;title&quot;: &quot;Module-trait associations&quot;, &quot;panels&quot;: [&quot;A-D&quot;], &quot;type&quot;: &quot;correlation matrix&quot;},
+  &quot;Figure 5&quot;: {&quot;title&quot;: &quot;Hub gene identification&quot;, &quot;panels&quot;: [&quot;A-C&quot;], &quot;type&quot;: &quot;network + bar&quot;},
+  &quot;Figure 6&quot;: {&quot;title&quot;: &quot;Validation and clinical relevance&quot;, &quot;panels&quot;: [&quot;A-D&quot;], &quot;type&quot;: &quot;ROC + boxplot&quot;}
+}
+</code></pre>
+<h3>2.5 analysis_executor（分析执行器）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Compute Layer，核心计算引擎</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>run_analysis</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>spatial_analysis, statistical_testing, pathway_inference, qc_pipeline</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>已审计数据 + 图表规划</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>analysis_results.yaml, statistical_outputs/<em>, figures/</em></td>
+</tr>
+<tr>
+<td><strong>超时设置</strong></td>
+<td>7200秒（计算密集型）</td>
+</tr>
+<tr>
+<td><strong>重试次数</strong></td>
+<td>3次</td>
+</tr>
+</tbody>
+</table>
+<p><strong>计算管线</strong>:</p>
+<pre><code>raw_data.h5ad
+  → QC filtering (mt_filter.py)
+  → Normalization + HVG selection
+  → Leiden clustering (multi_resolution.py)
+  → Cell type annotation (cell_type_annotation.py)
+  → Differential expression (statistical_testing)
+  → Pathway enrichment (pathway_inference)
+  → Results packaging (run_manifest.yaml)
+</code></pre>
+<h3>2.6 pipeline_engineer（管线工程师）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Infra Layer，可复现性保障</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>run_analysis, verify_methods</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>qc_pipeline, spatial_analysis</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>分析结果 manifest</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>methods_verification_report.md</td>
+</tr>
+<tr>
+<td><strong>Gate Rules</strong></td>
+<td>all_outputs_exist (CRITICAL), code_reproducible (CRITICAL)</td>
+</tr>
+</tbody>
+</table>
+<h3>2.7 statistician（统计师）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Validation Layer，统计方法审核</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>verify_methods</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>statistical_testing</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>DE结果、统计报告</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>统计审核意见</td>
+</tr>
+</tbody>
+</table>
+<p><strong>审核清单</strong>:</p>
+<ul>
+<li>检验假设满足（正态性、方差齐性、独立性）</li>
+<li>多重检验校正正确（Bonferroni/FDR/BH）</li>
+<li>效应量 + 置信区间完整</li>
+<li>伪重复检查（生物 vs 技术重复）</li>
+<li>样本量/功效分析</li>
+</ul>
+<h3>2.8 code_librarian（代码管理员）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Code Layer，代码资产管理</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>run_analysis, verify_methods, finalize</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>qc_pipeline</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>代码库路径</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>插件注册、依赖锁定、代码文档</td>
+</tr>
+</tbody>
+</table>
+<p><strong>管理范围</strong>:</p>
+<ul>
+<li><code>code_library/patterns/</code> — 可复用模式 (QC, clustering)</li>
+<li><code>code_library/modules/</code> — 完整分析模块</li>
+<li><code>code_library/solutions/</code> — 常见问题解决方案</li>
+<li><code>code_library/snippets/</code> — 工具函数</li>
+</ul>
+<h3>2.9 report_writer（报告撰写者）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Writing Layer，论文文本生产</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>write_methods, write_results, write_introduction, write_discussion, assemble_manuscript, apply_revision</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>scientific-writing, nature-writing, nature-polishing, humanizer, nature-citation, nature-response</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>已验证的方法+结果，文献库</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>IMRAD 各部分 Markdown，完整手稿 LaTeX/PDF</td>
+</tr>
+<tr>
+<td><strong>Gate Rules</strong></td>
+<td>no_local_paths, parameters_complete, citations_exist, limitations_discussed</td>
+</tr>
+</tbody>
+</table>
+<p><strong>写作管线</strong>:</p>
+<pre><code>Methods (from verified pipeline)
+   ↓ 参数提取 + 代码引用
+Results (from analysis outputs)
+   ↓ 数值追溯 + 图表交叉引用 + 禁止解释
+Introduction (from literature + hypotheses)
+   ↓ 漏斗结构: 背景→空白→假设→目标
+Discussion (from results + literature comparison)
+   ↓ 总结→对比→局限→意义→展望
+Assembly → manuscript.tex + manuscript.pdf
+</code></pre>
+<h3>2.10 integrity_checker（完整性检查者）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Quality Layer，最终质量守门人</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>verify_methods, integrity_check, internal_review, re_review</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>qc_pipeline, academic-paper-reviewer, nature-data, nature-citation</td>
+</tr>
+<tr>
+<td><strong>Gate 执行</strong></td>
+<td>16 规则 × 3 严重级别</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate 执行流程</strong>:</p>
+<pre><code>1. 加载手稿 sections (intro, methods, results, discussion)
+2. 加载 BibTeX 库 (references/library.bib)
+3. 加载图表计划 (figure_plan.json)
+4. 加载期刊目标 (formatting_requirements.yaml)
+5. 逐规则执行检查
+6. 生成 IntegrityReport
+   ├── passed: bool
+   ├── critical_failures: int  → blocks_pipeline = True
+   ├── high_failures: int      → blocking but fixable
+   ├── medium_failures: int    → warning only
+   └── results: [{rule, passed, message}]
+</code></pre>
+<h3>2.11 multi_omics_integrator（多组学整合师）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Integration Layer，跨平台数据整合</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>run_analysis, verify_methods</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>multi_omics, spatial_analysis, pathway_inference</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>多组学数据集</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>跨平台整合结果</td>
+</tr>
+</tbody>
+</table>
+<p><strong>整合方法库</strong>:</p>
+<ul>
+<li>跨平台归一化 (ComBat, Harmony, scVI)</li>
+<li>联合降维 (MOFA, Multi-Omics Factor Analysis)</li>
+<li>多视图聚类 (Spectrum, SNF)</li>
+<li>生物网络推断 (multi-omics network)</li>
+</ul>
+<h3>2.12 team_orchestrator（团队调度者）</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>Lead Agent，全局协调</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>finalize（总结）, 作为 fallback agent</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>deep-research（全局视角）</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>完整管线状态</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>最终提交包</td>
+</tr>
+<tr>
+<td><strong>特殊能力</strong></td>
+<td>跨 Agent 协调、冲突解决、回退处理</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>2.13 clinical_methodologist（临床方法学家）— v3.0 NEW</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>研究设计审核，PICO/PECO/PIRD框架，偏倚评估，报告指南选择</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>design_analysis_plan, data_audit</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>研究设计分类、偏倚风险评估、终点定义验证、报告指南匹配</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>hypotheses.yaml, research_questions.yaml, clinical_value_matrix.yaml</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>study_design_protocol.yaml, design_assessment_report.md</td>
+</tr>
+</tbody>
+</table>
+<h3>2.14 ethics_compliance_auditor（伦理合规审计师）— v3.0 NEW</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>IRB/伦理批准验证，数据隐私合规，ICMJE AI声明，利益冲突审核</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>data_audit, integrity_check, finalize</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>伦理批准文件验证、知情同意审核、数据隐私合规、临床试验注册验证</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>study_design_protocol.yaml, ethics_documentation/</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>ethics_compliance_report.md, compliance_checklist.yaml</td>
+</tr>
+</tbody>
+</table>
+<h3>2.15 causal_inference_reviewer（因果推断审查员）— v3.0 NEW</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>DAG审查，混杂评估，工具变量假设验证，敏感性分析(E-value)，因果语言审核</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>design_analysis_plan, verify_methods, write_discussion</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>DAG后门路径识别、IV三假设验证、E-value计算、中介分析假设检查</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>statistical_analysis_plan.yaml, hypotheses.yaml, analysis_results</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>causal_assumption_audit.md, causal_evidence_rating.yaml</td>
+</tr>
+</tbody>
+</table>
+<h3>2.16 external_validation_planner（外部验证规划师）— v3.0 NEW</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>独立队列验证策略设计，样本独立性验证，跨中心/跨平台验证规划</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>design_analysis_plan, verify_methods, integrity_check</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>验证层级设计(内部→时间→地理→外部)、验证队列识别、性能阈值设定</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>study_design_protocol.yaml, statistical_analysis_plan.yaml</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>validation_plan.yaml, validation_cohort_candidates.md</td>
+</tr>
+</tbody>
+</table>
+<h3>2.17 reviewer_simulator（多角色审稿模拟器）— v3.0 NEW</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>4角色独立审稿模拟(EIC+统计+临床+生信)，致命缺陷检测，反辩策略生成</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>internal_review, re_review</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>多角色独立审稿、投稿准备度评分(0-100)、反辩要点预生成</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>manuscript_draft.md, figures/, journal_requirements.yaml</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>simulated_peer_review.md, rebuttal_talking_points.md</td>
+</tr>
+</tbody>
+</table>
+<h3>2.18 novelty_killer（创新杀手/红队）— v3.0 NEW</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位</strong></td>
+<td>对抗性审查——主动寻找致命缺陷：样本不足、无外部验证、ML无增量、机制链断裂</td>
+</tr>
+<tr>
+<td><strong>负责阶段</strong></td>
+<td>formulate_hypotheses, internal_review</td>
+</tr>
+<tr>
+<td><strong>主要技能</strong></td>
+<td>10类致命缺陷系统评估(FATAL/MAJOR/MINOR/ABSENT)、竞争力对比、拒稿风险评分</td>
+</tr>
+<tr>
+<td><strong>输入</strong></td>
+<td>hypotheses.yaml, data_inventory.yaml, study_design_protocol.yaml</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>fatal_flaws_report.md, rejection_risk_summary.yaml</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>3. Agent 协作模式</h2>
+<h3>3.1 串联协作 (Sequential Handoff)</h3>
+<pre><code>research_strategist → literature_reviewer → report_writer → integrity_checker
+
+每个 Agent 完成工作后，下一个 Agent 以上一个的输出为输入。
+适用场景: 线性无分支的任务（如写 Introduction）。
+</code></pre>
+<h3>3.2 扇出协作 (Fan-Out Parallel)</h3>
+<pre><code>                     ┌──▶ analysis_executor (clustering)
+data_auditor ────────┼──▶ analysis_executor (DE)
+                     └──▶ analysis_executor (pathway)
+
+                     并行执行独立分析，结果汇聚到 figure_planner。
+                     适用场景: 多分析同时运行。
+</code></pre>
+<h3>3.3 交叉验证协作 (Adversarial Verify)</h3>
+<pre><code>report_writer ──→ manuscript_draft
+                        │
+        ┌───────────────┼───────────────┐
+        ▼               ▼               ▼
+  integrity_checker  statistician   literature_reviewer
+  (格式+引用)        (统计完整性)    (文献准确性)
+        │               │               │
+        └───────────────┼───────────────┘
+                        ▼
+                  team_orchestrator
+                  (冲突裁决 + 综合报告)
+</code></pre>
+<h3>3.4 迭代修订协作 (Loop-until-Clean)</h3>
+<pre><code>report_writer → integrity_checker → [PASS?]
+                                     ├─ YES → team_orchestrator
+                                     └─ NO  → report_writer (revise)
+                                              ↓
+                                         integrity_checker → ...
+                        最多迭代 max_retries=5 次 (apply_revision 阶段)
+</code></pre>
+<hr />
+<h2>4. Agent 到 Stage 的映射</h2>
+<table>
+<thead>
+<tr>
+<th>Stage (18)</th>
+<th>Phase</th>
+<th>Primary Agent</th>
+<th>Support Agents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>select_topic</td>
+<td>1</td>
+<td>research_strategist</td>
+<td>—</td>
+</tr>
+<tr>
+<td>target_journal</td>
+<td>1</td>
+<td>research_strategist</td>
+<td>—</td>
+</tr>
+<tr>
+<td>literature_search</td>
+<td>1</td>
+<td>literature_reviewer</td>
+<td>—</td>
+</tr>
+<tr>
+<td>formulate_hypotheses</td>
+<td>1</td>
+<td>research_strategist</td>
+<td>literature_reviewer</td>
+</tr>
+<tr>
+<td>data_audit</td>
+<td>2</td>
+<td>data_auditor</td>
+<td>code_librarian</td>
+</tr>
+<tr>
+<td>figure_planning</td>
+<td>2</td>
+<td>figure_planner</td>
+<td>data_auditor</td>
+</tr>
+<tr>
+<td>run_analysis</td>
+<td>2</td>
+<td>analysis_executor</td>
+<td>pipeline_engineer, multi_omics_integrator, code_librarian</td>
+</tr>
+<tr>
+<td>verify_methods</td>
+<td>2</td>
+<td>pipeline_engineer</td>
+<td>statistician, integrity_checker</td>
+</tr>
+<tr>
+<td>write_methods</td>
+<td>3</td>
+<td>report_writer</td>
+<td>pipeline_engineer</td>
+</tr>
+<tr>
+<td>write_results</td>
+<td>3</td>
+<td>report_writer</td>
+<td>figure_planner</td>
+</tr>
+<tr>
+<td>write_introduction</td>
+<td>3</td>
+<td>report_writer</td>
+<td>literature_reviewer</td>
+</tr>
+<tr>
+<td>write_discussion</td>
+<td>3</td>
+<td>report_writer</td>
+<td>literature_reviewer</td>
+</tr>
+<tr>
+<td>assemble_manuscript</td>
+<td>4</td>
+<td>report_writer</td>
+<td>—</td>
+</tr>
+<tr>
+<td>integrity_check</td>
+<td>4</td>
+<td>integrity_checker</td>
+<td>—</td>
+</tr>
+<tr>
+<td>internal_review</td>
+<td>4</td>
+<td>team_orchestrator</td>
+<td>integrity_checker</td>
+</tr>
+<tr>
+<td>apply_revision</td>
+<td>5</td>
+<td>report_writer</td>
+<td>—</td>
+</tr>
+<tr>
+<td>re_review</td>
+<td>5</td>
+<td>team_orchestrator</td>
+<td>integrity_checker</td>
+</tr>
+<tr>
+<td>finalize</td>
+<td>6</td>
+<td>integrity_checker</td>
+<td>team_orchestrator, code_librarian</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. Agent 通信协议</h2>
+<h3>5.1 Artifact-Based Communication</h3>
+<p>Agent 之间<strong>不直接通信</strong>，而是通过写入/读取共享制品文件交换信息:</p>
+<pre><code>Agent A 写入: papers/&lt;id&gt;/results/de_results.csv
+                ↓ (artifact_ledger.jsonl 记录 hash)
+Agent B 读取: papers/&lt;id&gt;/results/de_results.csv
+                ↓ (验证 hash 一致性)
+Agent B 处理并写入新制品
+</code></pre>
+<h3>5.2 Passport 同步</h3>
+<pre><code>每次 stage 完成后:
+  1. AgentDispatcher.dispatch() → StageResult (含 artifacts + errors)
+  2. PaperWorkflow._execute_stage() → passport.record_artifact()
+  3. PaperLoopEngine.record_and_sync() → _update_passport() + _sync_stale()
+  4. 下游 stage 的 upstream_ready() 检查上游 status == COMPLETED
+</code></pre>
+<h3>5.3 过期检测</h3>
+<pre><code>当上游 stage 的 artifact hash 变化:
+  1. PaperPassport.detect_artifact_drift() 检测到 hash 不匹配
+  2. 所有下游 stage 的 status → STALE
+  3. PipelineState → STALE_STAGES
+  4. decide_next_stage() 优先返回 stale stages (重运行)
+</code></pre>
+<hr />
+<h2>6. Paper Writing Team（协作团队）</h2>
+<h3>6.1 团队定义</h3>
+<p><code>paper_writing_team</code> 是一个预配置的协作团队，包含全部 12 个 Agent，用于完整的论文生产周期。</p>
+<p><strong>触发</strong>: 当用户请求 &quot;写完整论文&quot; / &quot;full paper workflow&quot; / &quot;academic pipeline&quot;</p>
+<p><strong>协调模式</strong>: team_orchestrator 作为 Lead，分配任务给其他 Agent</p>
+<h3>6.2 团队工作流</h3>
+<pre><code>Phase 1: Research  ──┬── research_strategist + literature_reviewer (并行)
+Phase 2: Data      ──┬── data_auditor → analysis_executor → pipeline_engineer
+Phase 3: Writing   ──┬── report_writer (串联 IMRAD)
+Phase 4: Review    ──┬── integrity_checker + statistician (交叉验证)
+Phase 5: Finalize  ──┬── team_orchestrator + integrity_checker
+</code></pre>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="pipeline_design" class="section-anchor">
+
+<h1>PIPELINE_DESIGN — 18阶段调度管线</h1>
+
+<hr />
+<h2>1. 管线全景：18-Stage Pipeline</h2>
+<pre><code>Phase 1: Research &amp; Planning          Phase 2: Data &amp; Methods
+┌─────────────────────────┐           ┌─────────────────────────┐
+│ ① select_topic          │           │ ⑤ data_audit            │
+│     └→ ② target_journal │           │     └→ ⑥ figure_planning│
+│     └→ ③ literature_    │           │     └→ ⑦ run_analysis   │
+│          search          │           │          └→ ⑧ verify_   │
+│ ②+③ ─→ ④ formulate_     │           │              methods    │
+│          hypotheses      │           │                         │
+└──────────┬──────────────┘           └──────────┬──────────────┘
+           │                                     │
+           └──────────────┬──────────────────────┘
+                          │
+Phase 3: Writing          ▼               Phase 4: Assembly &amp; Review
+┌─────────────────────────┐           ┌─────────────────────────┐
+│ ⑨ write_methods         │           │ ⑬ assemble_manuscript   │
+│ ⑩ write_results         │           │ ⑭ integrity_check       │
+│ ⑪ write_introduction    │           │ ⑮ internal_review       │
+│ ⑫ write_discussion      │           │                         │
+└──────────┬──────────────┘           └──────────┬──────────────┘
+           │                                     │
+           └──────────────┬──────────────────────┘
+                          │
+Phase 5: Revision         ▼               Phase 6: Finalize
+┌─────────────────────────┐           ┌─────────────────────────┐
+│ ⑯ apply_revision        │           │ ⑱ finalize              │
+│ ⑰ re_review             │           │    → manuscript_final   │
+│    ↻ (loop until pass)  │           │    → cover_letter       │
+└─────────────────────────┘           │    → reproducibility    │
+                                      └─────────────────────────┘
+</code></pre>
+<hr />
+<h2>2. 阶段依赖图 (DAG)</h2>
+<pre><code>                          ┌───────────────────────┐
+                          │   ① select_topic [CP] │
+                          └──────┬────────┬───────┘
+                                 │        │
+                    ┌────────────┘        └────────────┐
+                    ▼                                  ▼
+          ┌─────────────────┐                ┌──────────────────┐
+          │② target_journal │                │③ literature_search│
+          └────────┬────────┘                └────────┬─────────┘
+                   │                                  │
+                   └──────────┬───────────────────────┘
+                              ▼
+                    ┌───────────────────────┐
+                    │④ formulate_hypo [CP]  │
+                    └───────────┬───────────┘
+                                │
+                                ▼
+                    ┌───────────────────────┐
+                    │   ⑤ data_audit        │
+                    └──────┬────────┬───────┘
+                           │        │
+              ┌────────────┘        └────────────┐
+              ▼                                  ▼
+    ┌──────────────────┐               ┌──────────────────┐
+    │⑥ figure_plan [CP]│               │⑦ run_analysis    │
+    └────────┬─────────┘               └────────┬─────────┘
+             │                                  │
+             │                         ┌────────┘
+             │                         ▼
+             │               ┌──────────────────┐
+             │               │⑧ verify_methods  │
+             │               └────────┬─────────┘
+             │                        │
+             │           ┌────────────┼────────────┐
+             │           ▼            ▼            ▼
+             │   ┌──────────┐ ┌──────────┐ ┌──────────────┐
+             │   │⑨ methods │ │⑩ results │ │⑪ introduction│
+             │   │   [CP]   │ │   [CP]   │ │    [CP]      │
+             │   └────┬─────┘ └────┬─────┘ └──────┬───────┘
+             │        │            │               │
+             │        │            ▼               │
+             │        │     ┌──────────────┐       │
+             │        │     │⑫ discussion  │       │
+             │        │     │     [CP]     │       │
+             │        │     └──────┬───────┘       │
+             │        │            │               │
+             └────────┼────────────┼───────────────┘
+                      │            │
+                      └─────┬──────┘
+                            ▼
+                  ┌──────────────────┐
+                  │⑬ assemble [CP]   │
+                  └────────┬─────────┘
+                           │
+                           ▼
+                  ┌──────────────────┐
+                  │⑭ integrity_check │
+                  └────────┬─────────┘
+                           │
+                           ▼
+                  ┌──────────────────┐
+                  │⑮ internal_review │
+                  │      [CP]        │
+                  └────────┬─────────┘
+                           │
+                           ▼
+                  ┌──────────────────┐
+                  │⑯ apply_revision  │◀──┐
+                  └────────┬─────────┘   │
+                           │             │ (max 5 retries)
+                           ▼             │
+                  ┌──────────────────┐   │
+                  │⑰ re_review  [CP] ├───┘
+                  └────────┬─────────┘
+                           │ (pass)
+                           ▼
+                  ┌──────────────────┐
+                  │⑱ finalize   [CP] │
+                  └──────────────────┘
+
+  [CP] = Human Checkpoint (需要人工审核批准)
+</code></pre>
+<hr />
+<h2>3. 并行调度策略</h2>
+<h3>3.1 阶段内并行 (Intra-Phase Parallelism)</h3>
+<p>Phase 3 Writing 的4个写作为什么可以并行:</p>
+<pre><code>⑧ verify_methods ──┬─→ ⑨ write_methods       (depends: ⑧)
+                    └─→ ⑩ write_results       (depends: ⑧ + ⑥)
+
+③ literature ──────┬─→ ⑪ write_introduction  (depends: ③ + ④)
+④ hypotheses       │
+                    └─→ ⑫ write_discussion    (depends: ⑩ + ③)
+                         (⑩ 必须 COMPLETED)
+
+并行窗口:
+  t0: ⑧ COMPLETED → ⑨ + ⑩ 可同时启动 (⑨只需⑧, ⑩需要⑧+⑥)
+  t1: ⑩ COMPLETED → ⑫ 启动 (⑫ 依赖 ⑩)
+  t0-t1 期间: ⑨ + ⑪ 可以并行 (⑨ 在用⑧, ⑪ 在用③+④)
+</code></pre>
+<h3>3.2 decide_next_stage() 调度逻辑</h3>
+<pre><code class="language-python">def decide_next_stage(self) -&gt; Optional[str]:
+    for stage_def in self._active_stages:          # 按 phase order 扫描
+        stage = self.stages[stage_def.name]
+        if stage.status == StageStatus.COMPLETED:   # 跳过已完成
+            continue
+        if stage.status == StageStatus.FAILED and \
+           stage.retry_count &gt;= stage_def.max_retries:  # 跳过重试耗尽
+            continue
+        upstream_ready = all(
+            self.stages[u].status == StageStatus.COMPLETED
+            for u in stage_def.upstream              # 检查所有上游
+        )
+        if upstream_ready:
+            return stage_def.name                    # 返回第一个就绪阶段
+    # 全完成 → CLEAN, 否则 BLOCKED
+    return None
+</code></pre>
+<p><strong>关键特性</strong>: 非贪心 — 按 order 顺序选择，不跳级。保证逻辑顺序前提下最大化并行度。</p>
+<hr />
+<h2>4. 工作路径设计（5种模式）</h2>
+<h3>4.1 完整研究路径 (Full Research)</h3>
+<pre><code>Idea → ① Topic → ② Journal → ③ Literature → ④ Hypotheses [CP1]
+  → ⑤ Data Audit → ⑥ Figure Plan [CP2] → ⑦ Analysis
+  → ⑧ Verify → ⑨ Method → ⑩ Results → ⑪ Intro → ⑫ Discussion [CP3]
+  → ⑬ Assemble → ⑭ Integrity → ⑮ Review [CP4]
+  → ⑯ Revise → ⑰ Re-review [CP5]
+  → ⑱ Finalize [CP6]
+
+适用: 全新项目，有原始数据，从头写论文
+耗时: 8-12 周
+调用: wf.run(phases=[1,2,3,4,5])
+</code></pre>
+<h3>4.2 快速写作路径 (From Results)</h3>
+<pre><code>已有结果 → ⑤ Data Audit (简略) → ⑥ Figure Plan [CP]
+  → ⑨ Methods → ⑩ Results → ⑪ Intro → ⑫ Discussion
+  → ⑬ Assemble → ⑭ Integrity → ⑮ Review [CP]
+  → ⑯ Revise → ⑰ Re-review → ⑱ Finalize
+
+适用: 分析代码已完成，结果在手，只需写论文
+耗时: 2-4 周
+调用: wf.run(phases=[3,4,5])
+</code></pre>
+<h3>4.3 修订循环路径 (Revision Cycle)</h3>
+<pre><code>Reviewer Comments
+  → ⑯ Apply Revision → ⑰ Re-review
+  ↻ loop: 如果 re-review 不通过，修改后重来 (最多5次)
+  → ⑱ Finalize
+
+适用: 收到审稿意见需要修回
+耗时: 1-2 周
+调用: wf.run(phases=[5])
+</code></pre>
+<h3>4.4 方法学论文路径 (Methods Paper)</h3>
+<pre><code>跳过 hypothesis + figure_planning + intro writing
+保留: analysis + verify_methods + methods writing (extended)
+
+配置: paper_type = &quot;methods&quot;
+自动跳过: formulate_hypotheses, figure_planning, write_results, write_introduction, write_discussion
+</code></pre>
+<h3>4.5 文献综述路径 (Review Paper)</h3>
+<pre><code>跳过 data + analysis + methods + results
+保留: literature_search (extended) + introduction + discussion
+
+配置: paper_type = &quot;review&quot;
+自动跳过: data_audit, figure_planning, run_analysis, verify_methods, write_methods, write_results
+</code></pre>
+<hr />
+<h2>5. 检查点系统 (6 Human Checkpoints)</h2>
+<pre><code>CP1 ─ ① select_topic         → &quot;审查研究主题和范围，批准进入文献检索&quot;
+CP2 ─ ④ formulate_hypotheses → &quot;审查假设和实验设计，批准进入数据分析&quot;
+CP3 ─ ⑥ figure_planning      → &quot;审查图表策略和证据逻辑，批准进入分析执行&quot;
+CP4 ─ ⑮ internal_review      → &quot;审查完整手稿和审稿意见，批准进入修订&quot;
+CP5 ─ ⑰ re_review            → &quot;确认修订充分，批准进入最终化&quot;
+CP6 ─ ⑱ finalize             → &quot;最终质量审核，批准提交&quot;
+</code></pre>
+<p><strong>决策三态</strong>:</p>
+<ul>
+<li><code>approved</code> → 继续</li>
+<li><code>revision_needed</code> → 暂停，等待修复后 <code>resume()</code></li>
+<li><code>rejected</code> → 中止管线</li>
+</ul>
+<hr />
+<h2>6. 容错与恢复机制</h2>
+<h3>6.1 重试策略</h3>
+<pre><code class="language-yaml">retry:
+  strategy: exponential_backoff
+  base_seconds: 60
+  multiplier: 2.0          # 1min → 2min → 4min → 8min → 15min (max)
+  max_delay_seconds: 900
+  jitter: true             # 随机抖动避免雷鸣群效应
+  max_cumulative_retries: 20
+</code></pre>
+<h3>6.2 熔断器 (Circuit Breaker)</h3>
+<pre><code class="language-yaml">circuit_breaker:
+  failure_threshold: 5       # 5次失败后熔断
+  recovery_timeout: 600s     # 10分钟后尝试恢复
+  on_open: skip_stage        # 跳过故障阶段，管线继续
+</code></pre>
+<h3>6.3 过期检测 (Stale Detection)</h3>
+<pre><code>Artifact hash 变更触发链:
+  data_audit 更新 data_inventory.yaml (hash 变化)
+    → artifact_ledger.jsonl 记录新 hash
+    → _sync_stale() 扫描:
+        run_analysis.status == COMPLETED
+        但 data_audit artifact hash ≠ 记录值
+        → run_analysis → STALE
+        → 所有下游 (verify_methods, write_*, assemble, ...) → STALE
+    → decide_next_stage() 返回 run_analysis (stale 优先)
+</code></pre>
+<hr />
+<h2>7. 文件系统布局</h2>
+<pre><code>papers/&lt;paper_id&gt;/
+├── project_passport.yaml           # 项目护照
+├── research_plan/                  # Phase 1
+│   ├── research_question.md
+│   ├── journal_profile.md
+│   ├── formatting_requirements.yaml
+│   ├── hypotheses.yaml
+│   └── feasibility_decision.md
+├── references/                     # 文献
+│   ├── library.bib
+│   └── citation_evidence.csv
+├── data/                           # Phase 2
+│   ├── data_audit_report.md
+│   ├── data_inventory.yaml
+│   └── qc_filter_report.md
+├── results/                        # 分析结果
+│   ├── figure_plan.json
+│   ├── clustering_results.yaml
+│   ├── de_results.csv
+│   └── figures/
+├── manuscript/                     # Phase 3-5
+│   ├── {abstract,introduction,methods,results,discussion}.md
+│   ├── manuscript.tex / .pdf
+│   └── manuscript_revised.tex
+├── review/                         # Phase 4
+│   ├── review_report.md
+│   └── re_review_report.md
+├── integrity/                      # 质量
+│   ├── integrity_report.json
+│   └── integrity_report.md
+├── submission/                     # Phase 6
+│   ├── manuscript_final.pdf
+│   └── cover_letter.pdf
+├── workflow_state/                 # 状态持久化
+│   ├── e2e_state_*.json
+│   └── pending_invocations/*.json
+├── artifact_ledger.jsonl           # 制品 hash 日志
+├── checkpoint_ledger.jsonl         # 检查点决策日志
+└── workflow_report.md              # 最终报告
+</code></pre>
+<hr />
+<h2>8. CLI 控制</h2>
+<pre><code class="language-bash"># 创建项目
+python -m paper_workflow.cli create-project \
+  --idea &quot;IgG4-ROD vs MALT lymphoma biomarker discovery&quot; \
+  --field &quot;bioinformatics, immunology&quot; \
+  --journal &quot;Arthritis Research &amp; Therapy&quot;
+
+# 试运行 (不实际执行)
+python -m paper_workflow.e2e_workflow --paper-id &lt;id&gt; --dry-run
+
+# 运行特定阶段
+python -m paper_workflow.e2e_workflow --paper-id &lt;id&gt; --phases 1,2 --stop-at-checkpoint
+
+# 恢复暂停的工作流
+python -m paper_workflow.cli resume --paper &lt;id&gt;
+
+# 诊断 + 导出报告
+python -m paper_workflow.cli diagnose --paper &lt;id&gt;
+python -m paper_workflow.cli export-report --paper &lt;id&gt;
+</code></pre>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="quality_gates" class="section-anchor">
+
+<h1>QUALITY_GATES — 16规则质量门体系</h1>
+
+<blockquote>
+<p>v3.0: 从论文完整性升级为医学证据可信度门控系统。新增5大类别25个医学专用门。</p>
+</blockquote>
+<hr />
+<h2>1. 质量门概览</h2>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │                    INTEGRITY GATE SYSTEM                         │
+  │                                                                  │
+  │  G1: CITATION       G2: CLAIM          G3: CONTENT              │
+  │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐          │
+  │  │ bibtex_      │    │ citation_    │    │ results_no_ │          │
+  │  │ existence    │    │ evidence_    │    │ citations   │          │
+  │  │              │    │ traceability │    │             │          │
+  │  │ figures_     │    │ claim_       │    │ no_local_   │          │
+  │  │ referenced   │    │ artifact_    │    │ paths       │          │
+  │  │              │    │ binding      │    │             │          │
+  │  └─────────────┘    └─────────────┘    └─────────────┘          │
+  │                                                                  │
+  │  G4: DATA            G5: STATISTICS      G6: FORMAT              │
+  │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐          │
+  │  │ data_        │    │ statistics_ │    │ section_    │          │
+  │  │ availability │    │ reported    │    │ length_     │          │
+  │  │              │    │             │    │ minimum     │          │
+  │  │ code_        │    │ pseudo-     │    │ no_bullets_ │          │
+  │  │ availability │    │ replication │    │ in_prose    │          │
+  │  │              │    │ _check      │    │             │          │
+  │  │ methods_     │    │ results_no_ │    │ figure_     │          │
+  │  │ parameters_  │    │ overinter-  │    │ count_      │          │
+  │  │ complete     │    │ pretation   │    │ requirements│          │
+  │  │              │    │             │    │             │          │
+  │  │ discussion_  │    │             │    │             │          │
+  │  │ limitations  │    │             │    │             │          │
+  │  └─────────────┘    └─────────────┘    └─────────────┘          │
+  └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2>2. CRITICAL 规则（5条 — 阻塞管线）</h2>
+<h3>G1.1 — bibtex_citation_existence</h3>
+<pre><code>严重级别: CRITICAL ⛔
+描述: 手稿中每个引用密钥必须在 references.bib 中存在
+检查: 提取所有 \cite{key} → 验证 key ∈ BibTeX entries
+阻塞: 是
+自动修复: 否 (需人工补充缺失引用)
+</code></pre>
+<h3>G1.2 — citation_evidence_traceability</h3>
+<pre><code>严重级别: CRITICAL ⛔
+描述: 每个事实性声称必须可追溯到至少一条引用证据
+检查: 提取声称 → 匹配 citation_evidence.csv → 验证 DOI/PMID
+阻塞: 是
+自动修复: 否
+</code></pre>
+<h3>G1.3 — results_no_citations</h3>
+<pre><code>严重级别: CRITICAL ⛔
+描述: Results 部分不得包含对外部文献的引用
+检查: 扫描 Results 段落 → 检测 \cite{} 或 (Author, Year) 模式
+阻塞: 是
+自动修复: 否 (需移至 Discussion)
+</code></pre>
+<h3>G1.4 — claim_artifact_binding</h3>
+<pre><code>严重级别: CRITICAL ⛔
+描述: 手稿中每个数值声称必须可追溯到具体的分析制品文件
+检查: 提取数值声称 → 匹配 artifact_ledger.jsonl → 验证 hash 一致性
+阻塞: 是
+自动修复: 否
+示例:
+  声称: &quot;WGCNA identified 17 co-expression modules&quot;
+  追溯: results/wgcna/module_assignment.csv → hash SHA256:abc123...
+  验证: artifact_ledger.jsonl 中存在该 hash ✓
+</code></pre>
+<h3>G1.5 — figures_referenced</h3>
+<pre><code>严重级别: CRITICAL ⛔
+描述: figures/ 目录中的每个图形文件必须至少在手稿中被引用一次
+检查: list figures/ → grep manuscript for each figure filename
+阻塞: 是
+自动修复: 否
+</code></pre>
+<hr />
+<h2>3. HIGH 规则（8条 — 必须在提交前解决）</h2>
+<h3>G2.1 — data_availability_statement</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: 手稿必须包含完整的数据可用性声明及存储库 accession 号
+检查: 搜索 &quot;Data Availability&quot; 段落 → 验证 accession 格式
+阻塞: 是 (但支持自动修复)
+自动修复: 是 (基于 data_inventory.yaml 生成模板)
+</code></pre>
+<h3>G2.2 — code_availability_statement</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: 手稿必须包含代码可用性声明及仓库 DOI/URL
+检查: 搜索 &quot;Code Availability&quot; 段落 → 验证 DOI/URL 格式
+阻塞: 是
+自动修复: 是
+</code></pre>
+<h3>G2.3 — no_local_paths</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: 手稿不得包含本地文件路径 (C:/Users/..., /home/...)
+检查: regex 扫描 → 标记路径模式
+阻塞: 是
+自动修复: 是 (替换为相对路径或通用描述)
+</code></pre>
+<h3>G2.4 — methods_parameters_complete</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: Methods 必须报告所有软件版本、参数值和随机种子
+检查: 解析 Methods → 验证必需字段:
+  [software_versions, parameters, random_seeds, thresholds]
+阻塞: 是
+自动修复: 否 (需人机协作提取参数)
+</code></pre>
+<h3>G2.5 — discussion_limitations</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: Discussion 必须包含至少一个专门的局限性段落
+检查: 在 Discussion 中搜索 &quot;limitation&quot; / &quot;limitations&quot; / &quot;caveat&quot; 关键词
+阻塞: 是
+自动修复: 否 (需结合具体研究内容)
+</code></pre>
+<h3>G2.6 — results_no_overinterpretation</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: Results 不得包含因果语言（用于相关性发现）或推测性解释
+检查: 扫描因果词汇 (&quot;causes&quot;, &quot;leads to&quot;, &quot;triggers&quot;) + 推测信号
+阻塞: 是
+自动修复: 否
+</code></pre>
+<h3>G2.7 — statistics_reported</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: 每个统计检验必须报告: 检验统计量, 效应量, 置信区间, 精确p值
+检查: 解析统计声称 → 验证字段完整性:
+  [test_statistic, effect_size, ci, p_value]
+阻塞: 是
+自动修复: 否
+</code></pre>
+<h3>G2.8 — pseudoreplication_check</h3>
+<pre><code>严重级别: HIGH ⚠️
+描述: 无伪重复: 生物重复与技术重复正确区分
+检查: 识别重复结构 → 验证独立性假设
+阻塞: 是
+自动修复: 否
+</code></pre>
+<hr />
+<h2>4. MEDIUM 规则（3条 — 警告不阻塞）</h2>
+<h3>G3.1 — section_length_minimum</h3>
+<pre><code>严重级别: MEDIUM ℹ️
+描述: 各部分满足最低字数要求
+检查: word_count(section) vs paper_type minimum
+阻塞: 否
+自动修复: 否
+</code></pre>
+<h3>G3.2 — no_bullets_in_prose</h3>
+<pre><code>严重级别: MEDIUM ℹ️
+描述: 正文段落不得使用项目符号或编号列表
+检查: 扫描正文 → 检测 bullet/list markers
+阻塞: 否
+自动修复: 是 (自动转换为段落)
+</code></pre>
+<h3>G3.3 — figure_count_requirements</h3>
+<pre><code>严重级别: MEDIUM ℹ️
+描述: 图表数量不超过目标期刊限制
+检查: count(figures) + count(tables) vs journal limits
+阻塞: 否
+自动修复: 否
+</code></pre>
+<hr />
+<h2>5. 门触发矩阵</h2>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>bibtex</th>
+<th>citation_trace</th>
+<th>results_no_cite</th>
+<th>claim_bind</th>
+<th>fig_ref</th>
+<th>data_avail</th>
+<th>code_avail</th>
+<th>no_paths</th>
+<th>params</th>
+<th>limits</th>
+<th>no_overinterp</th>
+<th>stats</th>
+<th>pseudo</th>
+<th>length</th>
+<th>no_bullets</th>
+<th>fig_count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① select_topic</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>④ hypotheses</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑧ verify_methods</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑨ write_methods</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑩ write_results</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>—</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑪ write_intro</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑫ write_discussion</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑭ integrity_check</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑰ re_review</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑱ finalize</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>6. 门执行流程</h2>
+<h3>6.1 IntegrityGateChecker 检查顺序</h3>
+<pre><code class="language-python">class IntegrityGateChecker:
+    def run_all_checks(self, manuscript_sections, bibtex_path, 
+                       figure_plan=None, journal_target=None):
+        report = IntegrityReport()
+        
+        # Phase 1: Content-independent checks (fast)
+        for section_name, content in manuscript_sections.items():
+            self._check_no_local_paths(content, report)      # G2.3
+            self._check_no_bullets(content, report)           # G3.2
+            self._check_section_length(content, report)       # G3.1
+        
+        # Phase 2: Citation checks (medium)
+        if bibtex_path:
+            self._check_bibtex_existence(manuscript_sections, 
+                                         bibtex_path, report) # G1.1
+            self._check_citation_traceability(
+                manuscript_sections, bibtex_path, report)     # G1.2
+        
+        # Phase 3: Results-specific checks (slowest)
+        if 'results' in manuscript_sections:
+            self._check_results_no_citations(
+                manuscript_sections['results'], report)       # G1.3
+            self._check_claim_artifact_binding(
+                manuscript_sections['results'], 
+                self.artifact_ledger, report)                 # G1.4
+            self._check_statistics_reported(
+                manuscript_sections['results'], report)       # G2.7
+        
+        # Phase 4: Structure checks
+        self._check_figures_referenced(...)                   # G1.5
+        self._check_data_availability(...)                    # G2.1
+        self._check_code_availability(...)                    # G2.2
+        self._check_methods_parameters(...)                   # G2.4
+        self._check_discussion_limitations(...)               # G2.5
+        self._check_no_overinterpretation(...)                # G2.6
+        self._check_pseudoreplication(...)                    # G2.8
+        self._check_figure_count(...)                         # G3.3
+        
+        # Final: determine blocking status
+        report.blocks_pipeline = report.critical_failures &gt; 0
+        return report
+</code></pre>
+<h3>6.2 门结果数据结构</h3>
+<pre><code class="language-python">@dataclass
+class IntegrityReport:
+    report_id: str
+    passed: bool                     # all CRITICAL passed?
+    critical_failures: int
+    high_failures: int
+    medium_failures: int
+    blocks_pipeline: bool            # True if critical_failures &gt; 0
+    results: list[GateResult]        # detailed per-rule results
+    
+@dataclass  
+class GateResult:
+    rule: str                        # e.g. &quot;bibtex_citation_existence&quot;
+    severity: str                    # CRITICAL | HIGH | MEDIUM
+    passed: bool
+    message: str                     # Human-readable explanation
+    violations: list[dict]           # Specific violations with location + fix
+</code></pre>
+<hr />
+<h2>7. 默认门规则（按阶段自动推导）</h2>
+<p>当 stage 未显式定义 gate_rules 时，系统按 phase 自动应用默认规则:</p>
+<pre><code class="language-python">def _get_default_gate_rules(stage_name, phase):
+    if phase &lt;= 2:    # Research &amp; Data
+        return [{&quot;rule&quot;: &quot;all_outputs_exist&quot;, &quot;severity&quot;: &quot;critical&quot;}]
+    elif phase == 3:   # Writing
+        return [
+            {&quot;rule&quot;: &quot;no_local_paths&quot;, &quot;severity&quot;: &quot;high&quot;},
+            {&quot;rule&quot;: &quot;section_length_minimum&quot;, &quot;severity&quot;: &quot;medium&quot;},
+            {&quot;rule&quot;: &quot;no_bullets_in_prose&quot;, &quot;severity&quot;: &quot;medium&quot;},
+        ]
+    elif phase == 4:   # Assembly &amp; Review
+        return [
+            {&quot;rule&quot;: &quot;bibtex_citation_existence&quot;, &quot;severity&quot;: &quot;critical&quot;},
+            {&quot;rule&quot;: &quot;results_no_citations&quot;, &quot;severity&quot;: &quot;critical&quot;},
+            {&quot;rule&quot;: &quot;figures_referenced&quot;, &quot;severity&quot;: &quot;critical&quot;},
+        ]
+    else:              # Phase 5-6: Revision &amp; Finalize
+        return [
+            {&quot;rule&quot;: &quot;data_availability_statement&quot;, &quot;severity&quot;: &quot;high&quot;},
+            {&quot;rule&quot;: &quot;code_availability_statement&quot;, &quot;severity&quot;: &quot;high&quot;},
+            {&quot;rule&quot;: &quot;figure_count_requirements&quot;, &quot;severity&quot;: &quot;medium&quot;},
+        ]
+</code></pre>
+<hr />
+<h2>8. 门与管线的交互</h2>
+<pre><code>Stage 执行完成
+  │
+  ▼
+PaperWorkflow._execute_stage(stage)
+  ├── engine.run_stage(stage)           # 执行阶段
+  ├── engine.verify_stage(stage)        # 运行 gate checks
+  │     └── IntegrityGateChecker.run_all_checks()
+  │           │
+  │           ├── all CRITICAL pass? → StageStatus.COMPLETED
+  │           ├── any CRITICAL fail? → StageStatus.FAILED
+  │           │   └── PipelineState.GATE_FAILURE
+  │           └── MEDIUM fails? → 仅警告, 不阻塞
+  │
+  ├── passport.record_artifact(...)     # 记录制品
+  └── engine.record_and_sync()          # 同步状态 + 检测过期
+</code></pre>
+<hr />
+<h2>9. 自动修复能力</h2>
+<table>
+<thead>
+<tr>
+<th>规则</th>
+<th>可自动修复</th>
+<th>修复方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data_availability_statement</td>
+<td>✅</td>
+<td>从 data_inventory.yaml 生成模板</td>
+</tr>
+<tr>
+<td>code_availability_statement</td>
+<td>✅</td>
+<td>从 git remote + 配置生成</td>
+</tr>
+<tr>
+<td>no_local_paths</td>
+<td>✅</td>
+<td>regex 替换本地路径为通用描述</td>
+</tr>
+<tr>
+<td>no_bullets_in_prose</td>
+<td>✅</td>
+<td>将列表转换为段落</td>
+</tr>
+<tr>
+<td>bibtex_citation_existence</td>
+<td>❌</td>
+<td>需人工查找缺失引用</td>
+</tr>
+<tr>
+<td>citation_evidence_traceability</td>
+<td>❌</td>
+<td>需人工验证声称-证据对应</td>
+</tr>
+<tr>
+<td>claim_artifact_binding</td>
+<td>❌</td>
+<td>需人工追溯数值来源</td>
+</tr>
+<tr>
+<td>methods_parameters_complete</td>
+<td>❌</td>
+<td>需人机协作提取参数</td>
+</tr>
+<tr>
+<td>discussion_limitations</td>
+<td>❌</td>
+<td>需基于具体研究撰写</td>
+</tr>
+<tr>
+<td>results_no_overinterpretation</td>
+<td>❌</td>
+<td>需人工判断语义边界</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="workflow_patterns" class="section-anchor">
+
+<h1>WORKFLOW_PATTERNS — 5种工作流模式</h1>
+
+<hr />
+<h2>1. 模式总览</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────────────┐
+│                      WORKFLOW PATTERN LIBRARY                         │
+│                                                                       │
+│  PATTERN 1           PATTERN 2           PATTERN 3                    │
+│  Full Research       From Results        Revision Cycle               │
+│  ┌─────────┐         ┌─────────┐         ┌─────────┐                 │
+│  │18 stages│         │Phase 3-6│         │Phase 5-6│                 │
+│  │8-12 wks │         │ 2-4 wks │         │ 1-2 wks │                 │
+│  └─────────┘         └─────────┘         └─────────┘                 │
+│                                                                       │
+│  PATTERN 4           PATTERN 5                                       │
+│  Methods Paper       Literature Review                               │
+│  ┌─────────┐         ┌─────────┐                                     │
+│  │ 13 stgs │         │ 12 stgs │                                     │
+│  │ 3-6 wks │         │ 4-8 wks │                                     │
+│  └─────────┘         └─────────┘                                     │
+│                                                                       │
+│  COMPOSABLE:                                                          │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                  │
+│  │Code→Paper    │ │Multi-Journal  │ │Collaborative │                  │
+│  │Verification  │ │Targeting      │ │Multi-Author  │                  │
+│  └──────────────┘ └──────────────┘ └──────────────┘                  │
+└──────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2>2. Pattern 1: Full Research (完整研究路径)</h2>
+<h3>2.1 阶段序列</h3>
+<pre><code>Phase 1: Research &amp; Planning (4 stages)
+  ① select_topic [CP]
+  ② target_journal ──────┐
+  ③ literature_search ───┼──→ ④ formulate_hypotheses [CP]
+
+Phase 2: Data &amp; Methods (4 stages)
+  ⑤ data_audit ──┬──→ ⑥ figure_planning [CP]
+                 └──→ ⑦ run_analysis → ⑧ verify_methods
+
+Phase 3: Writing (4 stages)
+  ⑧ → ⑨ write_methods [CP]
+  ⑧+⑥ → ⑩ write_results [CP]
+  ③+④ → ⑪ write_introduction [CP]
+  ⑩+③ → ⑫ write_discussion [CP]
+
+Phase 4: Assembly &amp; Review (3 stages)
+  ⑨+⑩+⑪+⑫ → ⑬ assemble_manuscript [CP]
+  ⑬ → ⑭ integrity_check
+  ⑭ → ⑮ internal_review [CP]
+
+Phase 5: Revision (2 stages)
+  ⑮ → ⑯ apply_revision ↻
+       ⑰ re_review [CP] ─┘ (max 5 loops)
+
+Phase 6: Finalize (1 stage)
+  ⑰ → ⑱ finalize [CP]
+</code></pre>
+<h3>2.2 适用范围</h3>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据类型</td>
+<td>原始数据在手，需要全流程分析</td>
+</tr>
+<tr>
+<td>论文状态</td>
+<td>从零开始</td>
+</tr>
+<tr>
+<td>团队配置</td>
+<td>需要全部 12 个 Agent</td>
+</tr>
+<tr>
+<td>时间预算</td>
+<td>8-12 周</td>
+</tr>
+</tbody>
+</table>
+<h3>2.3 调用方式</h3>
+<pre><code class="language-python">from paper_workflow.e2e_workflow import run_e2e_workflow
+
+wf = run_e2e_workflow(
+    paper_id=&quot;paper_igg4malt_20260620&quot;,
+    phases=[1, 2, 3, 4, 5],
+    stop_at_checkpoint=True,
+    export_report=True
+)
+</code></pre>
+<hr />
+<h2>3. Pattern 2: From Results (快速写作路径)</h2>
+<h3>3.1 阶段序列</h3>
+<pre><code>已有: 分析代码 + 结果文件
+跳过: Phase 1 策略 + Phase 2 分析执行
+
+Phase 2 (简略):
+  ⑤ data_audit (简略 — 仅验证现有制品)
+  ⑥ figure_planning [CP]
+
+Phase 3-6: 同 Pattern 1
+</code></pre>
+<h3>3.2 触发条件</h3>
+<ul>
+<li>分析代码已在项目中</li>
+<li><code>results/</code> 目录已有完整输出</li>
+<li><code>artifact_ledger.jsonl</code> 已有制品记录</li>
+<li>只需论文写作和审查</li>
+</ul>
+<h3>3.3 调用方式</h3>
+<pre><code class="language-python">wf = E2EWorkflow(paper_id=&quot;paper_igg4malt_20260620&quot;, auto_load=True)
+# 自动检测到已有 artifacts，跳过 Phase 1-2
+wf.run(phases=[3, 4, 5], stop_at_checkpoint=True)
+</code></pre>
+<h3>3.4 优化</h3>
+<ul>
+<li><code>data_audit</code> 变为纯验证模式（不重新生成）</li>
+<li><code>run_analysis</code> 被替换为 <code>verify_existing_results</code></li>
+<li>时间从 8-12 周缩短到 2-4 周</li>
+</ul>
+<hr />
+<h2>4. Pattern 3: Revision Cycle (修订循环)</h2>
+<h3>4.1 循环逻辑</h3>
+<pre><code>Reviewer Comments Received
+        │
+        ▼
+  ┌─────────────────────┐
+  │ ⑯ apply_revision    │ ← 根据审稿意见修改手稿
+  └────────┬────────────┘
+           │
+           ▼
+  ┌─────────────────────┐
+  │ ⑰ re_review [CP]    │ ← 多视角重审
+  └────────┬────────────┘
+           │
+     ┌─────┴─────┐
+     │           │
+   PASS        FAIL (retry ≤ 5)
+     │           │
+     ▼           └──→ 回到 ⑯
+  ┌──────────┐
+  │ ⑱ finalize│
+  └──────────┘
+</code></pre>
+<h3>4.2 修订智能路由</h3>
+<pre><code class="language-python"># revision_routing skill 分析审稿意见类型:
+revision_type = classify_reviewer_comments(comments)
+
+if revision_type == &quot;minor&quot;:
+    # 仅修改措辞/格式 → 1次迭代
+    wf.run(phases=[5], max_iterations=1)
+elif revision_type == &quot;major&quot;:
+    # 需要补充分析 → 回到 Phase 2 部分阶段
+    wf.run(phases=[2, 3, 4, 5])
+elif revision_type == &quot;reject_with_resubmit&quot;:
+    # 重大修改 → 近乎完整重跑
+    wf.run(phases=[1, 2, 3, 4, 5])
+</code></pre>
+<hr />
+<h2>5. Pattern 4: Methods Paper (方法学论文)</h2>
+<h3>5.1 核心差异</h3>
+<pre><code>标准 IMRAD → 方法学论文:
+  Introduction   → Introduction (含现有方法综述)
+  Methods        → Methods (扩展 — 算法详述 + 实现细节)
+  Results        → Results (替换为 Validation + Benchmark)
+  Discussion     → Discussion (含与其他方法比较 + 适用场景)
+</code></pre>
+<h3>5.2 自动跳过的阶段</h3>
+<pre><code class="language-yaml"># config/default_config.yaml → paper_types.methods.skipped_stages
+skipped_stages:
+  - formulate_hypotheses    # 方法学无假设检验
+  - figure_planning         # 图表更灵活
+  - write_results           # 替换为 validation
+  - write_introduction      # 结构不同
+  - write_discussion        # 替换为 comparison
+</code></pre>
+<h3>5.3 新增阶段</h3>
+<pre><code>methods_paper 特有:
+  benchmark_against_baselines  → 性能对比表
+  ablation_study               → 消融实验
+  computational_efficiency     → 计算效率报告
+  installation_guide           → 安装指南
+  api_documentation            → API 文档
+</code></pre>
+<hr />
+<h2>6. Pattern 5: Literature Review (文献综述)</h2>
+<h3>6.1 核心差异</h3>
+<pre><code>跳过: data_audit, figure_planning, run_analysis, verify_methods, 
+      write_methods, write_results
+
+扩展:
+  literature_search → 时间延长至 3600s, 深度搜索多源
+  write_introduction → 替换为 thematic_sections (主题分区写作)
+  write_discussion → 替换为 synthesis + future_directions
+</code></pre>
+<h3>6.2 检索策略</h3>
+<pre><code class="language-yaml">literature_search (extended for review):
+  sources:
+    - PubMed (MeSH terms)
+    - Semantic Scholar (citation graph)
+    - Scopus (author tracking)
+    - arXiv (preprints)
+    - bioRxiv (preprints)
+  dedup_method: &quot;DOI-based + title fuzzy match&quot;
+  quality_filter:
+    - min_citations: 5
+    - peer_reviewed_only: true
+    - exclude_predatory: true
+  synthesis_method: &quot;thematic clustering + gap analysis&quot;
+</code></pre>
+<hr />
+<h2>7. 可组合模式</h2>
+<h3>7.1 Code→Paper Verification (代码-论文交叉验证)</h3>
+<pre><code>目的: 确保代码输出与论文声称 100% 一致
+
+流程:
+  1. 提取论文中所有数值声称
+  2. 运行分析代码
+  3. 逐项比对:
+     ┌─ 统计量 (β, OR, HR, p-value)
+     ├─ 样本量 (n=...)
+     ├─ 阈值 (FDR&lt;0.05, |log2FC|&gt;1)
+     └─ 模块/聚类数
+  4. 生成差异报告
+  5. 自动修复可修复的不一致
+</code></pre>
+<h3>7.2 Multi-Journal Targeting (多期刊适配)</h3>
+<pre><code>目的: 同一研究快速适配不同期刊格式
+
+流程:
+  1. 定义核心内容 (研究问题+结果+方法)
+  2. 对每个目标期刊:
+     ├─ 调整 abstract (字数限制)
+     ├─ 调整 图表数量
+     ├─ 重新格式化引用
+     └─ 调整 Discussion 侧重点
+  3. 并行生成多版本手稿
+</code></pre>
+<h3>7.3 Collaborative Multi-Author (多作者协作)</h3>
+<pre><code>目的: 支持分布式作者团队
+
+流程:
+  1. team_orchestrator 分配写作任务:
+     ├─ Author A → Introduction
+     ├─ Author B → Methods
+     ├─ Author C → Results (含图表)
+     └─ Author D → Discussion
+  2. 并行写作 (各作者在自己的工作树中)
+  3. assemble_manuscript 合并
+  4. integrity_check 验证一致性
+  5. internal_review 交叉审查
+</code></pre>
+<hr />
+<h2>8. 模式选择决策树</h2>
+<pre><code>START
+  │
+  ├─ 有新数据需要分析?
+  │   ├─ YES → Pattern 1: Full Research
+  │   └─ NO  → 是否有论文初稿?
+  │              ├─ YES → 是否需要修订?
+  │              │         ├─ YES → Pattern 3: Revision Cycle
+  │              │         └─ NO  → Pattern 2: From Results
+  │              └─ NO  → 论文类型?
+  │                        ├─ 方法学/工具 → Pattern 4: Methods
+  │                        ├─ 文献综述    → Pattern 5: Review
+  │                        └─ 原始研究    → Pattern 1: Full Research
+</code></pre>
+<hr />
+<h2>9. 模式性能特征</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>阶段数</th>
+<th>Agent 数</th>
+<th>并行度</th>
+<th>典型耗时</th>
+<th>Token 用量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full Research</td>
+<td>18</td>
+<td>12</td>
+<td>高 (4-5 并行)</td>
+<td>8-12 周</td>
+<td>~500K</td>
+</tr>
+<tr>
+<td>From Results</td>
+<td>12</td>
+<td>7</td>
+<td>高 (3-4 并行)</td>
+<td>2-4 周</td>
+<td>~200K</td>
+</tr>
+<tr>
+<td>Revision Cycle</td>
+<td>3</td>
+<td>4</td>
+<td>中 (2 并行)</td>
+<td>1-2 周</td>
+<td>~100K</td>
+</tr>
+<tr>
+<td>Methods Paper</td>
+<td>13</td>
+<td>8</td>
+<td>中 (2-3 并行)</td>
+<td>3-6 周</td>
+<td>~300K</td>
+</tr>
+<tr>
+<td>Literature Review</td>
+<td>12</td>
+<td>5</td>
+<td>低 (串行为主)</td>
+<td>4-8 周</td>
+<td>~400K</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>10. 模式组合示例</h2>
+<h3>场景: 先做 Full Research，收到审稿意见后进入 Revision Cycle</h3>
+<pre><code class="language-python"># Round 1: Full Research
+wf1 = run_e2e_workflow(&quot;paper_igg4malt&quot;, phases=[1,2,3,4,5])
+# 提交 → 收到审稿意见
+
+# Round 2: Revision Cycle
+wf2 = E2EWorkflow(&quot;paper_igg4malt&quot;, auto_load=True)
+wf2.run(phases=[5])  # 仅修订+重审+定稿
+
+# 如果是重大修改:
+wf2.run(phases=[2, 3, 4, 5])  # 从分析验证重新开始
+</code></pre>
+<h3>场景: Code→Paper Verification + Revision Cycle</h3>
+<pre><code class="language-python"># 先交叉验证
+verify_code_paper_consistency(paper_id=&quot;paper_igg4malt&quot;)
+
+# 如有不一致，触发修订
+if inconsistencies_found:
+    wf = E2EWorkflow(&quot;paper_igg4malt&quot;, auto_load=True)
+    wf.run(phases=[5])
+</code></pre>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="integration_map" class="section-anchor">
+
+<h1>INTEGRATION_MAP — 技能集成与工具矩阵</h1>
+
+<hr />
+<h2>1. 技能全景映射</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────┐
+│                       SKILL INTEGRATION LANDSCAPE                        │
+│                                                                          │
+│  RESEARCH LAYER                    WRITING LAYER                         │
+│  ┌────────────────────┐           ┌────────────────────┐                │
+│  │ topic_research     │           │ scientific-writing │                │
+│  │ deep-research      │           │ nature-writing     │                │
+│  │ literature_search  │           │ nature-polishing   │                │
+│  │ nature-academic-   │           │ nature-citation    │                │
+│  │     search         │           │ humanizer          │                │
+│  └────────┬───────────┘           │ research-paper-    │                │
+│           │                       │     writing        │                │
+│           │                       └────────┬───────────┘                │
+│           │                                │                             │
+│  ANALYSIS LAYER                   QUALITY LAYER                          │
+│  ┌────────────────────┐           ┌────────────────────┐                │
+│  │ spatial_analysis   │           │ academic-paper-    │                │
+│  │ statistical_testing│           │     reviewer       │                │
+│  │ pathway_inference  │           │ qc_pipeline        │                │
+│  │ figure_planning    │           │ reproducibility    │                │
+│  │ multi_omics        │           │ ai-writing-        │                │
+│  │ nature-figure      │           │     detection      │                │
+│  └────────┬───────────┘           │ revision_routing   │                │
+│           │                       │ paper_loop         │                │
+│           │                       └────────┬───────────┘                │
+│           │                                │                             │
+│  SUBMISSION LAYER                  DATA LAYER                            │
+│  ┌────────────────────┐           ┌────────────────────┐                │
+│  │ nature-response    │           │ nature-data        │                │
+│  │ nature-paper2ppt   │           │                    │                │
+│  └────────────────────┘           └────────────────────┘                │
+└─────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2>2. 内部技能 (12 Framework Skills)</h2>
+<h3>2.1 技能定义文件</h3>
+<table>
+<thead>
+<tr>
+<th>技能</th>
+<th>定义文件</th>
+<th>Agent</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>topic_research</code></td>
+<td><code>.claude/skills/topic_research.md</code></td>
+<td>research_strategist</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>literature_search</code></td>
+<td><code>.claude/skills/literature_search.md</code></td>
+<td>literature_reviewer</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>qc_pipeline</code></td>
+<td><code>.claude/skills/qc_pipeline.md</code></td>
+<td>integrity_checker</td>
+<td>2,4,5</td>
+</tr>
+<tr>
+<td><code>figure_planning</code></td>
+<td><code>.claude/skills/figure_planning.md</code></td>
+<td>figure_planner</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>spatial_analysis</code></td>
+<td><code>.claude/skills/spatial_analysis.md</code></td>
+<td>analysis_executor</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>statistical_testing</code></td>
+<td><code>.claude/skills/statistical_testing.md</code></td>
+<td>statistician</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>pathway_inference</code></td>
+<td><code>.claude/skills/pathway_inference.md</code></td>
+<td>analysis_executor</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>multi_omics</code></td>
+<td><code>.claude/skills/multi_omics.md</code></td>
+<td>multi_omics_integrator</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>paper_writing</code></td>
+<td><code>.claude/skills/paper_writing.md</code></td>
+<td>report_writer</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>paper_loop</code></td>
+<td><code>.claude/skills/paper_loop.md</code></td>
+<td>team_orchestrator</td>
+<td>4</td>
+</tr>
+<tr>
+<td><code>revision_routing</code></td>
+<td><code>.claude/skills/revision_routing.md</code></td>
+<td>report_writer</td>
+<td>5</td>
+</tr>
+<tr>
+<td><code>reproducibility</code></td>
+<td><code>.claude/skills/reproducibility.md</code></td>
+<td>pipeline_engineer</td>
+<td>2,6</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 技能调度触发器（来自 <code>default_config.yaml §6</code>）</h3>
+<pre><code class="language-yaml"># 关键触发器映射
+deep-research:
+  triggers: [literature search, comprehensive review, state of the art,
+             deep调研, 系统性检索, 文献综述]
+
+scientific-writing:
+  triggers: [write Methods, write Results, write Introduction, 
+             write Discussion, IMRAD, 医学论文, 科研写作段落]
+
+nature-polishing:
+  triggers: [polish manuscript, improve language, 润色, 改写, proofreading]
+
+nature-citation:
+  triggers: [add citations, insert references, Nature系列引用, 
+             CNS子刊, 补引用, 配文献]
+
+humanizer:
+  triggers: [remove AI traces, 去AI味, 不像AI写的, 更自然]
+
+academic-paper-reviewer:
+  triggers: [review manuscript, peer review, 审稿, critique paper]
+</code></pre>
+<hr />
+<h2>3. 外部技能集成 (28 External Skills)</h2>
+<h3>3.1 按阶段分组</h3>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>外部技能</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Phase 1</strong></td>
+<td><code>deep-research</code></td>
+<td>多源文献调研 + 引用追踪</td>
+</tr>
+<tr>
+<td></td>
+<td><code>nature-academic-search</code></td>
+<td>PubMed/CrossRef/arXiv 检索</td>
+</tr>
+<tr>
+<td></td>
+<td><code>summarize</code></td>
+<td>论文快速理解</td>
+</tr>
+<tr>
+<td></td>
+<td><code>paper-glance</code></td>
+<td>论文深度分析 + 审稿意见</td>
+</tr>
+<tr>
+<td><strong>Phase 2</strong></td>
+<td><code>nature-figure</code></td>
+<td>发表级图表 (≥300 DPI)</td>
+</tr>
+<tr>
+<td></td>
+<td><code>nature-data</code></td>
+<td>FAIR 数据管理</td>
+</tr>
+<tr>
+<td><strong>Phase 3</strong></td>
+<td><code>scientific-writing</code></td>
+<td>IMRAD 结构段落写作</td>
+</tr>
+<tr>
+<td></td>
+<td><code>nature-writing</code></td>
+<td>Nature 风格手稿构建</td>
+</tr>
+<tr>
+<td></td>
+<td><code>nature-citation</code></td>
+<td>CNS/子刊引用集成</td>
+</tr>
+<tr>
+<td></td>
+<td><code>research-paper-writing</code></td>
+<td>ML/CV/NLP 风格论文</td>
+</tr>
+<tr>
+<td></td>
+<td><code>academic-paper</code></td>
+<td>12-Agent 学术写作管线</td>
+</tr>
+<tr>
+<td><strong>Phase 4</strong></td>
+<td><code>academic-paper-polish</code></td>
+<td>学术润色</td>
+</tr>
+<tr>
+<td></td>
+<td><code>nature-polishing</code></td>
+<td>Nature 风格润色 + LaTeX 排版</td>
+</tr>
+<tr>
+<td></td>
+<td><code>humanizer</code></td>
+<td>AI 痕迹移除</td>
+</tr>
+<tr>
+<td></td>
+<td><code>academic-paper-reviewer</code></td>
+<td>多视角内审 (EIC+3Reviewers+Devil)</td>
+</tr>
+<tr>
+<td></td>
+<td><code>ai-writing-detection</code></td>
+<td>AI 写作检测</td>
+</tr>
+<tr>
+<td></td>
+<td><code>remove-ai-flavor</code></td>
+<td>中文 AI 味道去除</td>
+</tr>
+<tr>
+<td><strong>Phase 5</strong></td>
+<td><code>nature-response</code></td>
+<td>审稿回复信</td>
+</tr>
+<tr>
+<td></td>
+<td><code>academic-paper-reviewer</code></td>
+<td>重审 (re-review mode)</td>
+</tr>
+<tr>
+<td><strong>Phase 6</strong></td>
+<td><code>nature-paper2ppt</code></td>
+<td>论文转 PPT</td>
+</tr>
+<tr>
+<td></td>
+<td><code>nature-data</code></td>
+<td>数据可用性声明</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 完整外部技能列表</h3>
+<pre><code>academic-paper           academic-paper-polish      academic-paper-reviewer
+academic-pipeline        ai-writing-detection       darwin-skill
+deep-research            find-skills                gws-docs
+humanizer                nature-academic-search     nature-citation
+nature-data              nature-figure              nature-paper2ppt
+nature-polishing         nature-reader              nature-response
+nature-writing           paper-glance               remove-ai-flavor
+research-paper-writing   scientific-writing         skill-creator
+summarize                tavily-research
+</code></pre>
+<hr />
+<h2>4. MCP 工具集成</h2>
+<h3>4.1 MCP Server 矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>MCP Server</th>
+<th>工具</th>
+<th>用途</th>
+<th>频率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>consensus</strong></td>
+<td><code>search</code></td>
+<td>2亿+学术论文搜索，引用计数+期刊质量</td>
+<td>Phase 1</td>
+</tr>
+<tr>
+<td><strong>context7</strong></td>
+<td><code>resolve-library-id</code>, <code>query-docs</code></td>
+<td>R/Python 库最新文档查询</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td><strong>exa</strong></td>
+<td><code>web_search_exa</code>, <code>web_fetch_exa</code></td>
+<td>网页搜索+内容提取</td>
+<td>Phase 1,5</td>
+</tr>
+<tr>
+<td><strong>grok-search</strong></td>
+<td><code>web_search</code>, <code>web_fetch</code>, <code>web_map</code></td>
+<td>通用搜索+网站地图</td>
+<td>All phases</td>
+</tr>
+<tr>
+<td><strong>MiniMax</strong></td>
+<td><code>web_search</code>, <code>understand_image</code></td>
+<td>通用搜索+图像理解</td>
+<td>Phase 2,4</td>
+</tr>
+<tr>
+<td><strong>fast-context</strong></td>
+<td><code>fast_context_search</code></td>
+<td>AI 驱动代码语义搜索</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td><strong>pubmed</strong></td>
+<td><code>search_articles</code></td>
+<td>PubMed 生物医学文献</td>
+<td>Phase 1</td>
+</tr>
+</tbody>
+</table>
+<h3>4.2 按任务类型的工具选择</h3>
+<table>
+<thead>
+<tr>
+<th>任务</th>
+<th>首选工具</th>
+<th>备选工具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>生物医学文献搜索</td>
+<td><code>mcp__pubmed__search_articles</code></td>
+<td><code>mcp__consensus__search</code></td>
+</tr>
+<tr>
+<td>跨学科学术搜索</td>
+<td><code>mcp__consensus__search</code></td>
+<td><code>mcp__exa__web_search_exa</code></td>
+</tr>
+<tr>
+<td>R/Bioconductor 文档</td>
+<td><code>mcp__context7__query-docs</code></td>
+<td>Web search</td>
+</tr>
+<tr>
+<td>期刊投稿要求</td>
+<td><code>mcp__grok-search__web_search</code></td>
+<td><code>mcp__exa__web_search_exa</code></td>
+</tr>
+<tr>
+<td>代码语义搜索</td>
+<td><code>mcp__fast-context__fast_context_search</code></td>
+<td>Grep</td>
+</tr>
+<tr>
+<td>论文全文获取</td>
+<td><code>mcp__exa__web_fetch_exa</code></td>
+<td><code>mcp__grok-search__web_fetch</code></td>
+</tr>
+<tr>
+<td>图形内容分析</td>
+<td><code>mcp__MiniMax__understand_image</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>网站结构分析</td>
+<td><code>mcp__grok-search__web_map</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. 阶段 → 技能 → 工具 路由表</h2>
+<h3>5.1 Phase 1: Research &amp; Planning</h3>
+<pre><code>Stage ① select_topic
+  ├── Skill: topic_research
+  │     └── MCP: grok-search (最新研究趋势)
+  └── Skill: deep-research
+        └── MCP: consensus + pubmed (全方位检索)
+
+Stage ② target_journal
+  ├── Skill: topic_research
+  │     └── MCP: grok-search (期刊 Guide for Authors)
+  └── Skill: nature-academic-search
+        └── MCP: pubmed (期刊范围+发表记录)
+
+Stage ③ literature_search
+  ├── Skill: deep-research
+  │     └── MCP: consensus + pubmed (系统检索)
+  ├── Skill: nature-academic-search
+  │     └── MCP: pubmed (MeSH 检索策略)
+  └── Skill: nature-citation
+        └── MCP: pubmed (引用验证)
+
+Stage ④ formulate_hypotheses
+  ├── Skill: topic_research
+  └── Skill: scientific-writing
+</code></pre>
+<h3>5.2 Phase 2: Data &amp; Methods</h3>
+<pre><code>Stage ⑤ data_audit
+  ├── Skill: nature-data (FAIR 检查)
+  └── Skill: qc_pipeline (QC 指标验证)
+
+Stage ⑥ figure_planning
+  ├── Skill: figure_planning (图表策略)
+  └── Skill: nature-figure (发表标准)
+
+Stage ⑦ run_analysis
+  ├── Skill: spatial_analysis
+  ├── Skill: statistical_testing
+  ├── Skill: pathway_inference
+  │     └── MCP: context7 (R包文档参考)
+  └── MCP: fast-context (代码定位+调试)
+
+Stage ⑧ verify_methods
+  ├── Skill: qc_pipeline (输出验证)
+  ├── Skill: reproducibility (环境快照)
+  └── Skill: statistical_testing (统计审核)
+</code></pre>
+<h3>5.3 Phase 3: Writing</h3>
+<pre><code>Stage ⑨-⑫ Write IMRAD
+  ├── Skill: scientific-writing (段落草稿)
+  ├── Skill: nature-writing (Nature 风格)
+  ├── Skill: nature-citation (引用集成)
+  │     └── MCP: pubmed (DOI/PMID 验证)
+  └── Skill: research-paper-writing (claim-support 对齐)
+</code></pre>
+<h3>5.4 Phase 4: Assembly &amp; Review</h3>
+<pre><code>Stage ⑬ assemble_manuscript
+  ├── Skill: paper_writing
+  ├── Skill: nature-figure (图形嵌入)
+  └── Skill: nature-citation (引用编号)
+
+Stage ⑭ integrity_check
+  └── Skill: qc_pipeline (16 gate rules)
+
+Stage ⑮ internal_review
+  ├── Skill: academic-paper-reviewer (5 reviewer personas)
+  └── Skill: humanizer (AI traces check)
+</code></pre>
+<h3>5.5 Phase 5-6: Revision &amp; Finalize</h3>
+<pre><code>Stage ⑯ apply_revision
+  ├── Skill: paper_writing
+  ├── Skill: nature-polishing
+  ├── Skill: humanizer
+  └── Skill: nature-response
+
+Stage ⑰ re_review
+  └── Skill: academic-paper-reviewer (re-review mode)
+
+Stage ⑱ finalize
+  ├── Skill: qc_pipeline (最终完整性)
+  ├── Skill: nature-data (数据声明)
+  ├── Skill: nature-polishing (最终润色)
+  └── Skill: nature-paper2ppt (可选)
+</code></pre>
+<hr />
+<h2>6. Agent → 技能 → MCP 分配矩阵</h2>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Internal Skills</th>
+<th>External Skills</th>
+<th>MCP Tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>research_strategist</td>
+<td>topic_research</td>
+<td>deep-research, nature-academic-search</td>
+<td>consensus, grok-search, pubmed</td>
+</tr>
+<tr>
+<td>literature_reviewer</td>
+<td>literature_search</td>
+<td>deep-research, nature-academic-search, nature-citation</td>
+<td>consensus, pubmed</td>
+</tr>
+<tr>
+<td>data_auditor</td>
+<td>qc_pipeline</td>
+<td>nature-data</td>
+<td>context7</td>
+</tr>
+<tr>
+<td>figure_planner</td>
+<td>figure_planning</td>
+<td>nature-figure</td>
+<td>—</td>
+</tr>
+<tr>
+<td>analysis_executor</td>
+<td>spatial_analysis, pathway_inference, qc_pipeline</td>
+<td>—</td>
+<td>fast-context, context7</td>
+</tr>
+<tr>
+<td>pipeline_engineer</td>
+<td>qc_pipeline, reproducibility</td>
+<td>—</td>
+<td>context7</td>
+</tr>
+<tr>
+<td>statistician</td>
+<td>statistical_testing</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>report_writer</td>
+<td>paper_writing, revision_routing</td>
+<td>scientific-writing, nature-writing, nature-polishing, nature-citation, nature-response, humanizer, research-paper-writing</td>
+<td>pubmed</td>
+</tr>
+<tr>
+<td>integrity_checker</td>
+<td>qc_pipeline</td>
+<td>academic-paper-reviewer, nature-data, ai-writing-detection</td>
+<td>—</td>
+</tr>
+<tr>
+<td>multi_omics_integrator</td>
+<td>multi_omics, spatial_analysis, pathway_inference</td>
+<td>—</td>
+<td>context7</td>
+</tr>
+<tr>
+<td>code_librarian</td>
+<td>qc_pipeline</td>
+<td>—</td>
+<td>fast-context</td>
+</tr>
+<tr>
+<td>team_orchestrator</td>
+<td>paper_loop</td>
+<td>deep-research, academic-pipeline</td>
+<td>grok-search</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>7. Skill 注册表 (<code>.claude/SKILL_REGISTRY.md</code>)</h2>
+<h3>7.1 触发词索引</h3>
+<p>基于 <code>config/default_config.yaml §6 (skills_dispatcher)</code>，每个 skill 有完整的中英文触发词列表:</p>
+<pre><code class="language-yaml"># 示例: scientific-writing 触发词
+scientific-writing:
+  triggers:
+    english:
+      - &quot;write Methods&quot;
+      - &quot;write Results&quot;  
+      - &quot;write Introduction&quot;
+      - &quot;write Discussion&quot;
+      - &quot;draft section&quot;
+      - &quot;IMRAD&quot;
+      - &quot;scientific manuscript&quot;
+      - &quot;draft manuscript&quot;
+      - &quot;reporting guidelines&quot;
+      - &quot;CONSORT&quot;
+      - &quot;STROBE&quot;
+    chinese:
+      - &quot;医学论文&quot;
+      - &quot;科研写作段落&quot;
+      - &quot;写论文段落&quot;
+</code></pre>
+<h3>7.2 自动触发机制</h3>
+<pre><code>用户输入 → 技能触发词匹配 → SkillsDispatcher
+  ├── 精确匹配 → 直接调度
+  ├── 模糊匹配 → 列出候选, 请求确认
+  └── 无匹配 → 回退到 team_orchestrator (通用 Agent)
+</code></pre>
+<hr />
+<h2>8. 扩展集成</h2>
+<h3>8.1 添加自定义技能</h3>
+<pre><code class="language-yaml"># config/custom_skills.yaml
+my_custom_analysis:
+  triggers:
+    - &quot;custom analysis&quot;
+    - &quot;my specific method&quot;
+  phase: &quot;analysis&quot;
+  agent: &quot;analysis_executor&quot;
+  description: &quot;My specialized analysis pipeline&quot;
+</code></pre>
+<h3>8.2 添加新 MCP Server</h3>
+<pre><code class="language-json">// .claude/mcp.json
+{
+  &quot;mcpServers&quot;: {
+    &quot;my-new-server&quot;: {
+      &quot;command&quot;: &quot;my-mcp-server&quot;,
+      &quot;args&quot;: [&quot;--config&quot;, &quot;path/to/config&quot;]
+    }
+  }
+}
+</code></pre>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="case_studies" class="section-anchor">
+
+<h1>CASE_STUDIES — 3个真实项目案例</h1>
+
+<hr />
+<h2>Case 1: IgG4&amp;MALT — 生物标志物发现 (WGCNA + ML)</h2>
+<h3>项目背景</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>研究问题</strong></td>
+<td>IgG4-ROD vs MALT Lymphoma 鉴别诊断生物标志物</td>
+</tr>
+<tr>
+<td><strong>数据类型</strong></td>
+<td>转录组 (microarray/RNA-seq)</td>
+</tr>
+<tr>
+<td><strong>分析方法</strong></td>
+<td>DE分析 → CIBERSORT免疫浸润 → WGCNA → ML</td>
+</tr>
+<tr>
+<td><strong>目标期刊</strong></td>
+<td>Arthritis Research &amp; Therapy</td>
+</tr>
+<tr>
+<td><strong>当前状态</strong></td>
+<td>WGCNA完成 (17 modules, 132 hub-DEG)，待ML + 论文写作</td>
+</tr>
+</tbody>
+</table>
+<h3>管线映射</h3>
+<pre><code>已完成的阶段:
+
+Phase 1: Research &amp; Planning
+  ① select_topic ✓ — &quot;IgG4-ROD vs MALT differential biomarkers&quot;
+  ③ literature_search ✓ — IgG4-RD, MALT lymphoma, WGCNA biomarker studies
+
+Phase 2: Data &amp; Methods
+  ⑤ data_audit ✓ — GEO dataset validated
+  ⑦ run_analysis (partial):
+    ├── DE analysis ✓ — 842 DEGs identified
+    ├── CIBERSORT ✓ — 6 immune cell types significant
+    └── WGCNA ✓ — power=20, 17 modules, 8 disease-immune, 132 hub-DEG
+
+待完成的阶段:
+
+Phase 1: ② target_journal, ④ formulate_hypotheses
+Phase 2: ⑥ figure_planning, ⑦ run_analysis (ML部分), ⑧ verify_methods
+Phase 3-6: 全文写作 + 审查 + 修订 + 定稿
+</code></pre>
+<h3>工作流执行计划</h3>
+<pre><code class="language-python"># 当前项目快速写作路径 (From Results pattern)
+wf = E2EWorkflow(paper_id=&quot;paper_igg4malt_20260620&quot;)
+
+# Phase 1: 补完策略
+wf.run(phases=[1])  # target_journal + hypotheses (已有 topic + literature)
+
+# Phase 2: 补完分析
+wf.run(phases=[2])  # figure_planning + ML analysis + verify
+
+# Phase 3-6: 写作+审查+定稿
+wf.run(phases=[3, 4, 5], stop_at_checkpoint=True)
+</code></pre>
+<h3>特定配置覆盖</h3>
+<pre><code class="language-yaml"># paper_config.yaml (项目级覆盖)
+paper_type: original_research
+target_journal: &quot;Arthritis Research &amp; Therapy&quot;
+
+writing_standards:
+  sections:
+    abstract:
+      max_words: 300
+    methods:
+      subsections:
+        - &quot;Data Acquisition and Preprocessing&quot;
+        - &quot;Differential Expression Analysis&quot;
+        - &quot;Immune Cell Deconvolution (CIBERSORT)&quot;
+        - &quot;Weighted Gene Co-expression Network Analysis (WGCNA)&quot;
+        - &quot;Machine Learning-Based Feature Selection&quot;
+        - &quot;Diagnostic Model Construction and Validation&quot;
+</code></pre>
+<h3>关键质量门关注点</h3>
+<ul>
+<li><strong>G1.4 (claim_artifact_binding)</strong>: WGCNA power=20, 17 modules, 132 hub-DEG — 必须可追溯到 <code>results/wgcna/</code> 下的具体文件</li>
+<li><strong>G2.4 (methods_parameters_complete)</strong>: WGCNA 参数必须完整 — softPower, minModuleSize, mergeCutHeight, signedKME 等</li>
+<li><strong>G2.7 (statistics_reported)</strong>: DE 结果必须报告 log2FC + CI + adjusted p-value</li>
+</ul>
+<hr />
+<h2>Case 2: 肝骨轴MR — 孟德尔随机化中介分析</h2>
+<h3>项目背景</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>研究问题</strong></td>
+<td>验证&quot;肝骨轴&quot;因果假说: LiverPDFF → BMFF → BMD</td>
+</tr>
+<tr>
+<td><strong>数据类型</strong></td>
+<td>GWAS summary statistics (公开)</td>
+</tr>
+<tr>
+<td><strong>分析方法</strong></td>
+<td>两样本MR → 中介MR (四步) → MVMR → 敏感性分析</td>
+</tr>
+<tr>
+<td><strong>核心结果</strong></td>
+<td>LiverPDFF→BMFF β=+0.0621(P=4e-5), BMFF→BMD β=-0.0883(P=2e-7), 中介 α×β=-0.00548(P=0.001)</td>
+</tr>
+<tr>
+<td><strong>当前状态</strong></td>
+<td>v17.5 主分析完成，论文待整合</td>
+</tr>
+</tbody>
+</table>
+<h3>管线映射</h3>
+<pre><code>Phase 2: Data &amp; Methods
+  ⑤ data_audit — GWAS catalog + OpenGWAS 数据验证
+  ⑦ run_analysis:
+    ├── Two-sample MR (IVW, MR-Egger, Weighted Median, MR-PRESSO)
+    ├── Bidirectional MR (排除反向因果)
+    ├── Two-step Mediation MR (中介效应)
+    ├── Multivariable MR (竞争性中介)
+    └── Sensitivity: Cochran's Q, Leave-one-out, Steiger, F-statistic
+  ⑧ verify_methods:
+    └── Gate G2.8 (pseudoreplication_check) — 对 MR 特别重要:
+        确保暴露和结局 GWAS 样本不重叠
+        确保 IV 选择无 winner's curse
+
+Phase 3: Writing
+  ⑨ write_methods — 需遵循 STROBE-MR 报告指南
+  ⑩ write_results — 每个 β 必须带 CI + p-value + 敏感性检验结果
+  ⑪ write_introduction — 肝骨轴生物学背景 + MR 方法学空白
+  ⑫ write_discussion — 中介比例解释 + 竞争性中介讨论
+</code></pre>
+<h3>特定质量门</h3>
+<pre><code>MR 特定的额外检查:
+  □ F-statistic ≥ 10 for all IVs (弱工具变量排除)
+  □ MR-Egger intercept p &gt; 0.05 (无显著水平多效性)
+  □ MR-PRESSO global test (异常值检测)
+  □ Cochran's Q p &gt; 0.05 (无异质性)
+  □ Steiger directionality: &quot;TRUE&quot; (因果方向正确)
+  □ 中介效应 Sobel test + Bootstrap CI
+</code></pre>
+<h3>工作流执行</h3>
+<pre><code class="language-python">wf = E2EWorkflow(paper_id=&quot;paper_liver_bone_axis_mr&quot;)
+
+# 快速写作路径 (已有完整分析结果)
+wf.run(phases=[3, 4, 5], stop_at_checkpoint=True)
+
+# 如果审稿人要求额外敏感性分析:
+wf.run(phases=[2, 3, 4, 5])  # 回到 Phase 2 补充分析
+</code></pre>
+<hr />
+<h2>Case 3: StereoSeq — 空间转录组学平台</h2>
+<h3>项目背景</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>研究问题</strong></td>
+<td>健康肾脏空间转录组参考图谱 → 空间解卷积 → 衰老通路机制</td>
+</tr>
+<tr>
+<td><strong>数据类型</strong></td>
+<td>Stereo-seq bin50 (30,904 spots × 34,363 genes) + scRNA-seq 参考 (GSE185809, 56,728 cells)</td>
+</tr>
+<tr>
+<td><strong>分析方法</strong></td>
+<td>QC → scRNA参考图谱 → 空间解卷积 → 区域分割 → PCD通路分析</td>
+</tr>
+<tr>
+<td><strong>当前状态</strong></td>
+<td>全部分析完成，Methods section 修订中</td>
+</tr>
+</tbody>
+</table>
+<h3>管线映射</h3>
+<pre><code>Phase 1:
+  ① select_topic — &quot;Spatial transcriptomic atlas of aging human kidney&quot;
+  ③ literature_search — 空间转录组肾脏研究, 解卷积方法比较
+
+Phase 2 (已完成全部分析):
+  ⑤ data_audit — bin50 QC: MT&lt;25%/30%, Leiden r=0.6
+  ⑦ run_analysis:
+    ├── scRNA reference (5 samples, 19 cell types, KIDNEY_COLORS)
+    ├── Spatial deconvolution (SpecWeight NNLS + Anatomical Prior + Sinkhorn-Knopp, MAE=0.19%)
+    ├── Area domain segmentation (3-area: glomeruli/cortex/medulla)
+    ├── PCD pathway analysis (18 pathways × 3 areas × 2 samples, 42/54 significant)
+    └── Spatial expression visualization (星云热图 144 PDF + 通路等高线 12图)
+  ⑧ verify_methods:
+    └── Gate G2.4 — 参数完整性至关重要:
+        解卷积方法选择 (SpecWeight&gt;DWLS 的论据)
+        区域分割参数 (graph morphological)
+        PCD 通路评分方法
+
+Phase 3 (写作中):
+  ⑨ write_methods:
+    └── 必须精确记录:
+        - 空间解卷积: SpecWeight NNLS 参数, Anatomical Prior 构建
+        - 区域分割: 图形态学分割方法, boundary detection
+        - PCD 分析: 18种细胞死亡通路评分, FDR 校正
+</code></pre>
+<h3>方法学论文特征</h3>
+<pre><code class="language-yaml">paper_type: methods  # 方法学/平台论文
+
+# 重点:
+# - 解卷积 Benchmark: SpecWeight vs DWLS vs RCTD vs SPOTlight
+# - 计算效率: 30,904 spots 处理时间
+# - 可复现性: Docker + renv.lock + 固定 seeds
+# - 数据可用性: GEO accession (参考数据) + Zenodo (处理数据)
+</code></pre>
+<h3>关键交叉验证点</h3>
+<pre><code>论文 Methods vs 代码:
+  □ &quot;MT&lt;25%&quot; — mt_filter.py 默认值 25 ✓
+  □ &quot;Leiden r=0.6&quot; — leiden_clustering.py 默认值 0.6 ✓
+  □ &quot;SpecWeight NNLS&quot; — 实际使用的方法 vs DWLS (曾尝试但效果差)
+  □ &quot;MAE=0.19%&quot; — deconvolution 评估指标
+  □ &quot;42/54 significant&quot; — PCD 分析 FDR&lt;0.05 统计
+  □ &quot;Anoikis δ=0.55-0.67&quot; — 效应量报告
+</code></pre>
+<hr />
+<h2>Case 4: test_e2e_live — 端到端测试案例</h2>
+<h3>测试概述</h3>
+<p>位于 <code>papers/test_e2e_live/</code>，展示了完整的项目文件结构:</p>
+<pre><code>papers/test_e2e_live/
+├── project_passport.yaml
+├── checkpoint_ledger.jsonl
+├── artifact_ledger.jsonl
+├── research_plan/
+│   ├── feasibility_decision.md
+│   ├── formatting_requirements.yaml
+│   └── journal_profile.md
+├── data/
+│   ├── data_audit_report.md
+│   ├── data_inventory.yaml
+│   └── qc_filter_report.md
+├── results/
+│   ├── cell_annotation.md
+│   └── clustering_results.yaml
+├── integrity/
+│   ├── integrity_report.json
+│   └── integrity_report.md
+└── workflow_state/
+    ├── e2e_state_20260618_170203.json
+    └── pending_invocations/  (5 个 skill 调用等待)
+</code></pre>
+<h3>测试覆盖</h3>
+<pre><code class="language-python"># tests/test_all.py 和 tests/test_integration.py
+# 测试内容:
+# - P0 verification: 核心流程完整性
+# - E2E workflow: 5 phase 全流程
+# - Integrity gates: 16 rules 执行
+# - Passport: artifact 哈希记录+验证
+# - Agent dispatch: 12 agent 调度
+# - Config loading: YAML 配置解析
+</code></pre>
+<hr />
+<h2>跨案例对比</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>IgG4&amp;MALT</th>
+<th>肝骨轴MR</th>
+<th>StereoSeq</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>研究类型</strong></td>
+<td>生物标志物发现</td>
+<td>因果推断</td>
+<td>方法学/平台</td>
+</tr>
+<tr>
+<td><strong>论文类型</strong></td>
+<td>original_research</td>
+<td>original_research</td>
+<td>methods</td>
+</tr>
+<tr>
+<td><strong>数据来源</strong></td>
+<td>GEO (转录组)</td>
+<td>GWAS (公开)</td>
+<td>Stereo-seq + scRNA-seq</td>
+</tr>
+<tr>
+<td><strong>核心方法</strong></td>
+<td>WGCNA + ML</td>
+<td>MR + Mediation</td>
+<td>Deconv + Spatial</td>
+</tr>
+<tr>
+<td><strong>报告指南</strong></td>
+<td>—</td>
+<td>STROBE-MR</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>关键Gate</strong></td>
+<td>G2.4 (WGCNA参数)</td>
+<td>G2.8 (样本独立性)</td>
+<td>G2.4 (解卷积参数)</td>
+</tr>
+<tr>
+<td><strong>工作流模式</strong></td>
+<td>Pattern 2 (From Results)</td>
+<td>Pattern 2 (From Results)</td>
+<td>Pattern 4 (Methods Paper)</td>
+</tr>
+<tr>
+<td><strong>当前阶段</strong></td>
+<td>Phase 2→3 过渡</td>
+<td>Phase 3 写作</td>
+<td>Phase 3 写作</td>
+</tr>
+<tr>
+<td><strong>预估完成</strong></td>
+<td>4-6 周</td>
+<td>2-4 周</td>
+<td>2-4 周</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+
+<div class="page-break"></div>
+
+<div id="quick_reference" class="section-anchor">
+
+<h1>QUICK_REFERENCE — 一页速查卡</h1>
+
+<hr />
+<h2>工作流命令</h2>
+<pre><code class="language-bash"># 创建新论文项目
+python -m paper_workflow.cli create-project \
+  --idea &quot;your idea&quot; --field &quot;your field&quot; --journal &quot;target journal&quot;
+
+# 试运行 (查看计划不执行)
+python -m paper_workflow.e2e_workflow --paper-id &lt;id&gt; --dry-run
+
+# 运行指定阶段
+python -m paper_workflow.e2e_workflow --paper-id &lt;id&gt; --phases 1,2
+
+# 运行全部5阶段 (自动模式)
+python -m paper_workflow.e2e_workflow --paper-id &lt;id&gt; --phases 1,2,3,4,5
+
+# 检查点模式 (每阶段暂停)
+python -m paper_workflow.e2e_workflow --paper-id &lt;id&gt; --stop-at-checkpoint
+
+# 查看状态
+python -m paper_workflow.cli status --paper &lt;id&gt;
+
+# 诊断失败
+python -m paper_workflow.cli diagnose --paper &lt;id&gt;
+
+# 导出报告
+python -m paper_workflow.cli export-report --paper &lt;id&gt;
+</code></pre>
+<hr />
+<h2>18 Stage Pipeline 速查</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Stage</th>
+<th>Phase</th>
+<th>Agent</th>
+<th>CP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td>select_topic</td>
+<td>1:Research</td>
+<td>research_strategist</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>②</td>
+<td>target_journal</td>
+<td>1:Research</td>
+<td>research_strategist</td>
+<td>—</td>
+</tr>
+<tr>
+<td>③</td>
+<td>literature_search</td>
+<td>1:Research</td>
+<td>literature_reviewer</td>
+<td>—</td>
+</tr>
+<tr>
+<td>④</td>
+<td>formulate_hypotheses</td>
+<td>1:Research</td>
+<td>research_strategist</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑤</td>
+<td>data_audit</td>
+<td>2:Data</td>
+<td>data_auditor</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑥</td>
+<td>figure_planning</td>
+<td>2:Data</td>
+<td>figure_planner</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑦</td>
+<td>run_analysis</td>
+<td>2:Data</td>
+<td>analysis_executor</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑧</td>
+<td>verify_methods</td>
+<td>2:Data</td>
+<td>pipeline_engineer</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑨</td>
+<td>write_methods</td>
+<td>3:Writing</td>
+<td>report_writer</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑩</td>
+<td>write_results</td>
+<td>3:Writing</td>
+<td>report_writer</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑪</td>
+<td>write_introduction</td>
+<td>3:Writing</td>
+<td>report_writer</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑫</td>
+<td>write_discussion</td>
+<td>3:Writing</td>
+<td>report_writer</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑬</td>
+<td>assemble_manuscript</td>
+<td>4:Assembly</td>
+<td>report_writer</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑭</td>
+<td>integrity_check</td>
+<td>4:Assembly</td>
+<td>integrity_checker</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑮</td>
+<td>internal_review</td>
+<td>4:Assembly</td>
+<td>team_orchestrator</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑯</td>
+<td>apply_revision</td>
+<td>5:Revision</td>
+<td>report_writer</td>
+<td>—</td>
+</tr>
+<tr>
+<td>⑰</td>
+<td>re_review</td>
+<td>5:Revision</td>
+<td>team_orchestrator</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>⑱</td>
+<td>finalize</td>
+<td>6:Finalize</td>
+<td>integrity_checker</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>12 Agents 速查</h2>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>负责阶段</th>
+<th>核心技能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>research_strategist</td>
+<td>①②④</td>
+<td>topic_research, deep-research</td>
+</tr>
+<tr>
+<td>literature_reviewer</td>
+<td>③</td>
+<td>deep-research, nature-citation</td>
+</tr>
+<tr>
+<td>data_auditor</td>
+<td>⑤</td>
+<td>nature-data, qc_pipeline</td>
+</tr>
+<tr>
+<td>figure_planner</td>
+<td>⑥</td>
+<td>figure_planning, nature-figure</td>
+</tr>
+<tr>
+<td>analysis_executor</td>
+<td>⑦</td>
+<td>spatial_analysis, pathway_inference</td>
+</tr>
+<tr>
+<td>pipeline_engineer</td>
+<td>⑦⑧</td>
+<td>qc_pipeline, reproducibility</td>
+</tr>
+<tr>
+<td>statistician</td>
+<td>⑧</td>
+<td>statistical_testing</td>
+</tr>
+<tr>
+<td>report_writer</td>
+<td>⑨⑩⑪⑫⑬⑯</td>
+<td>scientific-writing, nature-*, humanizer</td>
+</tr>
+<tr>
+<td>integrity_checker</td>
+<td>⑧⑭⑱</td>
+<td>qc_pipeline, academic-paper-reviewer</td>
+</tr>
+<tr>
+<td>multi_omics_integrator</td>
+<td>⑦⑧</td>
+<td>multi_omics, spatial_analysis</td>
+</tr>
+<tr>
+<td>code_librarian</td>
+<td>⑦⑧⑱</td>
+<td>qc_pipeline</td>
+</tr>
+<tr>
+<td>team_orchestrator</td>
+<td>⑮⑰</td>
+<td>deep-research (协调)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>16 Quality Gates 速查</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Gate</th>
+<th>Severity</th>
+<th>Auto-Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>bibtex_citation_existence</td>
+<td>CRITICAL</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>2</td>
+<td>citation_evidence_traceability</td>
+<td>CRITICAL</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>3</td>
+<td>results_no_citations</td>
+<td>CRITICAL</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>4</td>
+<td>claim_artifact_binding</td>
+<td>CRITICAL</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>5</td>
+<td>figures_referenced</td>
+<td>CRITICAL</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>6</td>
+<td>data_availability_statement</td>
+<td>HIGH</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>7</td>
+<td>code_availability_statement</td>
+<td>HIGH</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>8</td>
+<td>no_local_paths</td>
+<td>HIGH</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>9</td>
+<td>methods_parameters_complete</td>
+<td>HIGH</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>10</td>
+<td>discussion_limitations</td>
+<td>HIGH</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>11</td>
+<td>results_no_overinterpretation</td>
+<td>HIGH</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>12</td>
+<td>statistics_reported</td>
+<td>HIGH</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>13</td>
+<td>pseudoreplication_check</td>
+<td>HIGH</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>14</td>
+<td>section_length_minimum</td>
+<td>MEDIUM</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>15</td>
+<td>no_bullets_in_prose</td>
+<td>MEDIUM</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>16</td>
+<td>figure_count_requirements</td>
+<td>MEDIUM</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5 Workflow Patterns</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>阶段</th>
+<th>耗时</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full Research</td>
+<td>1-6</td>
+<td>8-12wk</td>
+<td>新项目从零开始</td>
+</tr>
+<tr>
+<td>From Results</td>
+<td>3-6</td>
+<td>2-4wk</td>
+<td>分析完成, 只需写作</td>
+</tr>
+<tr>
+<td>Revision Cycle</td>
+<td>5-6</td>
+<td>1-2wk</td>
+<td>审稿修回</td>
+</tr>
+<tr>
+<td>Methods Paper</td>
+<td>1-6 (adapted)</td>
+<td>3-6wk</td>
+<td>方法学/工具论文</td>
+</tr>
+<tr>
+<td>Literature Review</td>
+<td>1-4 (adapted)</td>
+<td>4-8wk</td>
+<td>文献综述</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5 E2E Phases</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>名称</th>
+<th>阶段数</th>
+<th>检查点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Topic Research</td>
+<td>4</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Data Analysis</td>
+<td>4+3code</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Paper Writing</td>
+<td>4</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Polish &amp; Review</td>
+<td>3+6ext</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Submission</td>
+<td>3</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>关键 MCP 工具速查</h2>
+<table>
+<thead>
+<tr>
+<th>任务</th>
+<th>工具调用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>生物医学文献</td>
+<td><code>mcp__pubmed__search_articles</code></td>
+</tr>
+<tr>
+<td>跨学科学术</td>
+<td><code>mcp__consensus__search</code></td>
+</tr>
+<tr>
+<td>R包文档</td>
+<td><code>mcp__context7__resolve-library-id</code> → <code>mcp__context7__query-docs</code></td>
+</tr>
+<tr>
+<td>代码语义搜索</td>
+<td><code>mcp__fast-context__fast_context_search</code></td>
+</tr>
+<tr>
+<td>期刊政策搜索</td>
+<td><code>mcp__grok-search__web_search</code></td>
+</tr>
+<tr>
+<td>论文全文</td>
+<td><code>mcp__exa__web_fetch_exa</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>项目记忆参照</h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>记忆文件</th>
+<th>关键信息</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IgG4&amp;MALT</td>
+<td><code>igg4malt_wgcna_20260513</code></td>
+<td>WGCNA 17模块, 132 hub-DEG</td>
+</tr>
+<tr>
+<td>肝骨轴MR</td>
+<td><code>肝骨轴MR/</code></td>
+<td>MVMR v17.5, β/CI完整</td>
+</tr>
+<tr>
+<td>StereoSeq</td>
+<td><code>stereoseq_*</code> (多个)</td>
+<td>空间解卷积, PCD分析</td>
+</tr>
+<tr>
+<td>肾脏多组学</td>
+<td><code>kidney_multiomics_survey_2026</code></td>
+<td>调研阶段</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>常见操作</h2>
+<h3>从已有结果快速写论文</h3>
+<pre><code class="language-python">from paper_workflow.e2e_workflow import E2EWorkflow
+wf = E2EWorkflow(paper_id=&quot;paper_my_project&quot;, auto_load=True)
+wf.run(phases=[3, 4, 5], stop_at_checkpoint=True)
+</code></pre>
+<h3>只写 Methods 段落</h3>
+<pre><code class="language-python">wf = E2EWorkflow(paper_id=&quot;paper_my_project&quot;, auto_load=True)
+wf.run(phases=[3])  # Phase 3 第一个 stage 就是 write_methods
+</code></pre>
+<h3>修订审稿意见</h3>
+<pre><code class="language-python">wf = E2EWorkflow(paper_id=&quot;paper_my_project&quot;, auto_load=True)
+wf.run(phases=[5])  # apply_revision → re_review ↻
+</code></pre>
+<h3>重新运行分析后更新论文</h3>
+<pre><code class="language-python"># 1. 重新分析
+wf.run(phases=[2])
+# 2. 门检测到 artifact hash 变化 → 所有下游 STALE
+# 3. 自动重新写作 (stale 优先)
+wf.run(phases=[3, 4, 5])
+</code></pre>
+
+
+</div>
+
+<div class="page-break"></div>
+
+</body>
+</html>

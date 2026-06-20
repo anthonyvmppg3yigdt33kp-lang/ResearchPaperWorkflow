@@ -11,7 +11,8 @@
 #   clusterProfiler, org.Hs.eg.db, DESeq2, limma, edgeR, ggplot2,
 #   ggrepel, pheatmap, patchwork, dplyr, tibble, Matrix
 #
-# LOADING: source("C:/Users/HP/Desktop/ResearchPaperWorkflow/code_library/r/bioinformatics_analysis.R")
+# LOADING: # NOTE: Adjust path to your project root
+# source("code_library/r/bioinformatics_analysis.R")
 # =============================================================================
 
 

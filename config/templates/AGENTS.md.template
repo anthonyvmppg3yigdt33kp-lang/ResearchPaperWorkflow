@@ -1,0 +1,159 @@
+# AGENTS.md — AI Behavior Constraints for Research Paper Projects
+
+> **Purpose**: This file defines the mandatory behavioral rules for all AI agents operating within this paper project. It is loaded automatically at session start and applies to any AI model used for writing, analysis, or code generation. Violating these rules constitutes a deliverable-blocking defect.
+
+---
+
+## Core Rules
+
+### Rule 1: Never Fabricate Literature References
+
+Every citation must correspond to a verified record in the project bibliography. PMIDs, DOIs, and URLs must be confirmed against PubMed, CrossRef, or the publisher site before inclusion. Never generate a citation from memory or from training-data recall alone.
+
+- **Verification**: Each `\cite{}` or reference entry must have a corresponding entry in `references.bib` with a verified DOI or PMID.
+- **Violation consequence**: Any claim traced to an unverifiable reference is invalid and must be retracted from the manuscript.
+
+### Rule 2: Never Modify Raw Data Files
+
+All analyses execute in read-only mode against raw data. Raw data files (sequencing outputs, survey responses, clinical measurements) are immutable. Derived datasets (filtered, normalized, imputed) must be written to a separate `processed/` or `derived/` directory with provenance logged in the artifact ledger.
+
+- **Read-only paths**: `data/raw/`, `data/external/`, and any path containing `_original` or `_source`.
+- **Derived paths**: `data/processed/`, `results/`, `figures/`.
+
+### Rule 3: Never Overwrite Previous Analysis Results Without Explicit Human Approval
+
+Each analysis run produces versioned output. Overwriting a previous result requires a human `[APPROVE_OVERWRITE]` token in the conversation. Without it, new analyses must produce results under a new version tag or timestamped directory.
+
+- **Version convention**: `results/{analysis_name}/v{YYYYMMDD_HHMM}/` or incremental integer versioning.
+- **Exception**: Temporary/intermediate files explicitly marked with `_tmp` or `_cache` may be regenerated freely.
+
+### Rule 4: Every Analysis Must Produce a run_manifest.yaml
+
+Every computational step that generates results (scripts, notebooks, pipelines) must record a manifest file containing:
+
+```yaml
+analysis_name: "differential_expression_wilcoxon"
+timestamp: "2026-06-20T14:30:00Z"
+script_path: "scripts/02_de_analysis.R"
+parameters:
+  test: "wilcoxon"
+  logfc_threshold: 0.25
+  p_adjust_method: "BH"
+random_seed: 42
+software:
+  R: "4.3.2"
+  Seurat: "5.0.1"
+input_artifacts: ["data/processed/seurat_object.rds"]
+output_artifacts: ["results/de/v20260620_1430/de_results.csv"]
+git_commit: "a1b2c3d"
+```
+
+The manifest must be written alongside the output artifacts. Automated pipeline runners should generate this automatically; manual analyses require the analyst to produce it.
+
+### Rule 5: Every Quantitative Claim Must Bind to a Specific Artifact
+
+Every number appearing in the manuscript (p-values, effect sizes, counts, percentages, fold-changes) must be traceable to a specific row in `artifact_ledger.jsonl` and ultimately to a specific output file and line or cell. The claim ledger (see `CLAIM_LEDGER.csv`) enforces this binding.
+
+- **Traceability chain**: Manuscript claim → claim_id → artifact_path → artifact_hash → reproducible computation.
+- **No orphan numbers**: Any number without an artifact binding is a blocker for submission.
+
+### Rule 6: All Statistical Conclusions Must Pass Through the Statistician Gate
+
+Before any statistical result enters the manuscript, the following must be verified:
+
+- Assumptions of the chosen test are satisfied (normality, independence, homoscedasticity as applicable).
+- Multiple-testing correction has been applied where appropriate.
+- Effect sizes and confidence intervals are reported alongside p-values.
+- The choice of test matches the study design declared in `STUDY_PROTOCOL.yaml`.
+
+The statistician gate is a mandatory review step, not advisory. Results that fail this gate must be re-analyzed or their interpretation must be downgraded (e.g., from "confirmatory" to "exploratory").
+
+### Rule 7: Never Claim Clinical Deployability Without Prospective Validation
+
+Observational, retrospective, or cross-sectional findings may identify candidate biomarkers, risk factors, or associations. They do not establish clinical utility. Manuscript text must not imply that a finding is ready for clinical deployment unless:
+
+- A prospective, adequately powered validation study has been completed, OR
+- An external validation cohort has confirmed the finding with pre-registered analysis.
+
+Without these, language must be hedged: "candidate biomarker," "warrants prospective validation," "exploratory finding."
+
+### Rule 8: Data Availability Statement Must Include Accession Numbers or Repository DOIs
+
+The Data Availability section must contain:
+
+- For public datasets: full accession numbers (GEO: `GSEXXXXX`, ArrayExpress: `E-MTAB-XXXX`, dbGaP: `phsXXXXXX`, etc.), with URLs.
+- For generated data: repository name (Zenodo, Figshare, Dryad) and DOI.
+- For restricted data: the access procedure, including contact email or institutional portal URL.
+- Statement that all data are available, or an explicit listing of data that are not available with justification.
+
+### Rule 9: Code Availability Statement Must Include Repository URL and DOI
+
+The Code Availability section must contain:
+
+- A public GitHub/GitLab repository URL (not a private link).
+- A Zenodo or equivalent DOI that archives a specific commit/release.
+- The open-source license under which the code is released.
+- If any component is not open-source, a clear statement of which parts and why.
+
+### Rule 10: Methods Section Must Exactly Match Executed Code Parameters
+
+The Methods section is a prose description of what was actually executed, not what was planned. Every parameter value, software version, and methodological choice stated in Methods must correspond to the actual code that produced the results.
+
+- **Cross-verification**: Run a parameter-extraction script against the code and diff against the Methods text.
+- **Discrepancy protocol**: If a discrepancy is found, either update the Methods text or re-run the analysis — never leave a mismatch.
+- **Implicit defaults**: Any parameter not explicitly set in code but assumed by the software must be stated as "(default)" in Methods.
+
+### Rule 11: Never Use the Word "First" or "Novel" Without Explicit Human Approval
+
+Claims of priority ("first," "novel," "for the first time," "pioneering") are editorial judgments that require:
+
+1. A thorough prior-art search confirming no prior publication made the same claim.
+2. Explicit human author approval documented in the project decision log.
+
+Without both conditions, use neutral language: "we found," "our analysis demonstrates," "this approach identified."
+
+### Rule 12: P-Values Must Be Exact, With Effect Sizes and Confidence Intervals
+
+- P-values must be reported to 3 significant digits (e.g., p = 0.032, p = 0.187). Never truncate as "p < 0.05" unless p < 0.001, in which case "p < 0.001" is acceptable.
+- Every p-value must be accompanied by an effect size (Cohen's d, Hedges' g, OR, HR, beta, r, etc.) and its 95% confidence interval.
+- Non-significant results (p >= 0.05) still require effect sizes and CIs; do not describe them as "no effect" or "no difference" — use "no statistically significant difference was observed" with the CI reported.
+
+### Rule 13: Results Section Must NOT Contain Literature Citations
+
+The Results section reports only what was observed in the current study. It must not:
+
+- Cite other studies to contextualize findings (that belongs in Discussion).
+- Compare results to prior literature (that belongs in Discussion).
+- Use citation-dependent language like "consistent with prior work" (that belongs in Discussion).
+
+Exception: Citations to the study's own methodological references (e.g., the original publication of a method used) are permitted in the Methods section only.
+
+### Rule 14: Discussion Must Include a Limitations Paragraph
+
+The Discussion must contain at least one paragraph (typically the penultimate or final paragraph before the Conclusion) that explicitly addresses:
+
+- Study design limitations (observational vs. experimental, sample size, generalizability).
+- Methodological limitations (measurement error, confounding, missing data).
+- Statistical limitations (power for subgroup analyses, multiple testing burden).
+- Interpretational limitations (alternative explanations, residual confounding, reverse causation).
+
+Each limitation must be stated plainly — not as a backhanded strength ("our sample size, while modest, allowed deep phenotyping").
+
+### Rule 15: All AI-Assisted Content Must Be Reviewed by Human Authors (ICMJE Compliance)
+
+Per ICMJE authorship criteria, all authors must:
+
+- Have made substantial contributions to the conception or design of the work AND
+- Have drafted or substantively revised the work AND
+- Have approved the submitted version AND
+- Agree to be personally accountable for their contributions.
+
+AI tools may assist with drafting, polishing, formatting, and code generation, but cannot fulfill authorship criteria. Every section generated or substantially edited by AI must be flagged for human review with a `[REVIEW_NEEDED]` marker in the drafting phase, and the marker must be removed only after a human author has read, verified, and approved the content.
+
+---
+
+## Governance
+
+- **Loading**: This file is loaded at the start of every AI session within this project directory (or any subdirectory).
+- **Amendment**: Changes to these rules require a human project lead's approval and must be versioned in `config/` alongside the date of change and rationale.
+- **Audit**: The `integrity-check` pipeline stage automatically verifies compliance with Rules 1, 5, 10, and 12 before any manuscript version is considered ready for submission.

@@ -1,0 +1,21 @@
+method_id: ''
+name: ''
+version: ''
+category: qc|dimensionality_reduction|clustering|de|cell_communication|pathway|trajectory|integration|ml|statistics|visualization
+description: ''
+applicable_scenarios: []
+input_requirements: {}
+output_description: ''
+assumptions: []
+contraindications: []
+alternatives: []
+parameters: []
+software: []
+benchmark:
+  stability_score: 0.0
+  runtime_category: fast|medium|slow
+  dependency_complexity: low|medium|high
+validated_on_projects: []
+deprecation_status: active
+superseded_by: null
+references: []

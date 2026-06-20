@@ -11,8 +11,8 @@
 # 1. PIPELINE STAGES (18 stages)
 # =============================================================================
 pipeline:
-  version: "2.0.0"
-  description: "End-to-end academic research paper writing pipeline"
+  version: "3.0.0"
+  description: "End-to-end academic research paper writing pipeline — 19 stages with 41 medical evidence quality gates (v3.0)"
   stages:
     # --- STAGE 1: select_topic ---
     - id: select_topic
@@ -66,7 +66,7 @@ pipeline:
     # --- STAGE 3: literature_search ---
     - id: literature_search
       name: "Literature Search & Review"
-      layer: execution
+      layer: strategy
       order: 3
       agent: literature_reviewer
       skills:
@@ -75,7 +75,7 @@ pipeline:
         - nature-citation
       timeout_seconds: 3600
       dependencies:
-        - target_journal
+        - select_topic
       artifacts_out:
         - "literature_review.md"
         - "references.bib"
@@ -101,10 +101,39 @@ pipeline:
         - topic_research
       timeout_seconds: 900
       dependencies:
+        - select_topic
         - literature_search
+        - target_journal
       artifacts_out:
         - "hypotheses_document.md"
         - "research_questions.yaml"
+        - "hypotheses.yaml"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: design_analysis_plan"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: hypotheses_not_testable"
+
+    # --- STAGE 4.5: design_analysis_plan (v3.0 NEW) ---
+    - id: design_analysis_plan
+      name: "Design Statistical Analysis Plan"
+      layer: strategy
+      order: 5
+      agent: statistician
+      skills:
+        - statistical_testing
+        - scientific-writing
+      timeout_seconds: 1800
+      dependencies:
+        - formulate_hypotheses
+      artifacts_out:
+        - "statistical_analysis_plan.yaml"
+        - "study_design_protocol.yaml"
+        - "causal_assumption_audit.md"
       human_checkpoint: true
       retry:
         max_attempts: 2
@@ -113,23 +142,32 @@ pipeline:
           - "advance_to: data_audit"
         on_fail:
           - "retry_stage"
-          - "notify_human: hypotheses_not_testable"
+          - "notify_human: analysis_plan_incomplete"
+      description: >
+        v3.0 NEW — Statistician involved BEFORE data audit and figure planning.
+        Generates pre-specified Statistical Analysis Plan (SAP) defining primary/
+        secondary endpoints, sample unit, covariates, multiple testing strategy,
+        missing data handling, sensitivity analyses, negative controls, and
+        external validation plan. The SAP is FROZEN before primary analysis.
+        Also invokes clinical_methodologist for study design protocol and
+        causal_inference_reviewer for DAG/confounding assessment.
 
-    # --- STAGE 5: data_audit ---
+    # --- STAGE 6: data_audit ---
     - id: data_audit
       name: "Data Audit & Validation"
       layer: execution
-      order: 5
+      order: 6
       agent: data_auditor
       skills:
         - nature-data
         - qc_pipeline
       timeout_seconds: 2400
       dependencies:
-        - formulate_hypotheses
+        - design_analysis_plan
       artifacts_out:
         - "data_audit_report.md"
         - "data_availability_statement.md"
+        - "data_inventory.yaml"
       human_checkpoint: false
       retry:
         max_attempts: 2
@@ -140,17 +178,18 @@ pipeline:
           - "retry_stage"
           - "notify_human: data_quality_issues"
 
-    # --- STAGE 6: figure_planning ---
+    # --- STAGE 7: figure_planning ---
     - id: figure_planning
       name: "Figure Planning & Design"
-      layer: strategy
-      order: 6
+      layer: execution
+      order: 7
       agent: figure_planner
       skills:
         - figure_planning
         - nature-figure
       timeout_seconds: 1800
       dependencies:
+        - design_analysis_plan
         - data_audit
       artifacts_out:
         - "figure_plan.md"
@@ -165,11 +204,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: figure_plan_incomplete"
 
-    # --- STAGE 7: run_analysis ---
+    # --- STAGE 8: run_analysis ---
     - id: run_analysis
       name: "Run Computational Analysis"
       layer: execution
-      order: 7
+      order: 8
       agent: analysis_executor
       skills:
         - spatial_analysis
@@ -179,6 +218,7 @@ pipeline:
       timeout_seconds: 7200
       dependencies:
         - figure_planning
+        - data_audit
       artifacts_out:
         - "analysis_results.yaml"
         - "statistical_outputs/"
@@ -193,12 +233,12 @@ pipeline:
           - "retry_stage"
           - "notify_human: analysis_failed"
 
-    # --- STAGE 8: verify_methods ---
+    # --- STAGE 9: verify_methods ---
     - id: verify_methods
       name: "Verify Methods & Reproducibility"
-      layer: decision
-      order: 8
-      agent: integrity_checker
+      layer: execution
+      order: 9
+      agent: pipeline_engineer
       skills:
         - qc_pipeline
         - statistical_testing
@@ -217,11 +257,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: reproducibility_failure"
 
-    # --- STAGE 9: write_methods ---
+    # --- STAGE 10: write_methods ---
     - id: write_methods
       name: "Write Methods Section"
-      layer: execution
-      order: 9
+      layer: decision
+      order: 10
       agent: report_writer
       skills:
         - scientific-writing
@@ -241,11 +281,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: methods_incomplete"
 
-    # --- STAGE 10: write_results ---
+    # --- STAGE 11: write_results ---
     - id: write_results
       name: "Write Results Section"
-      layer: execution
-      order: 10
+      layer: decision
+      order: 11
       agent: report_writer
       skills:
         - scientific-writing
@@ -253,7 +293,8 @@ pipeline:
         - nature-polishing
       timeout_seconds: 3600
       dependencies:
-        - write_methods
+        - verify_methods
+        - figure_planning
       artifacts_out:
         - "results_section.md"
       human_checkpoint: true
@@ -266,11 +307,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: results_incomplete"
 
-    # --- STAGE 11: write_introduction ---
+    # --- STAGE 12: write_introduction ---
     - id: write_introduction
       name: "Write Introduction Section"
-      layer: execution
-      order: 11
+      layer: decision
+      order: 12
       agent: report_writer
       skills:
         - scientific-writing
@@ -292,11 +333,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: introduction_incomplete"
 
-    # --- STAGE 12: write_discussion ---
+    # --- STAGE 13: write_discussion ---
     - id: write_discussion
       name: "Write Discussion Section"
-      layer: execution
-      order: 12
+      layer: decision
+      order: 13
       agent: report_writer
       skills:
         - scientific-writing
@@ -318,11 +359,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: discussion_incomplete"
 
-    # --- STAGE 13: assemble_manuscript ---
+    # --- STAGE 14: assemble_manuscript ---
     - id: assemble_manuscript
       name: "Assemble Full Manuscript"
-      layer: execution
-      order: 13
+      layer: decision
+      order: 14
       agent: report_writer
       skills:
         - scientific-writing
@@ -350,11 +391,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: assembly_failed"
 
-    # --- STAGE 14: integrity_check ---
+    # --- STAGE 15: integrity_check ---
     - id: integrity_check
       name: "Integrity & Quality Check"
       layer: decision
-      order: 14
+      order: 15
       agent: integrity_checker
       skills:
         - qc_pipeline
@@ -376,12 +417,12 @@ pipeline:
           - "retry_stage"
           - "notify_human: integrity_check_failed"
 
-    # --- STAGE 15: internal_review ---
+    # --- STAGE 16: internal_review ---
     - id: internal_review
       name: "Internal Peer Review"
       layer: decision
-      order: 15
-      agent: integrity_checker
+      order: 16
+      agent: team_orchestrator
       skills:
         - academic-paper-reviewer
         - humanizer
@@ -401,11 +442,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: review_rejected"
 
-    # --- STAGE 16: apply_revision ---
+    # --- STAGE 17: apply_revision ---
     - id: apply_revision
       name: "Apply Revisions"
-      layer: execution
-      order: 16
+      layer: decision
+      order: 17
       agent: report_writer
       skills:
         - scientific-writing
@@ -429,12 +470,12 @@ pipeline:
           - "retry_stage"
           - "notify_human: revision_incomplete"
 
-    # --- STAGE 17: re_review ---
+    # --- STAGE 18: re_review ---
     - id: re_review
       name: "Re-Review Revised Manuscript"
       layer: decision
-      order: 17
-      agent: integrity_checker
+      order: 18
+      agent: team_orchestrator
       skills:
         - academic-paper-reviewer
         - nature-citation
@@ -454,12 +495,12 @@ pipeline:
           - "retry_stage"
           - "notify_human: re_review_failed"
 
-    # --- STAGE 18: finalize ---
+    # --- STAGE 19: finalize ---
     - id: finalize
       name: "Finalize & Package Manuscript"
       layer: supervision
-      order: 18
-      agent: team_orchestrator
+      order: 19
+      agent: integrity_checker
       skills:
         - nature-polishing
         - nature-data
@@ -840,15 +881,280 @@ quality_gates:
     auto_fix: false
 
   pseudoreplication_check:
-    severity: HIGH
-    description: "Ensure no pseudoreplication: biological vs. technical replicates correctly handled"
+    severity: CRITICAL
+    description: "Ensure no pseudoreplication: biological vs. technical replicates correctly handled (v3.0 CRITICAL)"
     check:
       type: "experimental_design_audit"
       rule: "identify_replicate_structure AND validate_independence"
     blocking: true
     auto_fix: false
 
-  # --- MEDIUM gates (warn but do not block) ---
+    # =========================================================================
+  # v3.0 NEW: Clinical Design Gates (5 CRITICAL)
+  # =========================================================================
+  study_design_declared:
+    severity: CRITICAL
+    category: clinical_design
+    description: "Study design explicitly declared (cohort/case-control/cross-sectional/diagnostic/RCT/prediction/MR)"
+    check:
+      type: "design_declaration_audit"
+      rule: "scan_for_design_type_in_title_abstract_methods"
+    blocking: true
+    auto_fix: false
+
+  clinical_question_actionable:
+    severity: HIGH
+    category: clinical_design
+    description: "Research question maps to a specific clinical decision or mechanism gap"
+    check:
+      type: "clinical_value_audit"
+      rule: "validate_against_clinical_value_matrix"
+    blocking: true
+    auto_fix: false
+
+  inclusion_exclusion_complete:
+    severity: CRITICAL
+    category: clinical_design
+    description: "Inclusion and exclusion criteria fully specified"
+    check:
+      type: "eligibility_audit"
+      rule: "find_inclusion_criteria AND find_exclusion_criteria"
+    blocking: true
+    auto_fix: false
+
+  endpoint_definition_complete:
+    severity: CRITICAL
+    category: clinical_design
+    description: "Primary and secondary endpoints clearly defined"
+    check:
+      type: "endpoint_audit"
+      rule: "extract_endpoints_from_methods"
+    blocking: true
+    auto_fix: false
+
+  ethics_irb_or_public_exemption:
+    severity: CRITICAL
+    category: clinical_design
+    description: "IRB/ethics approval or public data exemption documented"
+    check:
+      type: "ethics_compliance_audit"
+      rule: "find_ethics_statement OR find_public_data_exemption"
+    blocking: true
+    auto_fix: false
+
+  # =========================================================================
+  # v3.0 NEW: Data & Bias Gates (3 CRITICAL + 2 HIGH)
+  # =========================================================================
+  patient_level_independence:
+    severity: CRITICAL
+    category: data_bias
+    description: "Statistical unit is patient/donor, NOT cell/spot/ROI"
+    check:
+      type: "statistical_unit_audit"
+      rule: "compare_n_patients_vs_n_observations"
+    blocking: true
+    auto_fix: false
+
+  batch_confounding_audit:
+    severity: HIGH
+    category: data_bias
+    description: "Disease group NOT completely confounded with batch/center/platform"
+    check:
+      type: "batch_confounding_audit"
+      rule: "cross_tabulate_condition_by_batch"
+    blocking: true
+    auto_fix: false
+
+  missing_data_strategy:
+    severity: HIGH
+    category: data_bias
+    description: "Missing data handling strategy explicitly stated"
+    check:
+      type: "missing_data_audit"
+      rule: "find_strategy_in_methods"
+    blocking: false
+    auto_fix: false
+
+  train_test_leakage_check:
+    severity: CRITICAL
+    category: data_bias
+    description: "No information leakage between training and test/validation sets"
+    check:
+      type: "data_leakage_audit"
+      rule: "verify_split_by_patient_not_observation"
+    blocking: true
+    auto_fix: false
+
+  sample_overlap_check:
+    severity: CRITICAL
+    category: data_bias
+    description: "No sample overlap between discovery and validation cohorts"
+    check:
+      type: "sample_overlap_audit"
+      rule: "compare_sample_ids_across_cohorts"
+    blocking: true
+    auto_fix: false
+
+  # =========================================================================
+  # v3.0 NEW: Statistics & Model Gates (2 CRITICAL + 3 HIGH)
+  # =========================================================================
+  statistical_analysis_plan_exists:
+    severity: CRITICAL
+    category: statistics_model
+    description: "Statistical Analysis Plan frozen before primary analysis"
+    check:
+      type: "sap_audit"
+      rule: "find_sap_file AND verify_frozen_status"
+    blocking: true
+    auto_fix: false
+
+  effect_size_ci_reported:
+    severity: HIGH
+    category: statistics_model
+    description: "Every quantitative claim includes effect size AND confidence interval"
+    check:
+      type: "effect_size_audit"
+      rule: "scan_for_effect_sizes AND scan_for_confidence_intervals"
+    blocking: true
+    auto_fix: false
+
+  multiple_testing_control:
+    severity: CRITICAL
+    category: statistics_model
+    description: "Multiple testing correction explicitly stated (FDR/Bonferroni/hierarchical)"
+    check:
+      type: "multiple_testing_audit"
+      rule: "find_correction_method AND verify_applied"
+    blocking: true
+    auto_fix: false
+
+  model_calibration_reported:
+    severity: HIGH
+    category: statistics_model
+    description: "Prediction models report calibration curve and Brier score"
+    check:
+      type: "calibration_audit"
+      rule: "find_calibration_metrics"
+    blocking: false
+    auto_fix: false
+
+  external_validation_or_limitation:
+    severity: CRITICAL
+    category: statistics_model
+    description: "External validation performed OR conclusion explicitly downgraded"
+    check:
+      type: "validation_audit"
+      rule: "find_external_validation OR find_explicit_limitation"
+    blocking: true
+    auto_fix: false
+
+  # =========================================================================
+  # v3.0 NEW: Single-Cell & Spatial Omics Gates (5 HIGH)
+  # =========================================================================
+  cell_annotation_evidence:
+    severity: HIGH
+    category: sc_spatial_omics
+    description: "Cell-type annotation supported by >=2 of: markers, reference, manual review"
+    check:
+      type: "annotation_evidence_audit"
+      rule: "count_annotation_evidence_types_min_2_of_3"
+    blocking: true
+    auto_fix: false
+
+  spatial_region_registration:
+    severity: HIGH
+    category: sc_spatial_omics
+    description: "Spatial regions registered to pathology/imaging reference"
+    check:
+      type: "spatial_registration_audit"
+      rule: "find_registration_method"
+    blocking: false
+    auto_fix: false
+
+  de_pseudobulk_required:
+    severity: HIGH
+    category: sc_spatial_omics
+    description: "Single-cell DE uses pseudobulk or mixed models, NOT cell-level tests"
+    check:
+      type: "de_method_audit"
+      rule: "identify_de_method AND flag_cell_level_tests"
+    blocking: true
+    auto_fix: false
+
+  integration_batch_risk:
+    severity: HIGH
+    category: sc_spatial_omics
+    description: "Integration method assessed for removing true biological variation"
+    check:
+      type: "integration_audit"
+      rule: "verify_pre_post_integration_comparison"
+    blocking: false
+    auto_fix: false
+
+  ligand_receptor_overclaim_check:
+    severity: HIGH
+    category: sc_spatial_omics
+    description: "Cell-cell communication results NOT overclaimed as causal interactions"
+    check:
+      type: "language_audit"
+      rule: "scan_for_causal_language_in_lr_results"
+    blocking: false
+    auto_fix: false
+
+  # =========================================================================
+  # v3.0 NEW: AI/ML Gates (1 CRITICAL + 4 HIGH)
+  # =========================================================================
+  baseline_model_comparison:
+    severity: HIGH
+    category: ai_ml
+    description: "ML model compared against traditional statistical baseline or clinical score"
+    check:
+      type: "baseline_audit"
+      rule: "find_baseline_comparison"
+    blocking: true
+    auto_fix: false
+
+  nested_cv_or_external_test:
+    severity: CRITICAL
+    category: ai_ml
+    description: "Nested cross-validation OR independent external test set used"
+    check:
+      type: "cv_strategy_audit"
+      rule: "identify_cv_strategy AND flag_simple_cv_for_small_n"
+    blocking: true
+    auto_fix: false
+
+  calibration_decision_curve:
+    severity: HIGH
+    category: ai_ml
+    description: "Clinical prediction models report calibration AND decision curve analysis"
+    check:
+      type: "dca_audit"
+      rule: "find_dca_for_clinical_models"
+    blocking: false
+    auto_fix: false
+
+  explainability_sanity_check:
+    severity: HIGH
+    category: ai_ml
+    description: "SHAP/feature importance NOT interpreted as causal effects"
+    check:
+      type: "language_audit"
+      rule: "scan_for_causal_language_near_shap"
+    blocking: false
+    auto_fix: false
+
+  deployment_claim_limited:
+    severity: HIGH
+    category: ai_ml
+    description: "No clinical deployment claimed without prospective validation"
+    check:
+      type: "deployment_audit"
+      rule: "scan_for_deployment_claims_without_prospective"
+    blocking: true
+    auto_fix: false
+
+# --- MEDIUM gates (warn but do not block) ---
   section_length_minimum:
     severity: MEDIUM
     description: "Each required section must meet minimum word count threshold for the target paper type"
@@ -1551,6 +1857,16 @@ agent_routing:
         - verify_methods
         - finalize
 
+    multi_omics_integrator:
+      description: "Integrates multi-omics data modalities (transcriptomics, proteomics, metabolomics, epigenomics) using advanced computational frameworks for cross-platform normalization, joint dimensionality reduction, multi-view clustering, and biological network inference across heterogeneous high-dimensional datasets"
+      primary_skills:
+        - multi_omics
+        - spatial_analysis
+        - pathway_inference
+      stages:
+        - run_analysis
+        - verify_methods
+
 supervision:
   timeout:
     global_timeout_seconds: 86400
@@ -1627,18 +1943,17 @@ code_library:
     on_stage_enter: true
 
   scan_paths:
-    - "scripts/"
-    - "src/"
-    - "analysis/"
-    - "pipelines/"
-    - "utils/"
-    - "R/"
-    - "python/"
-    - "notebooks/"
+    - "code_library/patterns/qc/"
+    - "code_library/patterns/clustering/"
+    - "code_library/modules/"
+    - "code_library/solutions/"
+    - "code_library/snippets/"
+    - "code_library/r/"
+    - "code_library/pipelines/"
 
   plugin_registry:
     enabled: true
-    registry_file: "config/plugin_registry.yaml"
+    registry_file: "code_library/plugin_registry.yaml"
     auto_register_new_scripts: true
     supported_languages:
       - name: "R"

@@ -1,0 +1,271 @@
+# ============================================================================
+# STATISTICAL ANALYSIS PLAN (SAP) — COMPREHENSIVE TEMPLATE
+# ============================================================================
+# Purpose: Pre-specify all statistical analyses before any data analysis begins.
+# After freezing, changes must go through the deviations policy documented below.
+#
+# WHY PRE-SPECIFICATION MATTERS:
+#   1. Prevents p-hacking and HARKing (Hypothesizing After Results are Known)
+#   2. Distinguishes confirmatory vs. exploratory analyses — critical for
+#      reviewer and editor trust
+#   3. Required by many high-impact journals (Nature, JAMA, Lancet, BMJ)
+#   4. Essential for clinical trial registration (ClinicalTrials.gov, OSF)
+#   5. Protects YOU: a frozen SAP is your defense against accusations of
+#      selective reporting or fishing expeditions
+#
+# WHEN TO FREEZE: Before you run the first line of analysis code.
+# HOW TO USE:
+#   - Fill in plan_metadata, set status to "draft"
+#   - Iterate with co-authors until consensus
+#   - Change status to "frozen", record frozen_at timestamp
+#   - Commit the frozen version to git — NEVER modify a frozen SAP
+#   - Any change after freeze = deviation (see deviations section)
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# PLAN METADATA — Administrative header, never changes after freeze
+# ---------------------------------------------------------------------------
+plan_metadata:
+  id: "SAP-001"                          # Unique identifier for cross-referencing
+  paper_id: "PAPER-001"                  # Links to paper_config.yaml
+  title: "Statistical Analysis Plan — [INSERT PAPER SHORT TITLE]"
+  version: "1.0.0"                       # Semantic versioning: MAJOR.MINOR.PATCH
+  status: "draft"                         # draft | under_review | frozen | superseded
+  created_at: "2026-06-20"               # ISO 8601 date
+  frozen_at: null                         # Set when status → frozen; NEVER backdate
+  authors: ["Author 1", "Author 2"]      # SAP authors (often statistician + PI)
+  reviewer: null                          # Independent statistical reviewer (if any)
+  registration:                           # Public pre-registration (OSF, AsPredicted, etc.)
+    platform: null                       # e.g. OSF, ClinicalTrials.gov, AsPredicted
+    identifier: null                     # e.g. osf.io/abc12, NCT01234567
+    url: null
+
+# ---------------------------------------------------------------------------
+# PRIMARY ANALYSIS — The single analysis that answers the main research question.
+# There should be EXACTLY ONE primary endpoint and ONE primary analysis.
+# Everything else is secondary or exploratory.  This is the most critical
+# section of the SAP: if the primary analysis fails, the paper is null.
+# ---------------------------------------------------------------------------
+primary_analysis:
+
+  primary_endpoint:
+    name: "INSERT — e.g. Change in HbA1c from baseline to week 24"
+    variable: "INSERT — e.g. hba1c_change_w24"
+    measurement_method: "INSERT — e.g. HPLC, central lab, fasting"
+    analysis_metric: "INSERT — e.g. mean difference between treatment arms"
+    timepoint: "INSERT — e.g. Week 24 (primary); Week 12, 52 (secondary)"
+
+  # The specific statistical test that maps to the primary endpoint above.
+  # This is NOT "we'll use whatever the data look like" — pick ONE now.
+  statistical_test:
+    test_name: "INSERT — e.g. ANCOVA, Wilcoxon rank-sum, Cox proportional hazards"
+    null_hypothesis: "INSERT — e.g. No difference in mean HbA1c change between groups"
+    alternative_hypothesis: "INSERT — e.g. Significant difference in mean HbA1c change"
+    one_sided_or_two_sided: "two-sided"  # two-sided is the default; justify if one-sided
+    alpha_level: 0.05                    # Family-wise for the single primary endpoint
+    # If using a non-standard alpha, justify here:
+    alpha_justification: null            # e.g. "Bonferroni-corrected for 2 co-primary"
+
+  # Full model specification — enough detail that another statistician
+  # could write the code from this description alone.
+  model_specification:
+    model_type: "INSERT — e.g. linear regression, mixed-effects, logistic, Cox PH"
+    outcome_variable: "INSERT — e.g. hba1c_change_w24"
+    primary_predictor: "INSERT — e.g. treatment_group (categorical: placebo=0, drug=1)"
+    covariates:
+      - "INSERT — e.g. baseline HbA1c (continuous, centered at mean)"
+      - "INSERT — e.g. age (continuous, per 10 years)"
+      - "INSERT — e.g. sex (categorical, reference=male)"
+    random_effects:                      # NULL if no clustering / repeated measures
+      grouping_variable: null            # e.g. site_id, subject_id
+      covariance_structure: null         # e.g. unstructured, compound symmetry, AR(1)
+
+  # How to interpret the primary result
+  effect_size_metric:
+    metric: "INSERT — e.g. Cohen's d, partial eta-squared, hazard ratio, odds ratio"
+    interpretation_threshold: "INSERT — e.g. d=0.2 small, 0.5 medium, 0.8 large OR minimal clinically important difference (MCID) = 0.5% HbA1c"
+
+# ---------------------------------------------------------------------------
+# SECONDARY ANALYSES — Pre-registered, multiplicity-adjusted if needed.
+# These support the primary result but do NOT stand alone as conclusions.
+# ---------------------------------------------------------------------------
+secondary_analyses:
+  - endpoint: "INSERT — e.g. Change in fasting glucose at Week 24"
+    test: "INSERT — e.g. ANCOVA with same covariates as primary"
+    covariates: ["same as primary"]
+    multiplicity_adjustment: "INSERT — e.g. Hochberg step-up procedure across N secondary endpoints"
+
+  - endpoint: "INSERT — e.g. Proportion achieving HbA1c < 7.0%"
+    test: "INSERT — e.g. Logistic regression"
+    covariates: ["same as primary"]
+    multiplicity_adjustment: "INSERT — e.g. Part of secondary family, Hochberg-adjusted"
+
+# ---------------------------------------------------------------------------
+# EXPLORATORY ANALYSES — NOT adjusted for multiplicity.
+# Results from this section are HYPOTHESIS-GENERATING ONLY.
+# You CANNOT claim significance from exploratory analyses in the abstract.
+# ---------------------------------------------------------------------------
+exploratory_analyses:
+  - analysis_name: "INSERT — e.g. Subgroup-by-treatment interaction"
+    method: "INSERT — e.g. Forest plot with interaction p-values per subgroup"
+    rationale: "INSERT — e.g. Identify potential effect modifiers for future trials"
+    confirmatory_or_exploratory: "exploratory"  # ALWAYS "exploratory" in this section
+
+  - analysis_name: "INSERT — e.g. Mediation analysis of biomarker pathways"
+    method: "INSERT — e.g. Baron & Kenny causal steps + bootstrapped indirect effects"
+    rationale: "INSERT — e.g. Mechanistic hypothesis generation"
+    confirmatory_or_exploratory: "exploratory"
+
+# ---------------------------------------------------------------------------
+# COVARIATE HANDLING — Which covariates, why, and how they enter the model.
+# ---------------------------------------------------------------------------
+covariate_handling:
+  pre_specified_covariates:
+    - variable: "INSERT — e.g. baseline value of outcome"
+      rationale: "Reduces variance, increases power; default for ANCOVA"
+    - variable: "INSERT — e.g. age"
+      rationale: "Known confounder from prior literature"
+  batch_variables:
+    - "INSERT — e.g. sequencing_batch, sample_processing_date, plate_id"
+  adjustment_method: "INSERT — e.g. Include as fixed effects in all models OR ComBat harmonization then remove from model"
+
+# ---------------------------------------------------------------------------
+# MULTIPLE TESTING — Critical for omics and high-dimensional data.
+# Without this, your FWE (family-wise error) rate balloons.
+# ---------------------------------------------------------------------------
+multiple_testing:
+  strategy: "INSERT — e.g. gatekeeping / hierarchical / Bonferroni / FDR"
+  method: "INSERT — e.g. Benjamini-Hochberg FDR (q < 0.05)"
+  alpha_adjustment: "INSERT — e.g. Primary only = no adjustment; secondary family = Hochberg; omics = BH-FDR"
+  hierarchical_testing_order:
+    - "1. Global null (primary endpoint) at α = 0.05"
+    - "2. If significant → secondary endpoints, Hochberg-adjusted within family"
+    - "3. If significant → exploratory omics, BH-FDR q < 0.05"
+    - "4. All subsequent tests = nominal p-values, explicitly labeled as exploratory"
+
+# ---------------------------------------------------------------------------
+# MISSING DATA — How much missingness is expected, and how you will handle it.
+# Per ICH E9(R1), the primary estimand must address intercurrent events
+# (including treatment discontinuation and missing data).
+# ---------------------------------------------------------------------------
+missing_data:
+  expected_rate: "INSERT — e.g. 10-15% based on prior similar cohorts"
+  mechanism_assumption: "INSERT — e.g. Missing at Random (MAR) — primary assumption"
+  primary_method: "INSERT — e.g. MMRM (Mixed Model for Repeated Measures) under MAR"
+  sensitivity_methods:
+    - "INSERT — e.g. Pattern-mixture models (delta-adjusted, δ = -0.3 to +0.3)"
+    - "INSERT — e.g. Tipping-point analysis to find δ where conclusion reverses"
+    - "INSERT — e.g. Multiple imputation (m=50, FCS) as confirmatory check"
+    - "INSERT — e.g. Complete-case analysis as naive comparator"
+
+# ---------------------------------------------------------------------------
+# SUBGROUP ANALYSES — Which subgroups you will test, ALL must be pre-specified.
+# Subgroup analyses discovered after seeing the data are unreliable.
+# ---------------------------------------------------------------------------
+subgroup_analyses:
+  - subgroup_variable: "INSERT — e.g. sex (male vs. female)"
+    rationale: "INSERT — e.g. Known sex differences in drug metabolism"
+    pre_specified: true                    # MUST be true for ALL entries
+    interaction_test: "INSERT — e.g. Treatment × Sex interaction term in ANCOVA"
+
+  - subgroup_variable: "INSERT — e.g. age (<65 vs. ≥65)"
+    rationale: "INSERT — e.g. Efficacy may differ in elderly population"
+    pre_specified: true
+    interaction_test: "INSERT — e.g. Treatment × Age_group interaction"
+
+# ---------------------------------------------------------------------------
+# SENSITIVITY ANALYSES — Test the robustness of primary/secondary conclusions
+# under different analytical choices.
+# ---------------------------------------------------------------------------
+sensitivity_analyses:
+  - analysis_name: "INSERT — e.g. Per-protocol population (vs. primary ITT)"
+    what_is_tested: "Sensitivity to population definition"
+    method: "Restrict to subjects with ≥80% adherence"
+    decision_rule: "Direction and significance should be consistent with primary ITT"
+
+  - analysis_name: "INSERT — e.g. Unadjusted model (no covariates)"
+    what_is_tested: "Sensitivity to covariate adjustment"
+    method: "t-test without covariates"
+    decision_rule: "Effect size may differ but direction should be consistent"
+
+  - analysis_name: "INSERT — e.g. Remove outlier sites (>2 SD from mean effect)"
+    what_is_tested: "Sensitivity to site heterogeneity"
+    method: "Exclude sites with extreme treatment effects"
+    decision_rule: "Primary conclusion should not be driven by 1-2 outlier sites"
+
+# ---------------------------------------------------------------------------
+# NEGATIVE CONTROLS — Analyses that SHOULD show null results.
+# If a negative control is significant, it suggests confounding or bias.
+# Common in omics: permuted labels, scrambled genotypes, known-null genes.
+# ---------------------------------------------------------------------------
+negative_controls:
+  - control_name: "INSERT — e.g. Permuted treatment labels (n=1000 permutations)"
+    expected_result: "Null distribution centered at zero; observed effect outside 95% CI of null"
+    interpretation_if_failed: "If observed effect falls within null distribution → residual confounding likely; re-examine covariate balance"
+
+  - control_name: "INSERT — e.g. Known-null negative control genes (housekeeping, random intergenic)"
+    expected_result: "No differential expression (FDR > 0.5)"
+    interpretation_if_failed: "If >5% of negative control genes are DE → batch effect or normalization failure"
+
+# ---------------------------------------------------------------------------
+# EXTERNAL VALIDATION — Are you testing the model on an independent dataset?
+# ---------------------------------------------------------------------------
+external_validation:
+  planned: false                          # true | false
+  cohort_source: null                     # e.g. "UK Biobank", "TCGA", "GEO GSE12345"
+  sample_size: null
+  key_endpoints:
+    - null
+
+# ---------------------------------------------------------------------------
+# SOFTWARE & VERSION PINNING — Reproducibility requires exact versions.
+# ---------------------------------------------------------------------------
+software:
+  - name: "R"
+    version: "4.4.1"
+    packages:
+      - "lme4 1.1-35"
+      - "emmeans 1.10.1"
+      - "survival 3.6-4"
+  - name: "Python"
+    version: "3.11.8"
+    packages:
+      - "statsmodels 0.14.1"
+      - "scikit-learn 1.4.2"
+
+# ---------------------------------------------------------------------------
+# DEVIATIONS POLICY — What happens when you must change something after freeze?
+# This is your pre-commitment to transparency.
+# ---------------------------------------------------------------------------
+deviations:
+  policy_for_unplanned_analyses:
+    label: "Post-hoc / Unplanned"          # Must appear in all outputs
+    reporting: "Explicitly flagged in manuscript: 'This analysis was not pre-specified in the SAP.'"
+  approval_process:
+    - "1. Document the proposed deviation with rationale"
+    - "2. Obtain co-author consensus (≥2 statisticians if available)"
+    - "3. Update SAP addendum (NEW file: SAP-001-ADDENDUM-001.yaml) — NEVER modify frozen SAP"
+    - "4. Log date, reason, and approvers"
+    - "5. Report in manuscript: Methods → Deviations from SAP"
+
+# ---------------------------------------------------------------------------
+# REPORTING STANDARDS — How numbers appear in the final manuscript.
+# Consistent rounding prevents "p = 0.049, 0.05, 0.048" confusion.
+# ---------------------------------------------------------------------------
+reporting_standards:
+  p_value_reporting: "Exact p-values to 3 decimal places (p = 0.032, not p < 0.05), unless p < 0.001 then 'p < 0.001'. No 'p = 0.000'."
+  effect_size_reporting: "Always reported alongside CI and p-value. Never report p without effect size."
+  ci_reporting: "95% CI; format: [lower, upper]. e.g. OR = 1.45 [1.12, 1.88]"
+  rounding_rules:
+    means: "1 decimal place beyond the measurement precision"
+    standard_deviations: "2 decimal places"
+    percentages: "1 decimal place (e.g. 23.4%) for N≥100; whole numbers for N<100"
+    correlation_coefficients: "2 decimal places (e.g. r = 0.67)"
+  significant_figures: "Use the measurement precision as the floor. Never report more precision than the instrument provides."
+
+# ============================================================================
+# END OF SAP TEMPLATE
+# ============================================================================
+# After filling: review with all co-authors → freeze → commit to version control.
+# DO NOT modify after freezing — use the addendum process for changes.
+# ============================================================================

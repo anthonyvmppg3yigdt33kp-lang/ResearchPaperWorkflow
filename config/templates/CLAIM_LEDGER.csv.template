@@ -1,0 +1,2 @@
+claim_id,claim_text,section,paragraph,figure_ref,table_ref,artifact_path,artifact_hash,stat_test,stat_value,p_value,effect_size,ci_lower,ci_upper,sample_size,confidence_level,alternative_explanation,code_file,code_line_range,reviewer_challenge_ready
+C001,"WGCNA identified 17 co-expression modules, 8 disease-associated (FDR<0.05)",Results,2,Fig2A,,results/wgcna/module_assignment.csv,sha256:abc123,Fisher exact test,OR=3.2,0.001,OR=3.2,1.8,5.7,120,supported,"Module-disease association may reflect tissue composition",scripts/wgcna_analysis.R,45-78,FALSE

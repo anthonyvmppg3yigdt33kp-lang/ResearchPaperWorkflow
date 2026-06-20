@@ -1,24 +1,27 @@
-# Research Paper Workflow Framework
+# Research Paper Workflow Framework v3.0
 
-**A general-purpose, agent-driven research paper workflow system for bioinformatics and clinical research.**
+**A general-purpose, agent-driven research paper workflow system for bioinformatics and clinical research — upgraded to evidence-centric medical evidence generation.**
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-5/5%20Pass-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-3.0.0-orange.svg)]()
 
 ---
 
 ## What It Does
 
-This framework transforms the research paper writing process from ad-hoc scripting and manual coordination into a **deterministic, auditable, multi-agent pipeline** with:
+This framework transforms the research paper writing process from ad-hoc scripting and manual coordination into a **deterministic, auditable, multi-agent pipeline** with medical evidence quality assurance:
 
 - **4-layer architecture**: Strategy → Decision → Execution → Supervision
-- **18-stage paper pipeline**: From topic selection to final submission
-- **5 framework skills + 28 external skills**: Covering every research phase via the skill registry
-- **10 domain-specific agents**: With clear responsibility boundaries
+- **19-stage paper pipeline**: Including new Statistical Analysis Plan (SAP) pre-specification stage
+- **7-framework skills + 28 external skills**: Covering every research phase via the skill registry
+- **18 domain-specific agents**: With clear responsibility boundaries (6 new medical agents in v3.0)
 - **1 collaborative team** (`paper_writing_team`): For full-cycle manuscript production
-- **Passport system**: Hash-based artifact tracking and stale detection
-- **16 integrity gates**: Automated quality enforcement (5 CRITICAL, 8 HIGH, 3 MEDIUM)
+- **Passport system**: 5-ledger hash-based artifact tracking, claim binding, and stale detection
+- **41 integrity gates**: Automated quality enforcement (17 CRITICAL, 21 HIGH, 3 MEDIUM)
+  - Including clinical design, data bias, statistics/model, single-cell/spatial omics, and AI/ML categories
+- **Evidence Graph**: Full claim→statistics→artifact→code→parameter traceability
 - **CLI surface**: 10 commands for full pipeline control
 
 ## Design Philosophy

@@ -1,5 +1,5 @@
 """
-Paper Loop Engine — 18-stage paper pipeline with state management.
+Paper Loop Engine — 19-stage paper pipeline with state management.
 
 Loop model: observe -> decide -> run -> verify -> record -> mark_stale -> diagnose -> repeat
 """

@@ -1,0 +1,269 @@
+# ============================================================================
+# REPORTING GUIDELINE CHECKLIST — COMPLIANCE TRACKING TEMPLATE
+# ============================================================================
+# Purpose: Track adherence to standardized reporting guidelines (CONSORT, STROBE,
+# PRISMA, STREGA, ARRIVE, TRIPOD, CARE, SPIRIT, etc.) for your manuscript.
+#
+# WHY THIS EXISTS:
+#   1. Many journals REQUIRE a completed checklist as a submission file
+#   2. Ensures no critical methodological detail is omitted
+#   3. Demonstrates rigor to reviewers ("they followed STROBE, good")
+#   4. Systematic tracking prevents last-minute scrambling before submission
+#   5. Each item should map to a specific location in your manuscript
+#
+# HOW TO USE:
+#   - Identify the correct guideline for your study design
+#   - Fill in checklist_items from the official checklist PDF/website
+#   - As you write, mark each item: pending → complete or n/a
+#   - The evidence_location column is the SINGLE most important field —
+#     it tells reviewers exactly where to find each item in your manuscript
+#   - Before submission: compliance_pct should be 100% for all "required" items
+#
+# COMMON GUIDELINES BY STUDY TYPE:
+#   RCT                     → CONSORT 2010
+#   Observational           → STROBE (cohort/case-control/cross-sectional)
+#   Meta-analysis           → PRISMA 2020
+#   Genetic association     → STREGA (STROBE extension)
+#   Animal studies          → ARRIVE 2.0
+#   Prediction models       → TRIPOD
+#   Case reports            → CARE
+#   Clinical trial protocol → SPIRIT 2013
+#   Diagnostic accuracy     → STARD 2015
+#   Qualitative research    → SRQR / COREQ
+#   Systematic review prot. → PRISMA-P
+#   qPCR experiments        → MIQE
+#   Omics / microarray      → MIAME / MINSEQE
+#   Single-cell RNA-seq     → scRNA-seq reporting standards (Luecken & Theis 2019)
+#   Spatial transcriptomics → STROBE-based adaptations + FAIR
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# GUIDELINE IDENTIFICATION
+# ---------------------------------------------------------------------------
+guideline:
+  name: "INSERT — e.g. STROBE (STrengthening the Reporting of OBservational studies in Epidemiology)"
+  version: "INSERT — e.g. 2007 (v4), with 2014 STREGA extension for genetic epidemiology"
+  official_url: "INSERT — e.g. https://www.strobe-statement.org/checklists/"
+  applicable_paper_types:
+    - "INSERT — e.g. cohort study"
+    - "INSERT — e.g. case-control study"
+    - "INSERT — e.g. cross-sectional study"
+  # If using multiple guidelines (e.g. STROBE + STREGA), list all here and
+  # create separate checklist_items blocks for each. This template handles one
+  # guideline; duplicate the file for additional guidelines.
+
+# ---------------------------------------------------------------------------
+# CHECKLIST ITEMS — One entry per official checklist item.
+# ---------------------------------------------------------------------------
+# FIELDS:
+#   item_number:  Official item number from the checklist (e.g. "1a", "13b")
+#   section:      Manuscript section where this item belongs
+#                 (Title/Abstract, Introduction, Methods, Results, Discussion, Other)
+#   description:  The official item text from the guideline
+#   required:     true = mandatory for your study design; false = optional extension
+#   status:       pending | complete | na (not applicable to this study)
+#   evidence_location: EXACT location in manuscript (line number, paragraph,
+#                      or "Not required — case-only design")
+#
+# PRO TIP: Fill evidence_location with enough precision that a reviewer can
+# find it in under 10 seconds. "Methods, paragraph 3, lines 4-7" is good.
+# "Methods section" is not good enough.
+# ---------------------------------------------------------------------------
+checklist_items:
+  # --- TITLE AND ABSTRACT ---
+  - item_number: "1a"
+    section: "Title/Abstract"
+    description: "Indicate the study's design with a commonly used term in the title or the abstract"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "1b"
+    section: "Title/Abstract"
+    description: "Provide in the abstract an informative and balanced summary of what was done and what was found"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  # --- INTRODUCTION ---
+  - item_number: "2"
+    section: "Introduction"
+    description: "Explain the scientific background and rationale for the investigation being reported"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "3"
+    section: "Introduction"
+    description: "State specific objectives, including any prespecified hypotheses"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  # --- METHODS ---
+  - item_number: "4"
+    section: "Methods"
+    description: "Present key elements of study design early in the paper"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "5"
+    section: "Methods"
+    description: "Describe the setting, locations, and relevant dates, including periods of recruitment, exposure, follow-up, and data collection"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "6"
+    section: "Methods"
+    description: "Give the eligibility criteria, and the sources and methods of selection of participants"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "7"
+    section: "Methods"
+    description: "Clearly define all outcomes, exposures, predictors, potential confounders, and effect modifiers. Give diagnostic criteria, if applicable"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "8"
+    section: "Methods"
+    description: "For each variable of interest, give sources of data and details of methods of assessment (measurement). Describe comparability of assessment methods if there is more than one group"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "9"
+    section: "Methods"
+    description: "Describe any efforts to address potential sources of bias"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "10"
+    section: "Methods"
+    description: "Explain how the study size was arrived at"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "11"
+    section: "Methods"
+    description: "Explain how quantitative variables were handled in the analyses. If applicable, describe which groupings were chosen and why"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "12"
+    section: "Methods"
+    description: "(a) Describe all statistical methods, including those used to control for confounding. (b) Describe any methods used to examine subgroups and interactions. (c) Explain how missing data were addressed. (d) If applicable, describe analytical methods taking account of sampling strategy. (e) Describe any sensitivity analyses"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  # --- RESULTS ---
+  - item_number: "13"
+    section: "Results"
+    description: "(a) Report numbers of individuals at each stage of study — e.g. numbers potentially eligible, examined for eligibility, confirmed eligible, included in the study, completing follow-up, and analysed. (b) Give reasons for non-participation at each stage. (c) Consider use of a flow diagram"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "14"
+    section: "Results"
+    description: "(a) Give characteristics of study participants (e.g. demographic, clinical, social) and information on exposures and potential confounders. (b) Indicate number of participants with missing data for each variable of interest"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "15"
+    section: "Results"
+    description: "Report numbers of outcome events or summary measures over time"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "16"
+    section: "Results"
+    description: "(a) Give unadjusted estimates and, if applicable, confounder-adjusted estimates and their precision (e.g. 95% CI). Make clear which confounders were adjusted for and why they were included. (b) Report category boundaries when continuous variables were categorized. (c) If relevant, consider translating estimates of relative risk into absolute risk for a meaningful time period"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "17"
+    section: "Results"
+    description: "Report other analyses done — e.g. analyses of subgroups and interactions, and sensitivity analyses"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  # --- DISCUSSION ---
+  - item_number: "18"
+    section: "Discussion"
+    description: "Summarise key results with reference to study objectives"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "19"
+    section: "Discussion"
+    description: "Discuss limitations of the study, taking into account sources of potential bias or imprecision. Discuss both direction and magnitude of any potential bias"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "20"
+    section: "Discussion"
+    description: "Give a cautious overall interpretation of results considering objectives, limitations, multiplicity of analyses, results from similar studies, and other relevant evidence"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  - item_number: "21"
+    section: "Discussion"
+    description: "Discuss the generalisability (external validity) of the study results"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+  # --- OTHER INFORMATION ---
+  - item_number: "22"
+    section: "Other"
+    description: "Give the source of funding and the role of the funders for the present study and, if applicable, for the original study on which the present article is based"
+    required: true
+    status: "pending"
+    evidence_location: ""
+
+# ---------------------------------------------------------------------------
+# COMPLIANCE SUMMARY — Auto-compute or fill manually before submission.
+# ---------------------------------------------------------------------------
+# NOTE: This section should be recalculated every time you update item statuses.
+# The values below are placeholders; a script can auto-fill them.
+# ---------------------------------------------------------------------------
+compliance_summary:
+  total_items: 22                        # Count of ALL items in checklist_items
+  completed: 0                           # status == "complete"
+  not_applicable: 0                      # status == "na"
+  pending: 22                            # status == "pending"
+  compliance_pct: 0.0                    # (completed + not_applicable) / total_items × 100
+  required_items: 22                     # Count of items where required == true
+  required_complete: 0                   # Count of required items with status == "complete"
+  required_compliance_pct: 0.0           # required_complete / required_items × 100
+
+# ---------------------------------------------------------------------------
+# REVIEWER NOTES — Free text for internal tracking.
+# ---------------------------------------------------------------------------
+reviewer_notes: |
+  [INTERNAL — NOT FOR SUBMISSION]
+  Use this space to:
+  - Note items that are partially addressed and need revision
+  - Flag items where evidence_location is ambiguous
+  - Document disagreements among co-authors about whether an item is "na"
+  - Track which items the statistician vs. clinician needs to verify
+  - Record decisions: e.g. "Item 12d: N/A because simple random sample, confirmed by statistician on 2026-06-20"
+
+  Example entry:
+  "Item 7: Outcome definitions need harmonization — surgeon says 'complication within 30 days', statistician says 'complication within 90 days per CMS definition'. Awaiting PI decision."

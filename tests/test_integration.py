@@ -328,7 +328,7 @@ class TestConfigCodeSync:
         cl = ConfigLoader()
         if cl.is_loaded:
             stages = cl.get_pipeline_stages()
-            assert len(stages) == 18, f"Config should have 18 stages, got {len(stages)}"
+            assert len(stages) == 19, f"Config should have 18 stages, got {len(stages)}"
 
     def test_config_gates_count(self):
         from paper_workflow.utils.config_loader import ConfigLoader
@@ -353,7 +353,7 @@ class TestConfigCodeSync:
         if cl.is_loaded:
             ar = cl.get_agent_routing()
             agents = ar.get("agents", {})
-            assert len(agents) == 11, f"Expected 11 agents, got {len(agents)}"
+            assert len(agents) == 12, f"Expected 12 agents (11 original + multi_omics_integrator), got {len(agents)}"
 
     def test_config_code_stage_ids_match(self, temp_project):
         """Hardcoded PIPELINE_STAGES should match config YAML stage IDs."""

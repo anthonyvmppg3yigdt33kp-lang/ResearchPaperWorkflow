@@ -1,0 +1,107 @@
+# FIGURE_PLAN.yaml — Manuscript Figure Planning
+#
+# Defines every figure (main and supplementary) before analysis begins.
+# This enforces the principle: "know what every figure must conclude before
+# you run the analysis that produces it."
+#
+# Each figure entry should answer:
+#   1. What is the one-sentence conclusion this figure supports?
+#   2. What data feeds into it?
+#   3. Which analysis stage produces it?
+#   4. What are the journal's constraints on figures?
+
+paper_id: "PAPER-YYYY-NNN"
+plan_version: "1.0"
+created_at: "YYYY-MM-DD"
+
+# =============================================================================
+# FIGURE CATALOG
+# =============================================================================
+figures:
+  - id: "fig1"
+    panel_count: 4                     # Number of panels (a, b, c, d)
+    title: "Study overview and cohort characteristics"
+    conclusion: "One sentence stating what the reader should take away from this figure"
+    data_sources:
+      - "data/processed/cohort_summary.csv"
+    analysis_stage: "01_descriptive"   # Reference to pipeline stage
+    type: "main"                       # main | supplementary
+    width: "double_column"             # single (89 mm) | 1.5 (140 mm) | double (183 mm)
+    format: "PDF"                      # PDF | SVG | TIFF | EPS
+    dpi: 600                           # 300 for most journals; 600 for line art
+    color_mode: "CMYK"                 # RGB for online-only; CMYK for print
+
+  - id: "fig2"
+    panel_count: 3
+    title: ""
+    conclusion: ""
+    data_sources: []
+    analysis_stage: ""
+    type: "main"
+    width: "double_column"
+    format: "PDF"
+    dpi: 600
+    color_mode: "CMYK"
+
+  - id: "fig3"
+    panel_count: 2
+    title: ""
+    conclusion: ""
+    data_sources: []
+    analysis_stage: ""
+    type: "main"
+    width: "single"
+    format: "PDF"
+    dpi: 600
+    color_mode: "CMYK"
+
+  - id: "figS1"
+    panel_count: 1
+    title: "Quality control metrics"
+    conclusion: ""
+    data_sources: []
+    analysis_stage: ""
+    type: "supplementary"
+    width: "single"
+    format: "PDF"
+    dpi: 300
+    color_mode: "RGB"
+
+# =============================================================================
+# FIGURE CROSS-REFERENCES
+# =============================================================================
+# Maps each figure to the hypotheses it tests and the claims it supports.
+# This ensures every figure has a defined evidentiary role.
+figure_cross_references:
+  fig1:
+    related_hypotheses:
+      - "H1: Description of hypothesis 1"
+    related_claims:
+      - "claim_001"                    # References claim_id in CLAIM_LEDGER.csv
+      - "claim_002"
+  fig2:
+    related_hypotheses: []
+    related_claims: []
+  fig3:
+    related_hypotheses: []
+    related_claims: []
+  figS1:
+    related_hypotheses: []
+    related_claims: []
+
+# =============================================================================
+# JOURNAL CONSTRAINTS
+# =============================================================================
+# Fill in based on the target journal's Guide for Authors.
+journal_constraints:
+  max_main_figures: 6                  # Most journals: 5-8
+  max_supplementary_figures: null      # null means no hard limit
+  max_panels_per_figure: null          # Some journals limit panels
+  color_charges: true                  # true if journal charges for color in print
+  color_charge_per_figure: 0           # Cost in USD/GBP/EUR (set 0 if online-only)
+  preferred_formats:
+    - "PDF"                            # Vector for line art
+    - "TIFF"                           # Raster for photos/micrographs
+  min_resolution_dpi: 300
+  max_file_size_mb: 20                 # Per figure, if specified
+  font_minimum_pt: 6                   # Minimum readable font size after scaling

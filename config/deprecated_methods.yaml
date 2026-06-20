@@ -1,0 +1,19 @@
+deprecated_methods:
+- method_id: celldex_single_ref
+  name: celldex single-reference annotation
+  deprecated_date: 2025-01
+  reason: Single reference insufficient for novel cell types
+  superseded_by: CellTypist + Azimuth multi-reference consensus
+  migration_notes: Use multi-reference voting with marker-based validation
+- method_id: wilcoxon_cell_level_de
+  name: Wilcoxon test at single-cell level for DE
+  deprecated_date: 2024-06
+  reason: 'Pseudoreplication: cells are not independent replicates'
+  superseded_by: Pseudobulk aggregation + DESeq2/edgeR at donor level
+  migration_notes: Aggregate counts per donor per cell type before DE testing
+- method_id: simple_cv_small_n
+  name: Simple k-fold CV for n < 200
+  deprecated_date: 2024-03
+  reason: Performance inflation from tuning leakage in small samples
+  superseded_by: Nested CV or independent external validation
+  migration_notes: Use outer CV for evaluation, inner CV for tuning
