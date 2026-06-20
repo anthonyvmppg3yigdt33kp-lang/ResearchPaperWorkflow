@@ -20,7 +20,6 @@ DOC_ORDER = [
     ("QUALITY_GATES.md",    "QUALITY_GATES — 16规则质量门体系"),
     ("WORKFLOW_PATTERNS.md","WORKFLOW_PATTERNS — 5种工作流模式"),
     ("INTEGRATION_MAP.md",  "INTEGRATION_MAP — 技能集成与工具矩阵"),
-    ("CASE_STUDIES.md",     "CASE_STUDIES — 3个真实项目案例"),
     ("QUICK_REFERENCE.md",  "QUICK_REFERENCE — 一页速查卡"),
 ]
 
@@ -202,7 +201,7 @@ def merge_docs():
 <h2>科研论文多智能体协作工作流<br>完整设计文档</h2>
 <p class="cover-subtitle">4层架构 · 12类Agent · 18阶段管线 · 16质量门 · 5工作流模式</p>
 <p class="cover-date">Version 2.0.0 &mdash; June 20, 2026</p>
-<p class="cover-desc">本文档由 9 份设计文档合并生成，涵盖系统架构、Agent协作、管线调度、质量门、工作流模式、技能集成与案例研究等完整内容。适用于科研论文写作工作流的设计评审、技术选型与团队培训。</p>
+<p class="cover-desc">本文档由 8 份设计文档合并生成，涵盖系统架构、Agent协作、管线调度、质量门、工作流模式、技能集成等完整内容。适用于科研论文写作工作流的设计评审、技术选型与团队培训。</p>
 </div>
 </div>
 <div class="page-break"></div>
