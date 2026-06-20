@@ -551,65 +551,7 @@ quality_gates:
 
 ---
 
-## 8. 真实案例演练
-
-### 案例：IgG4&MALT生物标志物发现
-
-**背景：** IgG4-ROD vs MALT Lymphoma鉴别诊断，已有WGCNA结果（17模块、132 hub-DEG），准备进入ML分析和论文写作。
-
-**已完成的阶段：**
-- Phase 1: `select_topic` ✓, `literature_search` ✓
-- Phase 2: `data_audit` ✓, `run_analysis`（部分：DE ✓、CIBERSORT ✓、WGCNA ✓）
-
-**执行计划：**
-
-```python
-from paper_workflow.e2e_workflow import E2EWorkflow
-
-wf = E2EWorkflow(paper_id="paper_igg4malt_20260620")
-
-# 补完Phase 1：期刊定位 + 假设生成
-wf.run(phases=[1])
-
-# 补完Phase 2：图表规划 + ML分析 + 方法验证
-wf.run(phases=[2])
-
-# 写作+审稿+定稿（在检查点暂停）
-wf.run(phases=[3, 4, 5], stop_at_checkpoint=True)
-```
-
-**在每个检查点的操作：**
-
-```bash
-# Phase 1 检查点：审核研究策略
-python -m paper_workflow.cli checkpoint \
-  --paper paper_igg4malt_20260620 \
-  --stage research_plan --decision approved
-
-# Phase 2 检查点：审核图表规划
-python -m paper_workflow.cli checkpoint \
-  --paper paper_igg4malt_20260620 \
-  --stage figure_planning --decision approved
-
-# Phase 3 检查点：审核手稿
-python -m paper_workflow.cli checkpoint \
-  --paper paper_igg4malt_20260620 \
-  --stage assemble_manuscript --decision approved
-
-# Phase 4 检查点：审核审稿意见
-python -m paper_workflow.cli checkpoint \
-  --paper paper_igg4malt_20260620 \
-  --stage internal_review --decision approved
-
-# Phase 5 检查点：最终确认
-python -m paper_workflow.cli checkpoint \
-  --paper paper_igg4malt_20260620 \
-  --stage finalize --decision approved
-```
-
----
-
-## 9. 常见问题排查
+## 8. 常见问题排查
 
 ### Q1：`pip install -e .` 失败显示 "No module named setuptools"
 
