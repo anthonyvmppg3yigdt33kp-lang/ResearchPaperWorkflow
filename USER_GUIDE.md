@@ -1,8 +1,8 @@
-# ResearchPaperWorkflow v2 — 完整操作指南
+# ResearchPaperWorkflow v4 — 完整操作指南
 
 **面向科研人员的多智能体论文写作工作流 · 从零到投稿的完整手册**
 
-Version 2.0.0 · June 2026
+Version 4.0.0 · June 2026
 
 ---
 
@@ -26,12 +26,12 @@ Version 2.0.0 · June 2026
 
 ### 1.1 这是什么？
 
-ResearchPaperWorkflow 是一个**AI驱动的科研论文写作系统**。它把写论文从"手动操作各种脚本和文件"变成了"由AI Agent团队协作完成的自动化管线"。
+ResearchPaperWorkflow 是一个**AI驱动的科研论文写作系统**。
 
 **你可以用它做什么：**
 - 🚀 从研究想法开始，自动完成文献检索、数据分析、论文写作、审稿模拟、修订润色
 - 🔍 自动检查论文中的数据完整性、引用准确性、统计报告规范性
-- 🤖 让12个专业AI Agent协作完成论文（策略师、文献员、数据分析师、统计师、写作员...）
+- 🤖 让12个专业AI Agent协作完成论文（策略规划、文献调研、数据分析、统计审核、写作指导...）
 - ✅ 41项自动质量门确保论文达到投稿标准
 
 ### 1.2 安装
@@ -133,17 +133,17 @@ python -m paper_workflow.cli diagnose-gate-failures --paper <paper_id>
 
 ```
 ┌─────────────────────────────────────────────┐
-│  STRATEGY（策略层）                         │
-│  研究问题定义 → 期刊匹配 → 可行性 → 假设     │
+│  STRATEGY（策略层）                          │
+│  研究问题定义 → 期刊匹配 → 可行性 → 假设       │
 ├─────────────────────────────────────────────┤
-│  DECISION（决策层）                         │
-│  技能调度 → MCP工具路由 → 管线循环引擎       │
+│  DECISION（决策层）                          │
+│  技能调度 → MCP工具路由 → 管线循环引擎         │
 ├─────────────────────────────────────────────┤
-│  EXECUTION（执行层）                        │
-│  18阶段管线 → 质量门 → CLI命令              │
+│  EXECUTION（执行层）                         │
+│  18阶段管线 → 质量门 → CLI命令                │
 ├─────────────────────────────────────────────┤
-│  SUPERVISION（监督层）                      │
-│  护照追踪 → 溯源审计 → 完整性 → 过期检测     │
+│  SUPERVISION（监督层）                       │
+│  护照追踪 → 溯源审计 → 完整性 → 过期检测       │
 └─────────────────────────────────────────────┘
 ```
 
@@ -313,8 +313,7 @@ submission/
 
 ## 4. 五大工作模式
 
-### 模式1：完整研究（Full Research）⏱ 8-12周
-
+### 模式1：完整研究（Full Research）
 ```
 适用：有原始数据，从零开始的新项目
 流程：Phase 1 → 2 → 3 → 4 → 5（全部18个阶段）
@@ -329,7 +328,7 @@ python -m paper_workflow.cli create-project \
 python -m paper_workflow.e2e_workflow --paper-id <id> --phases 1,2,3,4,5 --stop-at-checkpoint
 ```
 
-### 模式2：从结果快速写作（From Results）⏱ 2-4周
+### 模式2：从结果快速写作（From Results）
 
 ```
 适用：分析已完成，有结果和图表，只需要论文写作
@@ -356,7 +355,7 @@ for s in skip_stages:
 wf.run(stop_at_checkpoint=True)
 ```
 
-### 模式3：修订循环（Revision Cycle）⏱ 1-2周
+### 模式3：修订循环（Revision Cycle）
 
 ```
 适用：收到审稿意见后的修回
@@ -376,7 +375,7 @@ python -m paper_workflow.cli checkpoint \
   --paper <paper_id> --stage re_review --decision approved
 ```
 
-### 模式4：方法学论文（Methods Paper）⏱ 3-6周
+### 模式4：方法学论文（Methods Paper）
 
 ```
 适用：工具/方法/软件论文
@@ -389,7 +388,7 @@ python -m paper_workflow.cli checkpoint \
 wf.initialize(idea="...", field="...", journal="Bioinformatics", paper_type="methods")
 ```
 
-### 模式5：文献综述（Literature Review）⏱ 4-8周
+### 模式5：文献综述（Literature Review）
 
 ```
 适用：系统综述或叙述性综述
@@ -862,6 +861,6 @@ ResearchPaperWorkflow_v2/
 
 ---
 
-*本指南基于 ResearchPaperWorkflow v2.0.0 编写。如有疑问，请参阅各模块的 README 和 DESIGN 文档。*
+*本指南基于 ResearchPaperWorkflow v4.0.0 编写。如有疑问，请参阅各模块的 README 和 DESIGN 文档。*
 
 *Last updated: June 20, 2026*
