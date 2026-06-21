@@ -1,11 +1,12 @@
 """
 Paper Workflow CLI — Command-line interface for the research paper workflow system.
 
-12 commands for full pipeline control.
+14 commands for full pipeline control.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -13,6 +14,11 @@ from paper_workflow.engine.loop_engine import PaperLoopEngine
 from paper_workflow.supervision.passport import PaperPassport
 from paper_workflow.supervision.integrity import IntegrityGateChecker
 from paper_workflow.strategy.research_strategy import ResearchStrategyManager
+from paper_workflow.utils.skill_installer import (
+    ensure_skills_available,
+    format_skill_report,
+    install_missing_skills,
+)
 
 
 def get_root() -> Path:
@@ -175,6 +181,43 @@ def cmd_strategy(args):
     print(manager.print_summary(strategy))
 
 
+def cmd_install_skills(args):
+    root = get_root()
+    target = Path(args.target_root).expanduser() if args.target_root else None
+    report = install_missing_skills(
+        project_root=root,
+        target_root=target,
+        check_only=args.check_only,
+        force=args.force,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(format_skill_report(report))
+    if args.strict and (report.get("missing_bundled") or report.get("missing_external")):
+        sys.exit(1)
+
+
+def cmd_aigc_humanizer(args):
+    root = get_root()
+    papers_dir = get_papers_dir(root)
+    engine = PaperLoopEngine(root, args.paper, papers_dir)
+    stage = "aigc_humanizer_review"
+    if stage not in engine.stages:
+        print("[ERROR] V4 stage not found: aigc_humanizer_review")
+        sys.exit(1)
+    result = engine.run_stage(stage)
+    if not result.get("success"):
+        print(f"[ERROR] {stage} failed: {result.get('error', '')}")
+        sys.exit(1)
+    verify = engine.verify_stage(stage)
+    engine.record_and_sync()
+    print(f"[OK] {stage} complete")
+    print(f"     Artifacts: {', '.join(result.get('artifacts', [])) or 'none'}")
+    if not verify.get("all_passed", False):
+        print(f"[WARNING] Gate review needs attention: {verify.get('error') or verify.get('results')}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Paper Workflow CLI")
     sub = parser.add_subparsers(dest="command")
@@ -199,14 +242,31 @@ def main():
     p = sub.add_parser("strategy"); p.add_argument("--idea", required=True); p.add_argument("--field", required=True)
     p.add_argument("--journal"); p.add_argument("--timeline", type=int)
 
+    p = sub.add_parser("install-skills")
+    p.add_argument("--target-root")
+    p.add_argument("--check-only", action="store_true")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--strict", action="store_true")
+    p.add_argument("--force", action="store_true")
+
+    p = sub.add_parser("run-aigc-humanizer")
+    p.add_argument("--paper", required=True)
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help(); return
 
+    if args.command != "install-skills":
+        try:
+            ensure_skills_available(get_root(), auto_install=True, quiet=True)
+        except Exception as exc:
+            print(f"[WARNING] Skill auto-check skipped: {exc}")
+
     {"create-project": cmd_create, "status": cmd_status, "run-pipeline": cmd_run,
      "checkpoint": cmd_checkpoint, "run-integrity-gate": cmd_integrity,
      "diagnose-gate-failures": cmd_diagnose, "detect-artifact-drift": cmd_drift,
-     "sync-artifact-stale": cmd_sync, "list-papers": cmd_list, "strategy": cmd_strategy}[args.command](args)
+     "sync-artifact-stale": cmd_sync, "list-papers": cmd_list, "strategy": cmd_strategy,
+     "install-skills": cmd_install_skills, "run-aigc-humanizer": cmd_aigc_humanizer}[args.command](args)
 
 
 if __name__ == "__main__":

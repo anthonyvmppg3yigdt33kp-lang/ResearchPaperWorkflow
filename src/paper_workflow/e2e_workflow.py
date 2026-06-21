@@ -260,7 +260,7 @@ class E2EWorkflow:
                  "description": "Cover letter and response letter preparation",
                  "produces": ["submission/cover_letter.md", "submission/response_letter_template.md"]},
                 {"id": "integrity_check", "skill": "qc_pipeline",
-                 "description": "Final integrity gates (16 rules, 3 severity levels)",
+                 "description": "Final integrity gates (44 rules, 3 severity levels)",
                  "produces": ["integrity/integrity_report.json", "integrity/integrity_report.md"]},
                 {"id": "presentation", "skill": "nature-paper2ppt",
                  "description": "Conference/group meeting presentation (optional)",
@@ -1193,7 +1193,7 @@ class E2EWorkflow:
     def _phase5_integrity_check(
         self, stage_def: dict[str, Any]
     ) -> tuple[StageOutcome, list[str], str]:
-        """Run the 16-rule integrity gate suite."""
+        """Run the 44-rule integrity gate suite."""
         try:
             # Gather manuscript sections
             sections: dict[str, str] = {}
@@ -1269,7 +1269,7 @@ class E2EWorkflow:
             return (
                 StageOutcome.SUCCESS,
                 artifacts,
-                f"All 16 gates passed ({report.critical_failures}C/{report.high_failures}H/{report.medium_failures}M).",
+                f"All 44 gates passed ({report.critical_failures}C/{report.high_failures}H/{report.medium_failures}M).",
             )
         except Exception as exc:
             return (StageOutcome.FAILURE, [], f"Integrity check failed: {exc}")

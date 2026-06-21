@@ -57,9 +57,9 @@ class TestE2EPipeline:
 
     EXPECTED_STAGES = [
         "select_topic", "target_journal", "literature_search", "formulate_hypotheses",
-        "data_audit", "figure_planning", "run_analysis", "verify_methods",
+        "design_analysis_plan", "data_audit", "figure_planning", "run_analysis", "verify_methods",
         "write_methods", "write_results", "write_introduction", "write_discussion",
-        "assemble_manuscript", "integrity_check", "internal_review",
+        "assemble_manuscript", "aigc_humanizer_review", "integrity_check", "internal_review",
         "apply_revision", "re_review", "finalize",
     ]
 
@@ -71,7 +71,7 @@ class TestE2EPipeline:
         for stage_id in self.EXPECTED_STAGES:
             assert stage_id in engine.stages, f"Stage '{stage_id}' not found in engine"
 
-        assert len(engine.stages) == 18, f"Expected 18 stages, got {len(engine.stages)}"
+        assert len(engine.stages) == 20, f"Expected 20 stages, got {len(engine.stages)}"
 
     def test_stage_dependencies_valid(self, paper_workflow_setup):
         """Verify all upstream dependencies reference existing stages."""
@@ -236,7 +236,7 @@ class TestIntegrityGates:
         from paper_workflow.supervision.integrity import IntegrityGateChecker
 
         gates = IntegrityGateChecker.GATES
-        assert len(gates) == 16, f"Expected 16 gates, got {len(gates)}"
+        assert len(gates) == 44, f"Expected 44 gates, got {len(gates)}"
 
     def test_gate_severity_counts(self):
         from paper_workflow.supervision.integrity import IntegrityGateChecker
@@ -247,9 +247,9 @@ class TestIntegrityGates:
             sev = gate_def["severity"]
             severities[sev] = severities.get(sev, 0) + 1
 
-        assert severities.get("critical", 0) == 5, f"Expected 5 CRITICAL, got {severities.get('critical', 0)}"
-        assert severities.get("high", 0) == 8, f"Expected 8 HIGH, got {severities.get('high', 0)}"
-        assert severities.get("medium", 0) == 3, f"Expected 3 MEDIUM, got {severities.get('medium', 0)}"
+        assert severities.get("critical", 0) == 17, f"Expected 17 CRITICAL, got {severities.get('critical', 0)}"
+        assert severities.get("high", 0) == 22, f"Expected 22 HIGH, got {severities.get('high', 0)}"
+        assert severities.get("medium", 0) == 5, f"Expected 5 MEDIUM, got {severities.get('medium', 0)}"
 
     def test_run_all_checks_with_empty_sections(self, temp_project):
         """Running checks with no manuscript sections should still produce a report."""
@@ -328,7 +328,7 @@ class TestConfigCodeSync:
         cl = ConfigLoader()
         if cl.is_loaded:
             stages = cl.get_pipeline_stages()
-            assert len(stages) == 19, f"Config should have 18 stages, got {len(stages)}"
+            assert len(stages) == 20, f"Config should have 20 stages, got {len(stages)}"
 
     def test_config_gates_count(self):
         from paper_workflow.utils.config_loader import ConfigLoader
@@ -337,7 +337,7 @@ class TestConfigCodeSync:
         if cl.is_loaded:
             gates = cl.get_quality_gates()
             total = sum(len(v) for v in gates.values())
-            assert total == 16, f"Config should have 16 quality gates, got {total}"
+            assert total == 44, f"Config should have 44 quality gates, got {total}"
 
     def test_writing_standards(self):
         from paper_workflow.utils.config_loader import ConfigLoader
@@ -353,7 +353,7 @@ class TestConfigCodeSync:
         if cl.is_loaded:
             ar = cl.get_agent_routing()
             agents = ar.get("agents", {})
-            assert len(agents) == 12, f"Expected 12 agents (11 original + multi_omics_integrator), got {len(agents)}"
+            assert len(agents) == 13, f"Expected 13 agents, got {len(agents)}"
 
     def test_config_code_stage_ids_match(self, temp_project):
         """Hardcoded PIPELINE_STAGES should match config YAML stage IDs."""
@@ -375,9 +375,8 @@ class TestConfigCodeSync:
             print(f"Config stage IDs: {config_ids}")
             print(f"Code stage IDs: {code_ids}")
 
-            # At minimum, both should have 18 stages
-            assert len(config_ids) == 18
-            assert len(code_ids) == 18
+            assert config_ids == code_ids
+            assert len(config_ids) == 20
 
 
 # ===========================================================================

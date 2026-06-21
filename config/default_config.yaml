@@ -1,18 +1,20 @@
 # =============================================================================
-# Research Paper Workflow v2 — Default Configuration
+# Research Paper Workflow v4.0 — Default Configuration
 # =============================================================================
 # This file defines the complete pipeline, quality gates, writing standards,
 # research domains, skills dispatching, agent routing, supervision, code library,
-# output interfaces, reproducibility, and extension points for the 18-stage
+# output interfaces, reproducibility, and extension points for the 20-stage
 # academic paper writing workflow.
 # =============================================================================
 
+version: "4.0.0"
+
 # =============================================================================
-# 1. PIPELINE STAGES (18 stages)
+# 1. PIPELINE STAGES (20 stages)
 # =============================================================================
 pipeline:
-  version: "3.0.0"
-  description: "End-to-end academic research paper writing pipeline — 19 stages with 41 medical evidence quality gates (v3.0)"
+  version: "4.0.0"
+  description: "End-to-end academic research paper writing pipeline -- 20 stages with 44 medical evidence and AIGC text hygiene gates (v4.0)"
   stages:
     # --- STAGE 1: select_topic ---
     - id: select_topic
@@ -386,24 +388,52 @@ pipeline:
         max_attempts: 2
       gate_rules:
         on_pass:
-          - "advance_to: integrity_check"
+          - "advance_to: aigc_humanizer_review"
         on_fail:
           - "retry_stage"
           - "notify_human: assembly_failed"
 
-    # --- STAGE 15: integrity_check ---
+    # --- STAGE 15: aigc_humanizer_review ---
+    - id: aigc_humanizer_review
+      name: "AIGC Detection & Humanizer Pass"
+      layer: decision
+      order: 15
+      agent: aigc_humanizer_reviewer
+      skills:
+        - ai-writing-detection
+        - humanizer
+        - aigc_humanizer_review
+      timeout_seconds: 1800
+      dependencies:
+        - assemble_manuscript
+      artifacts_out:
+        - "review/aigc_detection_report.md"
+        - "review/humanizer_revision_plan.yaml"
+        - "manuscript/manuscript_humanized.md"
+      human_checkpoint: true
+      retry:
+        max_attempts: 2
+      gate_rules:
+        on_pass:
+          - "advance_to: integrity_check"
+        on_fail:
+          - "retry_stage"
+          - "notify_human: aigc_humanizer_review_failed"
+
+    # --- STAGE 16: integrity_check ---
     - id: integrity_check
       name: "Integrity & Quality Check"
       layer: decision
-      order: 15
+      order: 16
       agent: integrity_checker
       skills:
         - qc_pipeline
         - nature-data
         - nature-citation
+        - ai-writing-detection
       timeout_seconds: 2400
       dependencies:
-        - assemble_manuscript
+        - aigc_humanizer_review
       artifacts_out:
         - "integrity_report.yaml"
         - "quality_gate_results.yaml"
@@ -417,11 +447,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: integrity_check_failed"
 
-    # --- STAGE 16: internal_review ---
+    # --- STAGE 17: internal_review ---
     - id: internal_review
       name: "Internal Peer Review"
       layer: decision
-      order: 16
+      order: 17
       agent: team_orchestrator
       skills:
         - academic-paper-reviewer
@@ -442,11 +472,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: review_rejected"
 
-    # --- STAGE 17: apply_revision ---
+    # --- STAGE 18: apply_revision ---
     - id: apply_revision
       name: "Apply Revisions"
       layer: decision
-      order: 17
+      order: 18
       agent: report_writer
       skills:
         - scientific-writing
@@ -470,11 +500,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: revision_incomplete"
 
-    # --- STAGE 18: re_review ---
+    # --- STAGE 19: re_review ---
     - id: re_review
       name: "Re-Review Revised Manuscript"
       layer: decision
-      order: 18
+      order: 19
       agent: team_orchestrator
       skills:
         - academic-paper-reviewer
@@ -495,11 +525,11 @@ pipeline:
           - "retry_stage"
           - "notify_human: re_review_failed"
 
-    # --- STAGE 19: finalize ---
+    # --- STAGE 20: finalize ---
     - id: finalize
       name: "Finalize & Package Manuscript"
       layer: supervision
-      order: 19
+      order: 20
       agent: integrity_checker
       skills:
         - nature-polishing
@@ -544,6 +574,7 @@ paper_types:
       - write_introduction
       - write_discussion
       - assemble_manuscript
+      - aigc_humanizer_review
       - integrity_check
       - internal_review
       - apply_revision
@@ -579,6 +610,7 @@ paper_types:
       - verify_methods
       - write_methods
       - assemble_manuscript
+      - aigc_humanizer_review
       - integrity_check
       - internal_review
       - apply_revision
@@ -618,6 +650,7 @@ paper_types:
       - write_introduction
       - write_discussion
       - assemble_manuscript
+      - aigc_humanizer_review
       - integrity_check
       - internal_review
       - apply_revision
@@ -662,6 +695,7 @@ paper_types:
       - write_introduction
       - write_discussion
       - assemble_manuscript
+      - aigc_humanizer_review
       - integrity_check
       - internal_review
       - apply_revision
@@ -702,6 +736,7 @@ paper_types:
       - write_introduction
       - write_discussion
       - assemble_manuscript
+      - aigc_humanizer_review
       - integrity_check
       - internal_review
       - apply_revision
@@ -743,6 +778,7 @@ paper_types:
       - write_introduction
       - write_discussion
       - assemble_manuscript
+      - aigc_humanizer_review
       - integrity_check
       - internal_review
       - apply_revision
@@ -766,7 +802,7 @@ paper_types:
       table_limit: 2
 
 # =============================================================================
-# 3. QUALITY GATES (16 gates)
+# 3. QUALITY GATES (44 gates)
 # =============================================================================
 quality_gates:
 
@@ -1153,6 +1189,39 @@ quality_gates:
       rule: "scan_for_deployment_claims_without_prospective"
     blocking: true
     auto_fix: false
+
+  # =========================================================================
+  # v4.0 NEW: AIGC Text Hygiene Gates
+  # =========================================================================
+  aigc_artifact_scan:
+    severity: HIGH
+    category: aigc_text
+    description: "No definitive AI interface artifacts remain in manuscript text"
+    check:
+      type: "aigc_artifact_scan"
+      rule: "scan_for_turn_markers_oaicite_tracking_urls_and_chatbot_residue"
+    blocking: false
+    auto_fix: true
+
+  aigc_style_signal_density:
+    severity: MEDIUM
+    category: aigc_text
+    description: "AI-style vocabulary and structural signals remain below review threshold"
+    check:
+      type: "aigc_style_density"
+      rule: "score_high_signal_phrases_parallelism_bold_headers_and_em_dash_density"
+    blocking: false
+    auto_fix: true
+
+  humanizer_revision_trace:
+    severity: MEDIUM
+    category: aigc_text
+    description: "AIGC review report, humanizer plan, and humanized manuscript copy are present"
+    check:
+      type: "artifact_presence"
+      rule: "require_review_aigc_report_humanizer_plan_and_manuscript_humanized"
+    blocking: false
+    auto_fix: true
 
 # --- MEDIUM gates (warn but do not block) ---
   section_length_minimum:
@@ -1585,6 +1654,31 @@ skills_dispatcher:
     phase: "polish"
     agent: "report_writer"
 
+  ai-writing-detection:
+    triggers:
+      - "AI writing detection"
+      - "check for AI writing"
+      - "detect AI text"
+      - "AIGC audit"
+      - "AI痕迹检测"
+      - "查AI"
+      - "检测AI写作"
+      - "manuscript AI trace scan"
+    phase: "quality"
+    agent: "aigc_humanizer_reviewer"
+
+  aigc_humanizer_review:
+    triggers:
+      - "AIGC humanizer review"
+      - "humanize manuscript"
+      - "AI trace removal pass"
+      - "AIGC审查"
+      - "去AI并保留学术含义"
+      - "人工化润色"
+      - "humanizer pass"
+    phase: "polish"
+    agent: "aigc_humanizer_reviewer"
+
   nature-figure:
     triggers:
       - "create figure"
@@ -1743,7 +1837,7 @@ skills_dispatcher:
     agent: "figure_planner"
 
 # =============================================================================
-# 7. AGENT ROUTING (11 agents)
+# 7. AGENT ROUTING (13 agents)
 # =============================================================================
 agent_routing:
   routing_strategy: best_match_with_fallback
@@ -1821,6 +1915,17 @@ agent_routing:
         - assemble_manuscript
         - apply_revision
 
+    aigc_humanizer_reviewer:
+      description: "Audits manuscript text for AIGC writing artifacts, produces a responsible AI-writing risk report, and prepares a conservative humanizer revision pass"
+      primary_skills:
+        - ai-writing-detection
+        - humanizer
+        - aigc_humanizer_review
+      stages:
+        - aigc_humanizer_review
+        - integrity_check
+        - finalize
+
     statistician:
       description: "Validates statistical methods, checks assumptions, ensures proper reporting of statistical results"
       primary_skills:
@@ -1833,6 +1938,7 @@ agent_routing:
       primary_skills:
         - qc_pipeline
         - academic-paper-reviewer
+        - ai-writing-detection
         - nature-data
         - nature-citation
       stages:

@@ -65,15 +65,15 @@ class StageDefinition:
         }
 
     # ------------------------------------------------------------------
-    # Phase derivation — order integer (1–19) → phase integer (1–6)
+    # Phase derivation: order integer (1-20) -> phase integer (1-6)
     # ------------------------------------------------------------------
-    # The 6-phase grouping per ARCHITECTURE.md (v3.0 — 19 stages):
-    #   1. Research & Planning   → stages order 1–5
-    #   2. Data & Methods        → stages order 6–9
-    #   3. Writing               → stages order 10–13
-    #   4. Assembly & Review     → stages order 14–16
-    #   5. Revision              → stages order 17–18
-    #   6. Finalize              → stages order 19
+    # The 6-phase grouping per ARCHITECTURE.md (v4.0, 20 stages):
+    #   1. Research & Planning   -> stage orders 1-5
+    #   2. Data & Methods        -> stage orders 6-9
+    #   3. Writing               -> stage orders 10-13
+    #   4. Assembly & Review     -> stage orders 14-16
+    #   5. Revision              -> stage orders 17-19
+    #   6. Finalize              -> stage order 20
     # ------------------------------------------------------------------
     # Legacy fallback — layer string → phase integer (deprecated; prefer
     # explicit ``phase`` or ``order``-based derivation).
@@ -96,7 +96,8 @@ class StageDefinition:
 
         This is the canonical mapping used when stages are loaded from the
         YAML config (which uses ``order``, not ``phase``).
-        v3.0: Research & Planning now includes design_analysis_plan (order 5).
+        v4.0 includes design_analysis_plan (order 5) and
+        aigc_humanizer_review (order 15).
         """
         if order <= 5:
             return 1   # Research & Planning (v3: orders 1-5)
@@ -106,9 +107,9 @@ class StageDefinition:
             return 3   # Writing (v3: orders 10-13)
         if order <= 16:
             return 4   # Assembly & Review (v3: orders 14-16)
-        if order <= 18:
+        if order <= 19:
             return 5   # Revision (v3: orders 17-18)
-        return 6       # Finalize (v3: order 19)
+        return 6       # Finalize (v4: order 20)
 
     @classmethod
     def _resolve_gate_severities(cls, quality_gates: dict[str, Any]) -> None:
@@ -152,7 +153,12 @@ class StageDefinition:
             stage_name: str = raw.get("name", stage_id)
             layer: str = raw.get("layer", "strategy")
             order: int = int(raw.get("order", 0))
-            phase: int = cls._LAYER_TO_PHASE.get(layer, order)
+            if "phase" in raw:
+                phase = int(raw["phase"])
+            elif order:
+                phase = cls._order_to_phase(order)
+            else:
+                phase = cls._LAYER_TO_PHASE.get(layer, 0)
 
             # --- Upstream dependencies ---
             upstream: list[str] = list(raw.get("dependencies", []) or [])
@@ -230,7 +236,7 @@ class StageState:
 
 
 class PaperLoopEngine:
-    """Core paper loop orchestrator — 19-stage pipeline with state management (v3.0)."""
+    """Core paper loop orchestrator: 20-stage pipeline with state management (v4.0)."""
 
     PIPELINE_STAGES = [
         # Phase 1: Research & Planning
@@ -322,9 +328,20 @@ class PaperLoopEngine:
                         upstream=["write_introduction", "write_methods", "write_results", "write_discussion"],
                         produces_artifacts=["manuscript/manuscript.tex", "manuscript/manuscript.pdf"],
                         agent="report_writer", skill="paper_writing", timeout_minutes=20),
+        StageDefinition(name="aigc_humanizer_review", phase=4, category="review",
+                        description="Audit AIGC writing signals and create a humanizer revision pass",
+                        upstream=["assemble_manuscript"],
+                        produces_artifacts=["review/aigc_detection_report.md",
+                                           "review/humanizer_revision_plan.yaml",
+                                           "manuscript/manuscript_humanized.md"],
+                        gate_rules=[{"rule": "aigc_artifact_scan", "severity": "high"},
+                                    {"rule": "aigc_style_signal_density", "severity": "medium"},
+                                    {"rule": "humanizer_revision_trace", "severity": "medium"}],
+                        agent="aigc_humanizer_reviewer", skill="aigc_humanizer_review",
+                        timeout_minutes=25),
         StageDefinition(name="integrity_check", phase=4, category="review",
                         description="Run integrity gates on complete manuscript",
-                        upstream=["assemble_manuscript"],
+                        upstream=["aigc_humanizer_review"],
                         produces_artifacts=["integrity/integrity_report.json"],
                         gate_rules=[{"rule": "bibtex_citation_existence", "severity": "critical"},
                                     {"rule": "results_no_citations", "severity": "critical"},
@@ -559,6 +576,12 @@ class PaperLoopEngine:
             sec_file = manuscript_dir / f"{sec}.md"
             if sec_file.exists():
                 sections[sec] = sec_file.read_text(encoding="utf-8", errors="ignore")
+        if not sections:
+            for full_name in ["manuscript_humanized.md", "manuscript_full.md", "manuscript.md"]:
+                full_path = manuscript_dir / full_name
+                if full_path.exists():
+                    sections["full"] = full_path.read_text(encoding="utf-8", errors="ignore")
+                    break
 
         # Run actual integrity checks if sections exist and gate rules are defined
         if sections and stage.definition.gate_rules:

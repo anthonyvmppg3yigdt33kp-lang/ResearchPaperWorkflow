@@ -147,7 +147,7 @@ class PaperPassport:
             "updated_at": datetime.now().isoformat(), "idea": idea, "field": field,
             "target_journal": target_journal, "paper_type": paper_type,
             "status": "initialized", "pipeline_state": "clean", "stages": {},
-            "metadata": {"version": "1.0", "total_stages": 19, "completed_stages": 0},
+            "metadata": {"version": "4.0", "total_stages": 20, "completed_stages": 0},
         }
         self._save_passport()
         return self.passport_data

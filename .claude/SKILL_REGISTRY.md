@@ -1,8 +1,16 @@
 # Skill Registry -- Research Paper Workflow Framework
 
-**Version**: 1.0.0 | **Last Updated**: 2026-06-18 | **Total Skills Mapped**: 28
+**Version**: 4.0.0 | **Last Updated**: 2026-06-21 | **Total Skills Mapped**: 31
 
-Comprehensive skill-to-stage mapping for the 18-stage Paper Loop Engine, 11 agents, and 3 collaborative teams. Every installable skill in the user's environment is mapped to at least one pipeline stage with trigger conditions, input/output contracts, and agent integration.
+> V4 addendum: the core pipeline is now 20 stages. New Stage 15
+> `aigc_humanizer_review` runs after `assemble_manuscript` and before
+> `integrity_check`. It is owned by `aigc_humanizer_reviewer` and uses
+> `ai-writing-detection`, `humanizer`, and the bundled
+> `aigc_humanizer_review` skill. The quality gate set is now 44 gates,
+> including `aigc_artifact_scan`, `aigc_style_signal_density`, and
+> `humanizer_revision_trace`.
+
+Comprehensive skill-to-stage mapping for the 20-stage Paper Loop Engine, 13 agents, and 3 collaborative teams. Every installable skill in the user's environment is mapped to at least one pipeline stage with trigger conditions, input/output contracts, and agent integration.
 
 ---
 
@@ -21,7 +29,7 @@ Comprehensive skill-to-stage mapping for the 18-stage Paper Loop Engine, 11 agen
 
 ## Paper Loop Stages Quick Reference
 
-### 18-Stage Pipeline (paper_loop.md)
+### 20-Stage Pipeline (paper_loop.md)
 
 | Phase | # | Stage ID | Description | Layer | Agent |
 |-------|---|----------|-------------|-------|-------|
@@ -29,20 +37,22 @@ Comprehensive skill-to-stage mapping for the 18-stage Paper Loop Engine, 11 agen
 | | 2 | `target_journal` | Journal targeting & requirements | Strategy | `research_strategist` |
 | | 3 | `literature_search` | Systematic literature search & synthesis | Strategy | `literature_reviewer` |
 | | 4 | `formulate_hypotheses` | Hypothesis formulation & study design | Strategy | `research_strategist` |
-| **2. Data & Methods** | 5 | `data_audit` | Data quality audit & metadata validation | Execution | `data_auditor` |
-| | 6 | `figure_planning` | Figure & table planning | Execution | `figure_planner` |
-| | 7 | `run_analysis` | Execute data analysis pipeline | Execution | `analysis_executor` |
-| | 8 | `verify_methods` | Methods verification & reproducibility | Execution | `pipeline_engineer` |
-| **3. Writing** | 9 | `write_methods` | Write Methods section | Execution | `report_writer` |
-| | 10 | `write_results` | Write Results section | Execution | `report_writer` |
-| | 11 | `write_introduction` | Write Introduction section | Decision | `report_writer` |
-| | 12 | `write_discussion` | Write Discussion section | Decision | `report_writer` |
-| **4. Assembly & Review** | 13 | `assemble_manuscript` | Assemble full manuscript | Decision | `report_writer` |
-| | 14 | `integrity_check` | Run 16 integrity gates | Decision | `integrity_checker` |
-| | 15 | `internal_review` | Internal peer review simulation | Supervision | `integrity_checker` |
-| **5. Revision** | 16 | `apply_revision` | Apply targeted revisions | Supervision | `report_writer` |
-| | 17 | `re_review` | Post-revision re-review | Supervision | `integrity_checker` |
-| **6. Finalize** | 18 | `finalize` | Final quality check & export | Supervision | `integrity_checker` |
+| | 5 | `design_analysis_plan` | Freeze statistical analysis plan before primary analysis | Strategy | `statistician` |
+| **2. Data & Methods** | 6 | `data_audit` | Data quality audit & metadata validation | Execution | `data_auditor` |
+| | 7 | `figure_planning` | Figure & table planning | Execution | `figure_planner` |
+| | 8 | `run_analysis` | Execute data analysis pipeline | Execution | `analysis_executor` |
+| | 9 | `verify_methods` | Methods verification & reproducibility | Execution | `pipeline_engineer` |
+| **3. Writing** | 10 | `write_methods` | Write Methods section | Execution | `report_writer` |
+| | 11 | `write_results` | Write Results section | Execution | `report_writer` |
+| | 12 | `write_introduction` | Write Introduction section | Decision | `report_writer` |
+| | 13 | `write_discussion` | Write Discussion section | Decision | `report_writer` |
+| **4. Assembly & Review** | 14 | `assemble_manuscript` | Assemble full manuscript | Decision | `report_writer` |
+| | 15 | `aigc_humanizer_review` | AIGC text hygiene scan and humanizer revision pass | Decision | `aigc_humanizer_reviewer` |
+| | 16 | `integrity_check` | Run 44 integrity gates | Decision | `integrity_checker` |
+| **5. Revision** | 17 | `internal_review` | Internal peer review simulation | Supervision | `team_orchestrator` |
+| | 18 | `apply_revision` | Apply targeted revisions | Supervision | `report_writer` |
+| | 19 | `re_review` | Post-revision re-review | Supervision | `team_orchestrator` |
+| **6. Finalize** | 20 | `finalize` | Final quality check & export | Supervision | `integrity_checker` |
 
 ### 10-Stage Academic Pipeline (paper_writing/SKILL.md, academic-pipeline)
 

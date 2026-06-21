@@ -15,7 +15,7 @@ def test_config_loader():
     assert cl.is_loaded, "Config should be loaded"
 
     stages = cl.get_pipeline_stages()
-    assert len(stages) == 19, f"Expected 18 stages, got {len(stages)}"
+    assert len(stages) == 20, f"Expected 20 stages, got {len(stages)}"
     print(f"Config loaded: {len(stages)} pipeline stages from config")
 
     ws = cl.get_writing_standards()
@@ -28,7 +28,7 @@ def test_config_loader():
     n_high = len(gates.get("high", []))
     n_med = len(gates.get("medium", []))
     total = n_crit + n_high + n_med
-    assert total == 16, f"Expected 16 total gates, got {total}"
+    assert total == 44, f"Expected 44 total gates, got {total}"
     print(f"Quality gates: {n_crit} critical + {n_high} high + {n_med} medium = {total} total")
 
     # Additional accessors
@@ -47,14 +47,12 @@ def test_config_loader():
 
     ar = cl.get_agent_routing()
     agents = ar.get("agents", {})
-    assert len(agents) == 12, f"Expected 12 agents, got {len(agents)}"
+    assert len(agents) == 13, f"Expected 13 agents, got {len(agents)}"
     print(f"Agent routing: {len(agents)} agents")
 
     sup = cl.get_supervision()
     assert "timeout" in sup
     print("Supervision config loaded OK")
-
-    return True
 
 
 def test_engine_with_config():
@@ -68,22 +66,20 @@ def test_engine_with_config():
         paper_id="test_p0",
         config_path=config_path,
     )
-    assert len(engine.stages) == 18, f"Expected 18 stages from config, got {len(engine.stages)}"
+    assert len(engine.stages) == 20, f"Expected 20 stages from config, got {len(engine.stages)}"
 
     # Verify stage IDs match config IDs
     expected_ids = [
         "select_topic", "target_journal", "literature_search", "formulate_hypotheses",
-        "data_audit", "figure_planning", "run_analysis", "verify_methods",
+        "design_analysis_plan", "data_audit", "figure_planning", "run_analysis", "verify_methods",
         "write_methods", "write_results", "write_introduction", "write_discussion",
-        "assemble_manuscript", "integrity_check", "internal_review",
+        "assemble_manuscript", "aigc_humanizer_review", "integrity_check", "internal_review",
         "apply_revision", "re_review", "finalize",
     ]
     actual_ids = list(engine.stages.keys())
     assert actual_ids == expected_ids, f"Stage ID mismatch: {actual_ids} != {expected_ids}"
 
     print(f"Engine loaded {len(engine.stages)} stages from config — IDs match config YAML")
-    return True
-
 
 def test_engine_backward_compat():
     """Test PaperLoopEngine WITHOUT config_path (backward compatible)."""
@@ -96,9 +92,9 @@ def test_engine_backward_compat():
     )
     expected_hardcoded = [
         "select_topic", "target_journal", "literature_search", "formulate_hypotheses",
-        "data_audit", "figure_planning", "run_analysis", "verify_methods",
+        "design_analysis_plan", "data_audit", "figure_planning", "run_analysis", "verify_methods",
         "write_methods", "write_results", "write_introduction", "write_discussion",
-        "assemble_manuscript", "integrity_check", "internal_review",
+        "assemble_manuscript", "aigc_humanizer_review", "integrity_check", "internal_review",
         "apply_revision", "re_review", "finalize",
     ]
     actual_ids = list(engine.stages.keys())
@@ -106,8 +102,6 @@ def test_engine_backward_compat():
         f"Backward compat ID mismatch: {actual_ids} != {expected_hardcoded}"
     )
     print(f"Backward compatible: engine uses hardcoded PIPELINE_STAGES ({len(engine.stages)} stages)")
-    return True
-
 
 def test_config_loader_missing_file():
     """Test ConfigLoader with missing config file returns defaults."""
@@ -130,8 +124,6 @@ def test_config_loader_missing_file():
     pt = cl.get_paper_type("nonexistent")
     assert pt["name"] == "Original Research Article"
     print("Missing config fallback: paper type default OK")
-
-    return True
 
 
 def main():

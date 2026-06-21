@@ -1,7 +1,7 @@
 """
 Integrity Gates — Automated manuscript quality and integrity checks.
 
-16 rules across 3 severity levels. Critical failures block pipeline progress.
+44 rules across 3 severity levels. Critical failures block pipeline progress.
 """
 from __future__ import annotations
 
@@ -52,20 +52,21 @@ class IntegrityReport:
 
 
 class IntegrityGateChecker:
-    """Runs integrity and quality checks on manuscript artifacts (v3.0).
+    """Runs integrity and quality checks on manuscript artifacts (v4.0).
 
-    v3.0 expands from 16 to 41 gates across 7 categories:
+    v4.0 expands to 44 gates across 8 categories:
       A. Citation & Claim (5 gates, v2 legacy)
       B. Clinical Design (5 gates, v3 new)
       C. Data & Bias (5 gates, v3 new)
       D. Statistics & Models (5 gates, v3 new)
       E. Single-Cell & Spatial Omics (5 gates, v3 new)
       F. AI / Machine Learning (5 gates, v3 new)
-      G. Format & Completeness (11 gates, v2 legacy + v3 upgrades)
+      G. AIGC Text Hygiene (3 gates, v4 new)
+      H. Format & Completeness (11 gates, v2 legacy + v3 upgrades)
     """
 
     # =========================================================================
-    # v3.0: 41 gates total (16 original + 25 new medical evidence gates)
+    # v4.0: 44 gates total (41 v3 gates + 3 AIGC text hygiene gates)
     # =========================================================================
     GATES = {
         # ---- A. Citation & Claim Integrity (5 CRITICAL, v2 legacy) ----
@@ -170,6 +171,17 @@ class IntegrityGateChecker:
                                      "category": "ai_ml",
                                      "description": "No clinical deployment claimed without prospective validation"},
 
+        # ---- G. AIGC Text Hygiene Gates (3 HIGH/MEDIUM, v4 new) ----
+        "aigc_artifact_scan": {"rule": "aigc_artifact_scan", "severity": "high",
+                               "category": "aigc_text",
+                               "description": "No definitive AI interface artifacts remain in manuscript text"},
+        "aigc_style_signal_density": {"rule": "aigc_style_signal_density", "severity": "medium",
+                                      "category": "aigc_text",
+                                      "description": "AI-style vocabulary and structural signals remain below review threshold"},
+        "humanizer_revision_trace": {"rule": "humanizer_revision_trace", "severity": "medium",
+                                     "category": "aigc_text",
+                                     "description": "AIGC review and humanizer revision trace are present for final manuscript"},
+
         # ---- G. Format & Completeness (6 HIGH/MEDIUM, v2 legacy) ----
         "data_availability_statement": {"rule": "data_availability_statement", "severity": "high",
                                         "category": "format",
@@ -208,7 +220,7 @@ class IntegrityGateChecker:
 
     MIN_LENGTHS = {"introduction": 500, "methods": 800, "results": 800, "discussion": 600, "abstract": 100}
 
-    # v3.0: Category-to-stage mapping for targeted gate activation
+    # v4.0: Category-to-stage mapping for targeted gate activation
     CATEGORY_STAGE_MAP = {
         "citation_claim": ["write_introduction", "write_discussion", "assemble_manuscript", "integrity_check"],
         "clinical_design": ["select_topic", "formulate_hypotheses", "design_analysis_plan", "data_audit"],
@@ -216,6 +228,7 @@ class IntegrityGateChecker:
         "statistics_model": ["design_analysis_plan", "verify_methods", "write_results", "integrity_check"],
         "sc_spatial_omics": ["data_audit", "run_analysis", "verify_methods", "write_methods"],
         "ai_ml": ["run_analysis", "verify_methods", "write_results", "integrity_check"],
+        "aigc_text": ["aigc_humanizer_review", "integrity_check", "finalize"],
         "format": ["write_methods", "write_results", "write_discussion", "assemble_manuscript", "integrity_check"],
     }
 
@@ -235,7 +248,7 @@ class IntegrityGateChecker:
                        claim_ledger: Optional[list] = None,
                        active_categories: Optional[list[str]] = None,
                        ) -> IntegrityReport:
-        """Run all integrity checks (v3.0 — 36 gates across 7 categories).
+        """Run all integrity checks (v4.0: 44 gates across 8 categories).
 
         New v3.0 inputs:
         - study_design: STUDY_PROTOCOL.yaml data for clinical design gates
@@ -300,6 +313,12 @@ class IntegrityGateChecker:
             report.results.append(self._check_decision_curve(sections, model_evaluation))
             report.results.append(self._check_explainability(sections))
             report.results.append(self._check_deployment_claim(sections))
+
+        # ---- G. AIGC Text Hygiene Gates (v4.0) ----
+        if "aigc_text" in cats:
+            report.results.append(self._check_aigc_artifacts(sections))
+            report.results.append(self._check_aigc_style_density(sections))
+            report.results.append(self._check_humanizer_trace(sections))
 
         # ---- G. Format & Completeness (v2 legacy + v3 upgrades) ----
         if "format" in cats:
@@ -850,6 +869,94 @@ class IntegrityGateChecker:
                                      "recommendation": "Do NOT claim clinical deployability without prospective study"})
         return GateResult(rule="deployment_claim_limited", severity="high", passed=True,
                          message="No unqualified deployment claims detected")
+
+    # =========================================================================
+    # v4.0: AIGC Text Hygiene Gate Methods
+    # =========================================================================
+    def _check_aigc_artifacts(self, sections: dict) -> GateResult:
+        if not sections:
+            return GateResult(rule="aigc_artifact_scan", severity="high", passed=True,
+                              message="No manuscript text supplied; gate skipped")
+        all_text = "\n".join(sections.values())
+        patterns = {
+            "ChatGPT citation marker": r"turn\d+(search|image|news|file)\d+|contentReference|oaicite|oai_citation",
+            "AI URL tracking": r"utm_source=(chatgpt\.com|openai)",
+            "AI source tag": r"<grok_card|\[attached_file:\d+\]|\[web:\d+\]",
+            "Chatbot residue": r"\b(I hope this helps|certainly, here|as of my last|knowledge cutoff)\b",
+        }
+        hits = {}
+        for label, pattern in patterns.items():
+            matches = re.findall(pattern, all_text, flags=re.IGNORECASE)
+            if matches:
+                hits[label] = len(matches)
+        return GateResult(
+            rule="aigc_artifact_scan",
+            severity="high",
+            passed=not hits,
+            message="No AI interface artifacts detected" if not hits else f"{sum(hits.values())} AI artifact signal(s) detected",
+            details={"hits": hits} if hits else {},
+        )
+
+    def _check_aigc_style_density(self, sections: dict) -> GateResult:
+        if not sections:
+            return GateResult(rule="aigc_style_signal_density", severity="medium", passed=True,
+                              message="No manuscript text supplied; gate skipped")
+        all_text = "\n".join(sections.values())
+        lowered = all_text.lower()
+        words = re.findall(r"\b\w+\b", all_text)
+        word_count = len(words)
+        if word_count < 200:
+            return GateResult(rule="aigc_style_signal_density", severity="medium", passed=True,
+                              message=f"{word_count} words; too short for reliable style-density check")
+
+        phrases = [
+            "complex and multifaceted", "intricate interplay", "played a crucial role",
+            "marking a pivotal moment", "underscores its importance", "in today's fast-paced world",
+            "at its core", "it is important to note", "rich tapestry", "serves as a testament",
+            "delve", "nuanced", "pivotal", "holistic", "robust",
+        ]
+        phrase_hits = [phrase for phrase in phrases if phrase in lowered]
+        bold_header_hits = re.findall(r"^\s*[-*]\s+\*\*[^*]+\*\*:", all_text, flags=re.MULTILINE)
+        tricolon_hits = re.findall(r"\b\w+,\s+\w+,\s+and\s+\w+\b", lowered)
+        em_dash_count = all_text.count("\u2014")
+
+        score = len(phrase_hits) + min(3, len(bold_header_hits)) + min(2, len(tricolon_hits) // 3)
+        if em_dash_count / max(word_count, 1) > 0.01:
+            score += 2
+        passed = score < 6
+        return GateResult(
+            rule="aigc_style_signal_density",
+            severity="medium",
+            passed=passed,
+            message="AIGC style signal density below threshold" if passed else f"AIGC style signal score {score} requires review",
+            details={
+                "score": score,
+                "word_count": word_count,
+                "phrase_hits": phrase_hits[:10],
+                "bold_header_items": len(bold_header_hits),
+                "tricolon_hits": len(tricolon_hits),
+                "em_dash_count": em_dash_count,
+                "caveat": "This is a triage signal only; do not treat it as proof of AI authorship.",
+            },
+        )
+
+    def _check_humanizer_trace(self, sections: dict) -> GateResult:
+        if not sections:
+            return GateResult(rule="humanizer_revision_trace", severity="medium", passed=True,
+                              message="No manuscript text supplied; gate skipped")
+        report_path = self.paper_dir / "review" / "aigc_detection_report.md"
+        plan_path = self.paper_dir / "review" / "humanizer_revision_plan.yaml"
+        humanized_path = self.paper_dir / "manuscript" / "manuscript_humanized.md"
+        present = [p.name for p in (report_path, plan_path, humanized_path) if p.exists()]
+        missing = [p.name for p in (report_path, plan_path, humanized_path) if not p.exists()]
+        passed = len(missing) == 0
+        return GateResult(
+            rule="humanizer_revision_trace",
+            severity="medium",
+            passed=passed,
+            message="AIGC review and humanizer trace present" if passed else "AIGC/humanizer trace incomplete",
+            details={"present": present, "missing": missing} if missing else {"present": present},
+        )
 
     def generate_markdown_report(self, report: IntegrityReport) -> str:
         lines = ["# Integrity Gate Report", "",

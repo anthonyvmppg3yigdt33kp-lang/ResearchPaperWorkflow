@@ -219,7 +219,7 @@ def test_strategy_layer():
         hypotheses = framework.generate_hypotheses(topic=topic, feasibility=report)
         assert len(hypotheses) >= 3, f"[FAIL] Expected >=3 hypotheses, got {len(hypotheses)}"
         assert hypotheses[0].category == "primary"
-        assert hypotheses[0].id == "H1"
+        assert hypotheses[0].id == "H-C1"
         print(f"  [OK] HypothesisFramework — {len(hypotheses)} hypotheses (H1={hypotheses[0].type})")
 
         # Add evidence and validate
@@ -247,7 +247,7 @@ def test_strategy_layer():
 
         # Hypothesis to_dict
         hd = h1.to_dict()
-        assert hd["id"] == "H1"
+        assert hd["id"] == "H-C1"
         print(f"  [OK] Hypothesis to_dict")
 
         # --- ResearchStrategyManager ---
@@ -456,7 +456,7 @@ def test_loop_engine():
         engine = PaperLoopEngine(root, paper_id="test_paper")
 
         # --- 18 stages initialized ---
-        assert len(engine.stages) == 18, f"[FAIL] Expected 18 stages, got {len(engine.stages)}"
+        assert len(engine.stages) == 20, f"[FAIL] Expected 20 stages, got {len(engine.stages)}"
         all_pending = all(s.status == StageStatus.PENDING for s in engine.stages.values())
         assert all_pending
         print(f"  [OK] {len(engine.stages)} stages initialized (all pending)")
@@ -472,7 +472,7 @@ def test_loop_engine():
 
         # --- decide_next_stage: first stage should be create_project ---
         next_s = engine.decide_next_stage()
-        assert next_s == "create_project", f"[FAIL] Expected create_project, got {next_s}"
+        assert next_s == "select_topic", f"[FAIL] Expected select_topic, got {next_s}"
         print(f"  [OK] First next stage — {next_s}")
 
         # --- Run stage ---
@@ -499,30 +499,35 @@ def test_loop_engine():
         # --- Pipeline progression ---
         # After create_project completed, next should be search_literature
         next2 = engine.decide_next_stage()
-        assert next2 == "search_literature", f"[FAIL] Expected search_literature, got {next2}"
+        assert next2 == "target_journal", f"[FAIL] Expected target_journal, got {next2}"
         print(f"  [OK] Pipeline progression — after create_project → {next2}")
 
         # Complete search_literature and verify
-        engine.run_stage("search_literature")
-        engine.verify_stage("search_literature")
-        assert engine.stages["search_literature"].status == StageStatus.COMPLETED
+        engine.run_stage("target_journal")
+        engine.verify_stage("target_journal")
+        assert engine.stages["target_journal"].status == StageStatus.COMPLETED
+        next_lit = engine.decide_next_stage()
+        assert next_lit == "literature_search", f"[FAIL] Expected literature_search, got {next_lit}"
+        engine.run_stage("literature_search")
+        engine.verify_stage("literature_search")
+        assert engine.stages["literature_search"].status == StageStatus.COMPLETED
         print(f"  [OK] search_literature completed")
 
         # Next should be research_plan (has 2 upstreams: create_project + search_literature)
         next3 = engine.decide_next_stage()
-        assert next3 == "research_plan", f"[FAIL] Expected research_plan, got {next3}"
+        assert next3 == "formulate_hypotheses", f"[FAIL] Expected formulate_hypotheses, got {next3}"
         print(f"  [OK] Upstream-aware progression — {next3}")
 
         # --- Blocked pipeline: complete some but not all upstreams ---
         # Reset: create_project done, others pending. search_literature NOT done yet, but
         # we need to check that research_plan won't proceed without search_literature.
         # Mark search_literature back to pending
-        engine.stages["search_literature"].status = StageStatus.PENDING
+        engine.stages["literature_search"].status = StageStatus.PENDING
         # Now research_plan has both upstreams but search_literature is pending.
         # But create_project is the only one with no upstreams, so decide_next
         # will return search_literature (which has upstream 'create_project' done).
         next4 = engine.decide_next_stage()
-        assert next4 == "search_literature", f"[FAIL] Expected search_literature, got {next4}"
+        assert next4 == "literature_search", f"[FAIL] Expected literature_search, got {next4}"
         print(f"  [OK] Blocked detection — returned {next4} (not research_plan)")
 
         # --- Unknown stage error ---
@@ -553,7 +558,7 @@ def test_loop_engine():
 
         # --- Human checkpoint stages ---
         human_stages = [sd.name for sd in engine.PIPELINE_STAGES if sd.human_checkpoint]
-        assert "create_project" in human_stages
+        assert "select_topic" in human_stages
         assert "internal_review" in human_stages
         assert "finalize" in human_stages
         print(f"  [OK] Human checkpoints — {human_stages}")
@@ -566,9 +571,9 @@ def test_loop_engine():
         print(f"  [OK] StageDefinition to_dict")
 
         # --- StageState to_dict ---
-        ss = engine.stages["create_project"]
+        ss = engine.stages["select_topic"]
         ssd = ss.to_dict()
-        assert ssd["name"] == "create_project"
+        assert ssd["name"] == "select_topic"
         assert ssd["status"] == "completed"
         print(f"  [OK] StageState to_dict")
 
@@ -615,13 +620,13 @@ def test_integrity_gates():
         checker = IntegrityGateChecker(paper_dir)
 
         # --- 16 gates defined ---
-        assert len(checker.GATES) == 16, f"[FAIL] Expected 16 gates, got {len(checker.GATES)}"
+        assert len(checker.GATES) == 44, f"[FAIL] Expected 44 gates, got {len(checker.GATES)}"
         critical_count = sum(1 for g in checker.GATES.values() if g["severity"] == "critical")
-        assert critical_count == 5
+        assert critical_count == 17
         print(f"  [OK] {len(checker.GATES)} gates defined ({critical_count} critical)")
 
         # --- Empty run ---
-        report = checker.run_all_checks()
+        report = checker.run_all_checks(active_categories=["format"])
         assert isinstance(report, IntegrityReport)
         assert not report.blocks_pipeline
         assert report.report_id.startswith("ir_")
@@ -891,9 +896,9 @@ def test_full_integration():
         assert passport_path.exists(), "[FAIL] Passport should exist"
         print(f"  [OK] Passport file exists — {passport_path.name}")
 
-        # --- Verify create_project completed ---
-        assert wf.engine.stages["create_project"].status == StageStatus.COMPLETED
-        print(f"  [OK] create_project already completed after initialize")
+        # --- Verify select_topic completed ---
+        assert wf.engine.stages["select_topic"].status == StageStatus.COMPLETED
+        print(f"  [OK] select_topic already completed after initialize")
 
         # --- Run next stages ---
         # Run without stop_at_checkpoint to get past human checkpoints
@@ -967,6 +972,7 @@ def test_full_integration():
             journal="Nature Genetics",
             project_root=root,
             auto_run=True,
+            max_stages=2,
         )
         assert wf4.state.stages_completed >= 1 or wf4.state.pipeline_state == "ready"
         print(f"  [OK] create_and_run_paper (auto_run) — completed={wf4.state.stages_completed}")

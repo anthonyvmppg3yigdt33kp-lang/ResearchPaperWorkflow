@@ -1,0 +1,53 @@
+version: "4.0.0"
+description: "Bundled skills required by ResearchPaperWorkflow V4."
+target_default: "~/.codex/skills"
+compare_roots:
+  - "~/.codex/skills"
+  - "~/.agents/skills"
+  - "~/.claude/skills"
+skills:
+  - name: topic_research
+    source: bundled
+    path: .claude/skills/topic_research.md
+  - name: literature_search
+    source: bundled
+    path: .claude/skills/literature_search.md
+  - name: statistical_testing
+    source: bundled
+    path: .claude/skills/statistical_testing.md
+  - name: qc_pipeline
+    source: bundled
+    path: .claude/skills/qc_pipeline.md
+  - name: figure_planning
+    source: bundled
+    path: .claude/skills/figure_planning.md
+  - name: spatial_analysis
+    source: bundled
+    path: .claude/skills/spatial_analysis.md
+  - name: reproducibility
+    source: bundled
+    path: .claude/skills/reproducibility.md
+  - name: paper_writing
+    source: bundled
+    path: .claude/skills/paper_writing.md
+  - name: paper_loop
+    source: bundled
+    path: .claude/skills/paper_loop.md
+  - name: revision_routing
+    source: bundled
+    path: .claude/skills/revision_routing.md
+  - name: multi_omics
+    source: bundled
+    path: .claude/skills/multi_omics.md
+  - name: pathway_inference
+    source: bundled
+    path: .claude/skills/pathway_inference.md
+  - name: ai-writing-detection
+    source: bundled
+    path: .claude/skills/ai-writing-detection.md
+  - name: humanizer
+    source: bundled
+    path: .claude/skills/humanizer.md
+  - name: aigc_humanizer_review
+    source: bundled
+    path: .claude/skills/aigc_humanizer_review.md

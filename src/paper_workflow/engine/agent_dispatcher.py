@@ -7,6 +7,7 @@ produces real outputs, writes files, and returns a StageResult.
 from __future__ import annotations
 
 import json
+import re
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -95,7 +96,7 @@ class AgentDispatcher:
             print(f"[ERROR] {stage}: {type(exc).__name__}: {exc}", flush=True)
 
     def _register_default_handlers(self) -> None:
-        """Register default handlers for all 19 pipeline stages."""
+        """Register default handlers for all configured pipeline stages."""
         # Phase 1: Research & Planning
         self._handlers["select_topic"] = self._execute_research_stage
         self._handlers["target_journal"] = self._execute_research_stage
@@ -113,6 +114,7 @@ class AgentDispatcher:
         self._handlers["write_discussion"] = self._execute_writing_stage
         # Phase 4: Assembly & Review
         self._handlers["assemble_manuscript"] = self._execute_writing_stage
+        self._handlers["aigc_humanizer_review"] = self._execute_aigc_humanizer_stage
         self._handlers["integrity_check"] = self._execute_review_stage
         self._handlers["internal_review"] = self._execute_review_stage
         # Phase 5: Revision
@@ -487,6 +489,221 @@ class AgentDispatcher:
             "status": "success", "artifacts": artifacts,
             "metrics": {}, "warnings": [], "errors": [],
         }
+
+    # ------------------------------------------------------------------
+    # AIGC + humanizer review handler (Phase 4)
+    # ------------------------------------------------------------------
+
+    def _execute_aigc_humanizer_stage(
+        self, stage_name: str, stage_def: Any, paper_dir: Path, agent_log: list
+    ) -> dict:
+        """Audit AI-writing signals and create a conservative humanizer pass."""
+        manuscript_dir = paper_dir / "manuscript"
+        review_dir = paper_dir / "review"
+        manuscript_dir.mkdir(parents=True, exist_ok=True)
+        review_dir.mkdir(parents=True, exist_ok=True)
+
+        source_files = [
+            manuscript_dir / "manuscript_full.md",
+            manuscript_dir / "manuscript.md",
+        ]
+        section_files = [
+            manuscript_dir / f"{section}.md"
+            for section in ("abstract", "introduction", "methods", "results", "discussion")
+        ]
+
+        text_parts: list[str] = []
+        source_labels: list[str] = []
+        for candidate in source_files:
+            if candidate.exists():
+                text_parts.append(candidate.read_text(encoding="utf-8", errors="ignore"))
+                source_labels.append(str(candidate.relative_to(paper_dir)))
+                break
+        if not text_parts:
+            for candidate in section_files:
+                if candidate.exists():
+                    text_parts.append(candidate.read_text(encoding="utf-8", errors="ignore"))
+                    source_labels.append(str(candidate.relative_to(paper_dir)))
+
+        source_text = "\n\n".join(text_parts).strip()
+        if not source_text:
+            source_text = "# Manuscript\n\n[Complete manuscript sections before AIGC review]\n"
+            source_labels.append("manuscript/*")
+
+        findings = self._scan_aigc_text(source_text)
+        report_path = review_dir / "aigc_detection_report.md"
+        plan_path = review_dir / "humanizer_revision_plan.yaml"
+        humanized_path = manuscript_dir / "manuscript_humanized.md"
+
+        report_lines = [
+            "# AIGC and Humanizer Review",
+            "",
+            f"Generated: {datetime.now().isoformat()}",
+            f"Stage: {stage_name}",
+            f"Input files: {', '.join(source_labels)}",
+            "",
+            "## Assessment",
+            "",
+            f"- Total words: {findings['word_count']}",
+            f"- Signal score: {findings['signal_score']}",
+            f"- Risk level: {findings['risk_level']}",
+            "",
+            "## Signals",
+            "",
+        ]
+        if findings["signals"]:
+            for item in findings["signals"]:
+                report_lines.append(f"- {item}")
+        else:
+            report_lines.append("- No strong AIGC writing signals detected.")
+        report_lines += [
+            "",
+            "## Humanizer Actions",
+            "",
+            "- Remove chatbot artifacts and unsupported AI-style meta-commentary.",
+            "- Replace inflated importance language with specific, evidence-bound claims.",
+            "- Keep citations, numeric claims, and technical terms intact.",
+            "- Preserve academic tone while varying sentence rhythm.",
+        ]
+        report_path.write_text("\n".join(report_lines), encoding="utf-8")
+
+        plan = {
+            "generated_at": datetime.now().isoformat(),
+            "stage": stage_name,
+            "input_files": source_labels,
+            "risk_level": findings["risk_level"],
+            "signal_score": findings["signal_score"],
+            "actions": [
+                "remove_chatbot_artifacts",
+                "replace_puffery_with_specific_claims",
+                "reduce_formulaic_parallelism",
+                "preserve_citations_and_numeric_claims",
+            ],
+            "signals": findings["signals"],
+        }
+        plan_path.write_text(yaml.dump(plan, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+        humanized_path.write_text(self._humanize_text(source_text), encoding="utf-8")
+
+        agent_log.append(
+            f"AIGC scan complete: score={findings['signal_score']} risk={findings['risk_level']}"
+        )
+        artifacts = [
+            {"path": "review/aigc_detection_report.md", "mime_type": "text/markdown", "source_stage": stage_name},
+            {"path": "review/humanizer_revision_plan.yaml", "mime_type": "application/yaml", "source_stage": stage_name},
+            {"path": "manuscript/manuscript_humanized.md", "mime_type": "text/markdown", "source_stage": stage_name},
+        ]
+        warnings = []
+        if findings["risk_level"] in ("medium", "high"):
+            warnings.append("AIGC writing signals found; review manuscript_humanized.md before submission")
+        return {
+            "status": "warning" if warnings else "success",
+            "artifacts": artifacts,
+            "metrics": {
+                "aigc_signal_score": findings["signal_score"],
+                "aigc_word_count": findings["word_count"],
+            },
+            "warnings": warnings,
+            "errors": [],
+        }
+
+    @staticmethod
+    def _scan_aigc_text(text: str) -> dict:
+        """Heuristic AIGC scan used for workflow triage, not accusation."""
+        lowered = text.lower()
+        word_count = len(re.findall(r"\b\w+\b", text))
+        signals: list[str] = []
+        score = 0
+
+        artifact_patterns = {
+            "ChatGPT citation artifact": r"turn\d+(search|image|news|file)\d+|contentReference|oaicite|oai_citation",
+            "AI URL tracking": r"utm_source=(chatgpt\.com|openai)",
+            "External AI source tag": r"<grok_card|\[attached_file:\d+\]|\[web:\d+\]",
+        }
+        for label, pattern in artifact_patterns.items():
+            matches = re.findall(pattern, text, flags=re.IGNORECASE)
+            if matches:
+                score += 4
+                signals.append(f"{label}: {len(matches)} match(es)")
+
+        high_signal_phrases = [
+            "complex and multifaceted",
+            "intricate interplay",
+            "played a crucial role",
+            "marking a pivotal moment",
+            "underscores its importance",
+            "in today's fast-paced world",
+            "at its core",
+            "it is important to note",
+            "in conclusion",
+            "rich tapestry",
+            "serves as a testament",
+            "delve",
+            "nuanced",
+            "pivotal",
+            "holistic",
+            "robust",
+        ]
+        phrase_hits = [phrase for phrase in high_signal_phrases if phrase in lowered]
+        if phrase_hits:
+            score += min(6, len(phrase_hits))
+            signals.append(f"High-signal vocabulary/phrases: {', '.join(phrase_hits[:8])}")
+
+        bold_headers = re.findall(r"^\s*[-*]\s+\*\*[^*]+\*\*:", text, flags=re.MULTILINE)
+        if bold_headers:
+            score += 2
+            signals.append(f"Inline bold-header list items: {len(bold_headers)}")
+
+        em_dashes = text.count("\u2014")
+        if word_count >= 200 and em_dashes / max(word_count, 1) > 0.01:
+            score += 2
+            signals.append(f"High em dash density: {em_dashes} em dashes in {word_count} words")
+
+        tricolons = re.findall(r"\b\w+,\s+\w+,\s+and\s+\w+\b", lowered)
+        if len(tricolons) >= 3:
+            score += 1
+            signals.append(f"Repeated rule-of-three phrasing: {len(tricolons)} instances")
+
+        if word_count < 200:
+            risk = "low"
+            signals.append("Text under 200 words; detection confidence is limited")
+        elif score >= 8:
+            risk = "high"
+        elif score >= 4:
+            risk = "medium"
+        else:
+            risk = "low"
+
+        return {
+            "word_count": word_count,
+            "signal_score": score,
+            "risk_level": risk,
+            "signals": signals,
+        }
+
+    @staticmethod
+    def _humanize_text(text: str) -> str:
+        """Apply conservative, deterministic cleanup while preserving claims."""
+        replacements = {
+            "It is important to note that ": "",
+            "It is worth noting that ": "",
+            "At its core, ": "",
+            "In conclusion, ": "",
+            "In summary, ": "",
+            "complex and multifaceted": "complex",
+            "intricate interplay": "interaction",
+            "played a crucial role": "contributed",
+            "marking a pivotal moment": "marking a change",
+            "underscores its importance": "supports this point",
+            "serves as a testament to": "shows",
+            "rich tapestry": "range",
+        }
+        result = text
+        for old, new in replacements.items():
+            result = result.replace(old, new)
+            result = result.replace(old.lower(), new)
+        result = re.sub(r"\n{3,}", "\n\n", result)
+        return result.strip() + "\n"
 
     # ------------------------------------------------------------------
     # Review stage handler (Phase 4-5)

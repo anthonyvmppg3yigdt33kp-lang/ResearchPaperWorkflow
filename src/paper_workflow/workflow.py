@@ -171,9 +171,10 @@ class PaperWorkflow:
 
 
 def create_and_run_paper(idea: str, field: str, journal: str = "",
-                         project_root: Optional[Path] = None, auto_run: bool = False) -> PaperWorkflow:
+                         project_root: Optional[Path] = None, auto_run: bool = False,
+                         max_stages: Optional[int] = None) -> PaperWorkflow:
     wf = PaperWorkflow(project_root=project_root)
     wf.initialize(idea=idea, field=field, journal=journal)
     if auto_run:
-        wf.run(stop_at_checkpoint=False)
+        wf.run(stop_at_checkpoint=False, max_stages=max_stages)
     return wf
