@@ -301,9 +301,9 @@ python -m paper_workflow.cli.main detect-artifact-drift --paper <paper_id>
 python -m paper_workflow.cli.main sync-artifact-stale --paper <paper_id>
 ```
 
-## 9. 推荐的人机协作流程
+## 9. 推荐的协作流程
 
-1. 人类定义研究问题和可用数据。
+1. 由我们定义研究问题和可用数据。
 2. `select_topic` 和 `target_journal` 生成方向与目标期刊约束。
 3. `literature_search` 建立文献库和证据表。
 4. `design_analysis_plan` 冻结 SAP，防止事后解释。
@@ -371,22 +371,4 @@ gh auth status
 chcp 65001
 ```
 
-## 12. 发布 V4
 
-维护者发布流程：
-
-```powershell
-python -m pytest -q
-git status -sb
-git add .
-git commit -m "Release v4 workflow with AIGC humanizer review"
-git tag v4.0.0
-git push origin <branch>
-git push origin v4.0.0
-```
-
-如需 GitHub Release：
-
-```powershell
-gh release create v4.0.0 --title "ResearchPaperWorkflow v4.0.0" --notes-file docs/V4_CONFIGURATION_AUDIT.md
-```
