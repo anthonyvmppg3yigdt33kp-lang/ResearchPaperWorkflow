@@ -1,6 +1,6 @@
-# ARCHITECTURE — ResearchPaperWorkflow v2 系统架构
+# ARCHITECTURE — ResearchPaperWorkflow v4 系统架构
 
-**Version**: 2.0.0 | **Layer Count**: 4 | **Design Pattern**: Layered + Event-Driven + Pipeline
+**Version**: 4.0.0 | **Layer Count**: 4 | **Design Pattern**: Layered + Event-Driven + Pipeline
 
 ---
 
