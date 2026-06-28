@@ -28,17 +28,17 @@ pipeline:
       timeout_seconds: 1800
       dependencies: []
       artifacts_out:
-        - "topic_proposal.md"
-        - "feasibility_assessment.md"
+        - "research_plan/research_question.md"
+        - "research_plan/hypotheses.yaml"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: target_journal"
+      transition_policy:
+        on_pass: {action: advance_to, stage: target_journal}
         on_fail:
-          - "abort_pipeline"
-          - "notify_human: topic_not_feasible"
+          actions:
+            - {action: abort_pipeline}
+            - {action: notify_human, reason: topic_not_feasible}
 
     # --- STAGE 2: target_journal ---
     - id: target_journal
@@ -53,17 +53,16 @@ pipeline:
       dependencies:
         - select_topic
       artifacts_out:
-        - "journal_selection_report.md"
-        - "journal_requirements.yaml"
+        - "research_plan/journal_profile.md"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: literature_search"
+      transition_policy:
+        on_pass: {action: advance_to, stage: literature_search}
         on_fail:
-          - "retry_stage"
-          - "notify_human: no_suitable_journal"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: no_suitable_journal}
 
     # --- STAGE 3: literature_search ---
     - id: literature_search
@@ -79,18 +78,16 @@ pipeline:
       dependencies:
         - select_topic
       artifacts_out:
-        - "literature_review.md"
-        - "references.bib"
-        - "citation_map.yaml"
+        - "references/library.bib"
       human_checkpoint: false
       retry:
         max_attempts: 3
-      gate_rules:
-        on_pass:
-          - "advance_to: formulate_hypotheses"
+      transition_policy:
+        on_pass: {action: advance_to, stage: formulate_hypotheses}
         on_fail:
-          - "retry_stage"
-          - "notify_human: literature_gaps"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: literature_gaps}
 
     # --- STAGE 4: formulate_hypotheses ---
     - id: formulate_hypotheses
@@ -107,18 +104,16 @@ pipeline:
         - literature_search
         - target_journal
       artifacts_out:
-        - "hypotheses_document.md"
-        - "research_questions.yaml"
-        - "hypotheses.yaml"
+        - "research_plan/feasibility_decision.md"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: design_analysis_plan"
+      transition_policy:
+        on_pass: {action: advance_to, stage: design_analysis_plan}
         on_fail:
-          - "retry_stage"
-          - "notify_human: hypotheses_not_testable"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: hypotheses_not_testable}
 
     # --- STAGE 4.5: design_analysis_plan (v3.0 NEW) ---
     - id: design_analysis_plan
@@ -133,18 +128,18 @@ pipeline:
       dependencies:
         - formulate_hypotheses
       artifacts_out:
-        - "statistical_analysis_plan.yaml"
-        - "study_design_protocol.yaml"
-        - "causal_assumption_audit.md"
+        - "research_plan/statistical_analysis_plan.yaml"
+        - "research_plan/study_design_protocol.yaml"
+        - "research_plan/causal_assumption_audit.md"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: data_audit"
+      transition_policy:
+        on_pass: {action: advance_to, stage: data_audit}
         on_fail:
-          - "retry_stage"
-          - "notify_human: analysis_plan_incomplete"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: analysis_plan_incomplete}
       description: >
         v3.0 NEW — Statistician involved BEFORE data audit and figure planning.
         Generates pre-specified Statistical Analysis Plan (SAP) defining primary/
@@ -167,18 +162,17 @@ pipeline:
       dependencies:
         - design_analysis_plan
       artifacts_out:
-        - "data_audit_report.md"
-        - "data_availability_statement.md"
-        - "data_inventory.yaml"
+        - "data/data_audit_report.md"
+        - "data/data_inventory.yaml"
       human_checkpoint: false
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: figure_planning"
+      transition_policy:
+        on_pass: {action: advance_to, stage: figure_planning}
         on_fail:
-          - "retry_stage"
-          - "notify_human: data_quality_issues"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: data_quality_issues}
 
     # --- STAGE 7: figure_planning ---
     - id: figure_planning
@@ -194,17 +188,17 @@ pipeline:
         - design_analysis_plan
         - data_audit
       artifacts_out:
-        - "figure_plan.md"
-        - "figure_specifications.yaml"
+        - "results/figure_plan.json"
+        - "results/figure_specs.yaml"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: run_analysis"
+      transition_policy:
+        on_pass: {action: advance_to, stage: run_analysis}
         on_fail:
-          - "retry_stage"
-          - "notify_human: figure_plan_incomplete"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: figure_plan_incomplete}
 
     # --- STAGE 8: run_analysis ---
     - id: run_analysis
@@ -222,18 +216,16 @@ pipeline:
         - figure_planning
         - data_audit
       artifacts_out:
-        - "analysis_results.yaml"
-        - "statistical_outputs/"
-        - "figures/"
+        - "results/run_manifest.yaml"
       human_checkpoint: false
       retry:
         max_attempts: 3
-      gate_rules:
-        on_pass:
-          - "advance_to: verify_methods"
+      transition_policy:
+        on_pass: {action: advance_to, stage: verify_methods}
         on_fail:
-          - "retry_stage"
-          - "notify_human: analysis_failed"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: analysis_failed}
 
     # --- STAGE 9: verify_methods ---
     - id: verify_methods
@@ -248,16 +240,16 @@ pipeline:
       dependencies:
         - run_analysis
       artifacts_out:
-        - "methods_verification_report.md"
+        - "methods/run_manifest.yaml"
       human_checkpoint: false
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: write_methods"
+      transition_policy:
+        on_pass: {action: advance_to, stage: write_methods}
         on_fail:
-          - "retry_stage"
-          - "notify_human: reproducibility_failure"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: reproducibility_failure}
 
     # --- STAGE 10: write_methods ---
     - id: write_methods
@@ -272,16 +264,16 @@ pipeline:
       dependencies:
         - verify_methods
       artifacts_out:
-        - "methods_section.md"
+        - "manuscript/methods.md"
       human_checkpoint: true
       retry:
         max_attempts: 3
-      gate_rules:
-        on_pass:
-          - "advance_to: write_results"
+      transition_policy:
+        on_pass: {action: advance_to, stage: write_results}
         on_fail:
-          - "retry_stage"
-          - "notify_human: methods_incomplete"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: methods_incomplete}
 
     # --- STAGE 11: write_results ---
     - id: write_results
@@ -298,16 +290,16 @@ pipeline:
         - verify_methods
         - figure_planning
       artifacts_out:
-        - "results_section.md"
+        - "manuscript/results.md"
       human_checkpoint: true
       retry:
         max_attempts: 3
-      gate_rules:
-        on_pass:
-          - "advance_to: write_introduction"
+      transition_policy:
+        on_pass: {action: advance_to, stage: write_introduction}
         on_fail:
-          - "retry_stage"
-          - "notify_human: results_incomplete"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: results_incomplete}
 
     # --- STAGE 12: write_introduction ---
     - id: write_introduction
@@ -324,16 +316,16 @@ pipeline:
         - literature_search
         - formulate_hypotheses
       artifacts_out:
-        - "introduction_section.md"
+        - "manuscript/introduction.md"
       human_checkpoint: true
       retry:
         max_attempts: 3
-      gate_rules:
-        on_pass:
-          - "advance_to: write_discussion"
+      transition_policy:
+        on_pass: {action: advance_to, stage: write_discussion}
         on_fail:
-          - "retry_stage"
-          - "notify_human: introduction_incomplete"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: introduction_incomplete}
 
     # --- STAGE 13: write_discussion ---
     - id: write_discussion
@@ -350,16 +342,16 @@ pipeline:
         - write_results
         - literature_search
       artifacts_out:
-        - "discussion_section.md"
+        - "manuscript/discussion.md"
       human_checkpoint: true
       retry:
         max_attempts: 3
-      gate_rules:
-        on_pass:
-          - "advance_to: assemble_manuscript"
+      transition_policy:
+        on_pass: {action: advance_to, stage: assemble_manuscript}
         on_fail:
-          - "retry_stage"
-          - "notify_human: discussion_incomplete"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: discussion_incomplete}
 
     # --- STAGE 14: assemble_manuscript ---
     - id: assemble_manuscript
@@ -381,17 +373,16 @@ pipeline:
         - write_results
         - write_discussion
       artifacts_out:
-        - "manuscript_draft.md"
-        - "manuscript_draft.pdf"
+        - "manuscript/manuscript_full.md"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: aigc_humanizer_review"
+      transition_policy:
+        on_pass: {action: advance_to, stage: aigc_humanizer_review}
         on_fail:
-          - "retry_stage"
-          - "notify_human: assembly_failed"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: assembly_failed}
 
     # --- STAGE 15: aigc_humanizer_review ---
     - id: aigc_humanizer_review
@@ -413,12 +404,12 @@ pipeline:
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: integrity_check"
+      transition_policy:
+        on_pass: {action: advance_to, stage: integrity_check}
         on_fail:
-          - "retry_stage"
-          - "notify_human: aigc_humanizer_review_failed"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: aigc_humanizer_review_failed}
 
     # --- STAGE 16: integrity_check ---
     - id: integrity_check
@@ -435,17 +426,17 @@ pipeline:
       dependencies:
         - aigc_humanizer_review
       artifacts_out:
-        - "integrity_report.yaml"
-        - "quality_gate_results.yaml"
+        - "integrity/integrity_report.json"
+        - "integrity/integrity_report.md"
       human_checkpoint: false
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: internal_review"
+      transition_policy:
+        on_pass: {action: advance_to, stage: internal_review}
         on_fail:
-          - "retry_stage"
-          - "notify_human: integrity_check_failed"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: integrity_check_failed}
 
     # --- STAGE 17: internal_review ---
     - id: internal_review
@@ -460,17 +451,16 @@ pipeline:
       dependencies:
         - integrity_check
       artifacts_out:
-        - "internal_review_report.md"
-        - "revision_roadmap.yaml"
+        - "review/review_report.md"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: apply_revision"
+      transition_policy:
+        on_pass: {action: advance_to, stage: apply_revision}
         on_fail:
-          - "retry_stage"
-          - "notify_human: review_rejected"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: review_rejected}
 
     # --- STAGE 18: apply_revision ---
     - id: apply_revision
@@ -488,17 +478,16 @@ pipeline:
       dependencies:
         - internal_review
       artifacts_out:
-        - "revised_manuscript.md"
-        - "revision_tracker.yaml"
+        - "manuscript/manuscript_revised.md"
       human_checkpoint: true
       retry:
         max_attempts: 3
-      gate_rules:
-        on_pass:
-          - "advance_to: re_review"
+      transition_policy:
+        on_pass: {action: advance_to, stage: re_review}
         on_fail:
-          - "retry_stage"
-          - "notify_human: revision_incomplete"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: revision_incomplete}
 
     # --- STAGE 19: re_review ---
     - id: re_review
@@ -513,17 +502,16 @@ pipeline:
       dependencies:
         - apply_revision
       artifacts_out:
-        - "re_review_report.md"
-        - "final_quality_gates.yaml"
+        - "review/re_review_report.md"
       human_checkpoint: true
       retry:
         max_attempts: 2
-      gate_rules:
-        on_pass:
-          - "advance_to: finalize"
+      transition_policy:
+        on_pass: {action: advance_to, stage: finalize}
         on_fail:
-          - "retry_stage"
-          - "notify_human: re_review_failed"
+          actions:
+            - {action: retry_stage}
+            - {action: notify_human, reason: re_review_failed}
 
     # --- STAGE 20: finalize ---
     - id: finalize
@@ -540,18 +528,18 @@ pipeline:
       dependencies:
         - re_review
       artifacts_out:
-        - "final_manuscript.md"
-        - "final_manuscript.pdf"
-        - "submission_package.yaml"
-        - "reproducibility_bundle.zip"
+        - "submission/manuscript_final.md"
+        - "submission/cover_letter.md"
+        - "submission/data_availability_statement.md"
+        - "submission/code_availability_statement.md"
       human_checkpoint: true
       retry:
         max_attempts: 1
-      gate_rules:
-        on_pass:
-          - "pipeline_complete"
+      transition_policy:
+        on_pass: {action: pipeline_complete}
         on_fail:
-          - "notify_human: finalization_failed"
+          actions:
+            - {action: notify_human, reason: finalization_failed}
 
 # =============================================================================
 # 2. PAPER TYPES

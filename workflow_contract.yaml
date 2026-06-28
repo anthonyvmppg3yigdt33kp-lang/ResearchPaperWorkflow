@@ -1,0 +1,219 @@
+version: "1.0.0"
+description: "Truth-layer contract for the 20-stage ResearchPaperWorkflow pipeline."
+truth_policy:
+  completed_requires:
+    - "real execution_mode"
+    - "all required_outputs exist and are non-empty"
+    - "all configured critical/high quality_gates produce concrete pass results"
+  fail_closed_gate_severities:
+    - critical
+    - high
+  non_completed_execution_modes:
+    - template
+    - pending_harness
+    - needs_input
+claim_evidence_audit_interface:
+  inputs:
+    - claim_ledger.jsonl
+    - references.bib
+    - manuscript/*.md
+  output: claim_evidence_matrix
+  status: reserved
+stages:
+  select_topic:
+    executor_mode: real
+    required_outputs:
+      - research_plan/research_question.md
+      - research_plan/hypotheses.yaml
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: target_journal}
+      on_fail: {actions: [{action: abort_pipeline}, {action: notify_human, reason: topic_not_feasible}]}
+  target_journal:
+    executor_mode: real
+    required_outputs:
+      - research_plan/journal_profile.md
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: literature_search}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: no_suitable_journal}]}
+  literature_search:
+    executor_mode: real
+    required_outputs:
+      - references/library.bib
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: formulate_hypotheses}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: literature_gaps}]}
+  formulate_hypotheses:
+    executor_mode: real
+    required_outputs:
+      - research_plan/feasibility_decision.md
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: design_analysis_plan}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: hypotheses_not_testable}]}
+  design_analysis_plan:
+    executor_mode: real
+    required_outputs:
+      - research_plan/statistical_analysis_plan.yaml
+      - research_plan/study_design_protocol.yaml
+      - research_plan/causal_assumption_audit.md
+    quality_gates:
+      - {rule: statistical_analysis_plan_exists, severity: critical}
+      - {rule: endpoint_definition_complete, severity: critical}
+      - {rule: patient_level_independence, severity: critical}
+    transition_policy:
+      on_pass: {action: advance_to, stage: data_audit}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: analysis_plan_incomplete}]}
+  data_audit:
+    executor_mode: real
+    required_outputs:
+      - data/data_audit_report.md
+      - data/data_inventory.yaml
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: figure_planning}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: data_quality_issues}]}
+  figure_planning:
+    executor_mode: real
+    required_outputs:
+      - results/figure_plan.json
+      - results/figure_specs.yaml
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: run_analysis}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: figure_plan_incomplete}]}
+  run_analysis:
+    executor_mode: real
+    required_outputs:
+      - results/run_manifest.yaml
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: verify_methods}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: analysis_failed}]}
+  verify_methods:
+    executor_mode: real
+    required_outputs:
+      - methods/run_manifest.yaml
+    quality_gates:
+      - {rule: statistical_analysis_plan_exists, severity: critical}
+      - {rule: patient_level_independence, severity: critical}
+    transition_policy:
+      on_pass: {action: advance_to, stage: write_methods}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: reproducibility_failed}]}
+  write_methods:
+    executor_mode: real
+    required_outputs:
+      - manuscript/methods.md
+    quality_gates:
+      - {rule: no_local_paths, severity: high}
+      - {rule: methods_parameters_complete, severity: high}
+      - {rule: pseudoreplication_check, severity: critical}
+    transition_policy:
+      on_pass: {action: advance_to, stage: write_results}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: methods_quality_failed}]}
+  write_results:
+    executor_mode: real
+    required_outputs:
+      - manuscript/results.md
+    quality_gates:
+      - {rule: results_no_citations, severity: critical}
+      - {rule: claim_artifact_binding, severity: critical}
+      - {rule: statistics_reported, severity: high}
+    transition_policy:
+      on_pass: {action: advance_to, stage: write_introduction}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: results_quality_failed}]}
+  write_introduction:
+    executor_mode: real
+    required_outputs:
+      - manuscript/introduction.md
+    quality_gates:
+      - {rule: bibtex_citation_existence, severity: critical}
+    transition_policy:
+      on_pass: {action: advance_to, stage: write_discussion}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: introduction_quality_failed}]}
+  write_discussion:
+    executor_mode: real
+    required_outputs:
+      - manuscript/discussion.md
+    quality_gates:
+      - {rule: bibtex_citation_existence, severity: critical}
+      - {rule: discussion_limitations, severity: high}
+      - {rule: results_no_overinterpretation, severity: high}
+    transition_policy:
+      on_pass: {action: advance_to, stage: assemble_manuscript}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: discussion_quality_failed}]}
+  assemble_manuscript:
+    executor_mode: real
+    required_outputs:
+      - manuscript/manuscript_full.md
+    quality_gates:
+      - {rule: bibtex_citation_existence, severity: critical}
+      - {rule: results_no_citations, severity: critical}
+    transition_policy:
+      on_pass: {action: advance_to, stage: aigc_humanizer_review}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: manuscript_assembly_failed}]}
+  aigc_humanizer_review:
+    executor_mode: real
+    required_outputs:
+      - review/aigc_detection_report.md
+      - review/humanizer_revision_plan.yaml
+      - manuscript/manuscript_humanized.md
+    quality_gates:
+      - {rule: aigc_artifact_scan, severity: high}
+      - {rule: aigc_style_signal_density, severity: medium}
+    transition_policy:
+      on_pass: {action: advance_to, stage: integrity_check}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: aigc_humanizer_review_failed}]}
+  integrity_check:
+    executor_mode: real
+    required_outputs:
+      - integrity/integrity_report.json
+      - integrity/integrity_report.md
+    quality_gates:
+      - {rule: bibtex_citation_existence, severity: critical}
+      - {rule: results_no_citations, severity: critical}
+      - {rule: claim_artifact_binding, severity: critical}
+    transition_policy:
+      on_pass: {action: advance_to, stage: internal_review}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: integrity_failed}]}
+  internal_review:
+    executor_mode: real
+    required_outputs:
+      - review/review_report.md
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: apply_revision}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: internal_review_failed}]}
+  apply_revision:
+    executor_mode: real
+    required_outputs:
+      - manuscript/manuscript_revised.md
+    quality_gates:
+      - {rule: no_local_paths, severity: high}
+    transition_policy:
+      on_pass: {action: advance_to, stage: re_review}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: revision_failed}]}
+  re_review:
+    executor_mode: real
+    required_outputs:
+      - review/re_review_report.md
+    quality_gates: []
+    transition_policy:
+      on_pass: {action: advance_to, stage: finalize}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: re_review_failed}]}
+  finalize:
+    executor_mode: real
+    required_outputs:
+      - submission/manuscript_final.md
+      - submission/cover_letter.md
+      - submission/data_availability_statement.md
+      - submission/code_availability_statement.md
+    quality_gates:
+      - {rule: data_availability_statement, severity: high}
+      - {rule: code_availability_statement, severity: high}
+      - {rule: aigc_artifact_scan, severity: high}
+    transition_policy:
+      on_pass: {action: pipeline_complete}
+      on_fail: {actions: [{action: retry_stage}, {action: notify_human, reason: final_package_failed}]}

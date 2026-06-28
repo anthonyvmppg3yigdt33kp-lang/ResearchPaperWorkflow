@@ -1,3 +1,9 @@
+# Historical Note
+
+This user guide predates the next-generation V4 truth layer. Use
+`docs/NEXT_GEN_V4_TRUTH_LAYER.md` for the current 20-stage workflow,
+`WorkflowAPI`, agent harness, and validation commands.
+
 # ResearchPaperWorkflow v4 — 完整操作指南
 
 **面向科研人员的多智能体论文写作工作流 · 从零到投稿的完整手册**

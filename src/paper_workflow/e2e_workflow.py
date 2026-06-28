@@ -270,6 +270,37 @@ class E2EWorkflow:
         },
     }
 
+    V4_PHASE_BOUNDARIES: dict[int, str] = {
+        1: "design_analysis_plan",
+        2: "verify_methods",
+        3: "write_discussion",
+        4: "re_review",
+        5: "finalize",
+    }
+
+    V4_STAGE_TO_E2E_PHASE: dict[str, int] = {
+        "select_topic": 1,
+        "target_journal": 1,
+        "literature_search": 1,
+        "formulate_hypotheses": 1,
+        "design_analysis_plan": 1,
+        "data_audit": 2,
+        "figure_planning": 2,
+        "run_analysis": 2,
+        "verify_methods": 2,
+        "write_methods": 3,
+        "write_results": 3,
+        "write_introduction": 3,
+        "write_discussion": 3,
+        "assemble_manuscript": 4,
+        "aigc_humanizer_review": 4,
+        "integrity_check": 4,
+        "internal_review": 4,
+        "apply_revision": 4,
+        "re_review": 4,
+        "finalize": 5,
+    }
+
     def __init__(
         self,
         paper_id: str,
@@ -492,6 +523,12 @@ class E2EWorkflow:
             Phase reports keyed by phase number.
         """
         target_phases = phases or [1, 2, 3, 4, 5]
+        if not dry_run:
+            return self._run_v4_delegate(
+                target_phases=target_phases,
+                stop_at_checkpoint=stop_at_checkpoint,
+                skip_optional=skip_optional,
+            )
         self._aborted = False
         self._paused_at = None
 
@@ -530,6 +567,114 @@ class E2EWorkflow:
         self._print_summary()
 
         return self.phase_reports
+
+    def _run_v4_delegate(
+        self,
+        *,
+        target_phases: list[int],
+        stop_at_checkpoint: bool,
+        skip_optional: bool,
+    ) -> dict[int, PhaseReport]:
+        """Run through the canonical V4 WorkflowAPI while preserving E2E reports."""
+        from paper_workflow.api import WorkflowAPI
+
+        self._aborted = False
+        self._paused_at = None
+        for phase_num in target_phases:
+            if phase_num in self.phase_reports:
+                report = self.phase_reports[phase_num]
+                report.status = PhaseStatus.RUNNING
+                report.started_at = datetime.now().isoformat()
+
+        stop_after_stage = None
+        max_phase = max(target_phases) if target_phases else 5
+        if max_phase < 5:
+            stop_after_stage = self.V4_PHASE_BOUNDARIES[max_phase]
+
+        print(self._banner("E2E WORKFLOW START"))
+        print(f"  Paper ID : {self.paper_id}")
+        print(f"  Directory: {self.paper_dir}")
+        print(f"  Phases   : {target_phases}")
+        print("  Backend  : V4 WorkflowAPI / PaperLoopEngine")
+        print()
+
+        api = WorkflowAPI(self.project_root)
+        result = api.run_pipeline(
+            self.paper_id,
+            stop_on_failure=True,
+            auto_approve_checkpoints=not stop_at_checkpoint,
+            stop_after_stage=stop_after_stage,
+        )
+
+        for event in result.get("events", []):
+            kind = event.get("event")
+            if kind != "stage":
+                if kind == "checkpoint_required":
+                    phase_num = self.V4_STAGE_TO_E2E_PHASE.get(event.get("stage", ""), max_phase)
+                    if phase_num in self.phase_reports:
+                        report = self.phase_reports[phase_num]
+                        report.status = PhaseStatus.PAUSED
+                        report.checkpoint_decision = "pending"
+                        self._paused_at = phase_num
+                continue
+            self._record_v4_stage_event(event)
+
+        for phase_num in target_phases:
+            if phase_num not in self.phase_reports:
+                continue
+            report = self.phase_reports[phase_num]
+            if report.status == PhaseStatus.PAUSED:
+                report.completed_at = datetime.now().isoformat()
+                continue
+            if report.stages_failed:
+                report.status = PhaseStatus.FAILED
+            elif report.stages_run:
+                report.status = PhaseStatus.COMPLETED
+            elif phase_num <= max_phase:
+                report.status = PhaseStatus.SKIPPED
+            report.completed_at = datetime.now().isoformat()
+            if report.status == PhaseStatus.COMPLETED and not report.checkpoint_decision:
+                report.checkpoint_decision = "v4_api"
+
+        state_path = self._save_state()
+        print(f"\n[STATE] Saved to {state_path}")
+        print(self._banner("E2E WORKFLOW COMPLETE"))
+        self._print_summary()
+        return self.phase_reports
+
+    def _record_v4_stage_event(self, event: dict[str, Any]) -> None:
+        stage = event["stage"]
+        phase_num = self.V4_STAGE_TO_E2E_PHASE.get(stage, 5)
+        if phase_num not in self.phase_reports:
+            return
+
+        run_payload = event.get("run", {}) or {}
+        artifacts = list(run_payload.get("artifacts", []) or [])
+        outcome = StageOutcome.SUCCESS if event.get("success") else StageOutcome.FAILURE
+        invocation = SkillInvocation(
+            skill_name=run_payload.get("skill", "paper_loop"),
+            phase=phase_num,
+            stage=stage,
+            completed_at=datetime.now().isoformat(),
+            outcome=outcome,
+            artifacts_produced=artifacts,
+            error_message="" if outcome == StageOutcome.SUCCESS else str(event.get("verify", {}).get("results", [])),
+            metadata={
+                "execution_backend": "v4_workflow_api",
+                "execution_mode": run_payload.get("execution_mode"),
+                "outputs_verified": run_payload.get("outputs_verified"),
+            },
+        )
+        self.skill_log.append(invocation)
+
+        report = self.phase_reports[phase_num]
+        report.skill_invocations.append(invocation)
+        report.stages_run += 1
+        if outcome == StageOutcome.SUCCESS:
+            report.stages_succeeded += 1
+        else:
+            report.stages_failed += 1
+            report.errors.append(f"V4 stage '{stage}' failed or blocked.")
 
     def resume(
         self,

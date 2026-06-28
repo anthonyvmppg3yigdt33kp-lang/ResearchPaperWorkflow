@@ -1,3 +1,9 @@
+# Historical Note
+
+This quick start predates the next-generation V4 truth layer. Use
+`docs/NEXT_GEN_V4_TRUTH_LAYER.md` for the current 20-stage workflow,
+`WorkflowAPI`, agent harness, and validation commands.
+
 # Quick Start Guide — Research Paper Workflow Framework v1.0.0
 
 This guide gets you from zero to a working paper pipeline in under 10 minutes.

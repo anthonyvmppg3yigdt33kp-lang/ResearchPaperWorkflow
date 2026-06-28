@@ -10,8 +10,9 @@ from paper_workflow.engine.loop_engine import (
     StageStatus,
     PipelineState,
 )
+from paper_workflow.engine.agent_harness import AgentHarness
 
 __all__ = [
     "PaperLoopEngine", "StageDefinition", "StageState",
-    "StageStatus", "PipelineState",
+    "StageStatus", "PipelineState", "AgentHarness",
 ]

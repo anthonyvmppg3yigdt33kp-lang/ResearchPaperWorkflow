@@ -1,3 +1,9 @@
+# Historical Note
+
+This quick reference predates the next-generation V4 truth layer. Use
+`docs/NEXT_GEN_V4_TRUTH_LAYER.md` for the current 20-stage workflow,
+`WorkflowAPI`, agent harness, and validation commands.
+
 # QUICK REFERENCE — 一页速查卡
 
 **Version**: 2.0.0

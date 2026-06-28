@@ -483,12 +483,21 @@ def test_loop_engine():
         assert engine.stages[next_s].status == StageStatus.RUNNING
         print(f"  [OK] Run stage — {result['agent']}/{result['skill']}")
 
-        # --- Verify stage (no gate rules → should pass) ---
+        # --- Verify stage: scaffold/template output should not pass truth gates ---
         verify = engine.verify_stage(next_s)
-        assert verify["all_passed"], f"[FAIL] Verify should pass: {verify}"
-        assert engine.stages[next_s].status == StageStatus.COMPLETED
-        assert engine.stages[next_s].completed_at is not None
+        assert not verify["all_passed"], f"[FAIL] Template output should not pass: {verify}"
+        assert engine.stages[next_s].status == StageStatus.FAILED
+        assert engine.stages[next_s].execution_mode == "template"
         print(f"  [OK] Verify stage — all_passed={verify['all_passed']}")
+
+        # Manually approve select_topic to continue testing dependency routing.
+        engine.stages[next_s].status = StageStatus.COMPLETED
+        engine.stages[next_s].completed_at = datetime.now().isoformat()
+        engine.stages[next_s].execution_mode = "real"
+        engine.stages[next_s].outputs_verified = True
+        from paper_workflow.supervision.passport import PaperPassport
+        passport = PaperPassport(engine.paper_dir)
+        passport.record_checkpoint("select_topic", "approved", "test approval")
 
         # --- Record and sync ---
         sync = engine.record_and_sync()
@@ -504,12 +513,19 @@ def test_loop_engine():
 
         # Complete search_literature and verify
         engine.run_stage("target_journal")
-        engine.verify_stage("target_journal")
+        target_verify = engine.verify_stage("target_journal")
+        assert target_verify["all_passed"]
         assert engine.stages["target_journal"].status == StageStatus.COMPLETED
         next_lit = engine.decide_next_stage()
         assert next_lit == "literature_search", f"[FAIL] Expected literature_search, got {next_lit}"
         engine.run_stage("literature_search")
-        engine.verify_stage("literature_search")
+        lit_verify = engine.verify_stage("literature_search")
+        assert not lit_verify["all_passed"]
+        assert engine.stages["literature_search"].execution_mode == "pending_harness"
+        engine.stages["literature_search"].status = StageStatus.COMPLETED
+        engine.stages["literature_search"].completed_at = datetime.now().isoformat()
+        engine.stages["literature_search"].execution_mode = "real"
+        engine.stages["literature_search"].outputs_verified = True
         assert engine.stages["literature_search"].status == StageStatus.COMPLETED
         print(f"  [OK] search_literature completed")
 
@@ -593,6 +609,8 @@ def test_loop_engine():
         # Complete all 18 stages
         for sd in engine.PIPELINE_STAGES:
             engine.stages[sd.name].status = StageStatus.COMPLETED
+            if sd.human_checkpoint:
+                passport.record_checkpoint(sd.name, "approved", "test approval")
         final_next = engine.decide_next_stage()
         assert final_next is None, f"[FAIL] All done should return None, got {final_next}"
         assert engine.pipeline_state == PipelineState.CLEAN
@@ -906,9 +924,12 @@ def test_full_integration():
         print(f"  [OK] Pipeline run (max_stages=4) — completed={wf.state.stages_completed}, "
               f"failed={wf.state.stages_failed}")
 
-        # --- Verify stages progressed ---
-        assert wf.state.stages_completed >= 1
-        print(f"  [OK] Stages progressed: {wf.state.stages_completed} completed")
+        # --- Verify Phase 1 progresses to journal profile, then stops for literature harness input ---
+        assert wf.state.stages_completed == 1
+        assert wf.state.stages_failed >= 1
+        assert wf.engine.stages["target_journal"].status == StageStatus.COMPLETED
+        assert wf.engine.stages["literature_search"].execution_mode == "pending_harness"
+        print(f"  [OK] Truth layer stopped for literature harness input: failed={wf.state.stages_failed}")
 
         # --- Diagnose ---
         diag = wf.diagnose_failures()
@@ -974,7 +995,8 @@ def test_full_integration():
             auto_run=True,
             max_stages=2,
         )
-        assert wf4.state.stages_completed >= 1 or wf4.state.pipeline_state == "ready"
+        assert wf4.state.stages_failed >= 1
+        assert wf4.state.pipeline_state == "blocked"
         print(f"  [OK] create_and_run_paper (auto_run) — completed={wf4.state.stages_completed}")
 
         # --- WorkflowState dataclass ---

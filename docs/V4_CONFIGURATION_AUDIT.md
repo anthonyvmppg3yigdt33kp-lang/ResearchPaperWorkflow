@@ -1,3 +1,9 @@
+# Historical Note
+
+This audit predates the next-generation V4 truth layer. Use
+`docs/NEXT_GEN_COMPLETION_AUDIT.md` for the current requirement-to-evidence
+status.
+
 # V4 配置与链路审计记录
 
 审计日期：2026-06-21  

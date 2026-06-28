@@ -197,10 +197,12 @@ class ConfigLoader:
             "medium": [],
         }
         for gate_key, gate_def in raw_gates.items():
-            severity = str(gate_def.get("severity", "MEDIUM")).lower()
+            gate_copy = copy.deepcopy(gate_def)
+            gate_copy.setdefault("id", gate_key)
+            severity = str(gate_copy.get("severity", "MEDIUM")).lower()
             if severity not in buckets:
                 severity = "medium"
-            buckets[severity].append(copy.deepcopy(gate_def))
+            buckets[severity].append(gate_copy)
         return buckets
 
     def get_writing_standards(self) -> dict[str, Any]:

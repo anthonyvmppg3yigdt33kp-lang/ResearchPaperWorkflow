@@ -1,3 +1,9 @@
+# Historical Note
+
+This guide predates the next-generation V4 truth layer. Use
+`docs/NEXT_GEN_V4_TRUTH_LAYER.md` for the current 20-stage workflow,
+`WorkflowAPI`, agent harness, and validation commands.
+
 # ResearchPaperWorkflow V4 完整安装与使用教程
 
 本文档面向第一次下载仓库的用户，覆盖安装、Claude Code/Codex 配置、skill 自动补齐、课题数据迁移、完整工作流执行和常见问题排查。

@@ -1,3 +1,9 @@
+# Historical Note
+
+This blueprint predates the next-generation V4 truth layer. Use
+`docs/NEXT_GEN_V4_TRUTH_LAYER.md` for the current 20-stage workflow,
+`WorkflowAPI`, agent harness, and validation commands.
+
 # Research Paper Workflow v2 — Framework Blueprint
 
 **Version**: 1.0.0 | **Generated**: 2026-06-19 | **Source**: `config/default_config.yaml` + `src/paper_workflow/engine/loop_engine.py`

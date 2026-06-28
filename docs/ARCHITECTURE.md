@@ -1,3 +1,10 @@
+# Historical Note
+
+This document is retained for background. The current production architecture is
+the V4 truth-layer design documented in `docs/NEXT_GEN_V4_TRUTH_LAYER.md`.
+Older counts such as 18 stages, 16 gates, or legacy E2E execution should be
+treated as historical unless they are repeated in the next-generation guide.
+
 # Research Paper Workflow Framework — Architecture
 
 **Version**: 1.0.0 | **Last Updated**: 2026-06-18

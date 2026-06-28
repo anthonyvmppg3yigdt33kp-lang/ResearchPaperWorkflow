@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import yaml
+
 from paper_workflow.strategy.research_strategy import ResearchStrategyManager, ResearchStrategy
 from paper_workflow.engine.loop_engine import PaperLoopEngine, StageStatus, PipelineState
 from paper_workflow.supervision.passport import PaperPassport
@@ -89,8 +91,22 @@ class PaperWorkflow:
         self.passport.record_checkpoint(stage="select_topic", decision="approved",
                                         notes=f"Workflow initialized. Timeline: {timeline_weeks} weeks.")
         if "select_topic" in self.engine.stages:
-            self.engine.stages["select_topic"].status = StageStatus.COMPLETED
-            self.engine.stages["select_topic"].completed_at = datetime.now().isoformat()
+            artifacts = self._write_initial_topic_artifacts(strategy, idea, field, journal, timeline_weeks)
+            stage = self.engine.stages["select_topic"]
+            stage.status = StageStatus.COMPLETED
+            stage.completed_at = datetime.now().isoformat()
+            stage.execution_mode = "real"
+            stage.outputs_verified = True
+            stage.artifacts_produced = artifacts
+            stage.required_outputs = artifacts
+            stage.missing_outputs = []
+            stage.gate_results = [{
+                "rule": "manual_checkpoint_artifact_set",
+                "severity": "critical",
+                "passed": True,
+                "message": "select_topic approved during workflow initialization with concrete artifacts",
+            }]
+            self.engine.record_and_sync()
         # Backward compat: if engine uses legacy "create_project" ID
         elif "create_project" in self.engine.stages:
             self.engine.stages["create_project"].status = StageStatus.COMPLETED
@@ -99,16 +115,62 @@ class PaperWorkflow:
         print(f"[PaperWorkflow] Initialized: {self.paper_id}")
         return self.state
 
+    def _write_initial_topic_artifacts(
+        self,
+        strategy: ResearchStrategy,
+        idea: str,
+        field: str,
+        journal: str,
+        timeline_weeks: int,
+    ) -> list[str]:
+        research_dir = self.engine.paper_dir / "research_plan"
+        research_dir.mkdir(parents=True, exist_ok=True)
+        topic_path = research_dir / "research_question.md"
+        topic_path.write_text(
+            "\n".join([
+                "# Research Topic",
+                "",
+                f"Initialized: {datetime.now().isoformat()}",
+                f"Field: {field}",
+                f"Target journal: {journal or 'auto-selected'}",
+                f"Timeline weeks: {timeline_weeks}",
+                "",
+                "## Research Question",
+                "",
+                (strategy.topic.research_questions[0] if strategy.topic and strategy.topic.research_questions else idea),
+                "",
+                "## Scope",
+                "",
+                idea,
+            ]) + "\n",
+            encoding="utf-8",
+        )
+        hypotheses_path = research_dir / "hypotheses.yaml"
+        hypotheses_path.write_text(
+            yaml.dump({
+                "generated_at": datetime.now().isoformat(),
+                "source": "workflow_initialize_checkpoint",
+                "hypotheses": [
+                    {
+                        "id": "H1",
+                        "statement": (strategy.topic.research_questions[0] if strategy.topic and strategy.topic.research_questions else idea),
+                        "status": "author_approved_seed",
+                    }
+                ],
+            }, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+        )
+        return ["research_plan/research_question.md", "research_plan/hypotheses.yaml"]
+
     def run(self, stop_at_checkpoint: bool = True, max_stages: Optional[int] = None) -> WorkflowState:
         stages_run = 0
+        if not stop_at_checkpoint:
+            self._auto_approve_checkpoint_blockers("PaperWorkflow.run(stop_at_checkpoint=False)")
         stage = self.engine.decide_next_stage()
         while stage:
             if max_stages and stages_run >= max_stages:
                 print(f"[PaperWorkflow] Max stages ({max_stages}) reached"); break
             sd = self.engine.stages[stage].definition
-            if stop_at_checkpoint and sd.human_checkpoint:
-                print(f"\n[PaperWorkflow] CHECKPOINT: {stage} — {sd.description}")
-                break
             result = self._execute_stage(stage)
             stages_run += 1
             if not result["success"]:
@@ -118,13 +180,33 @@ class PaperWorkflow:
                 if result.get("critical"): break
             else:
                 self.state.stages_completed += 1
+                if sd.human_checkpoint:
+                    if stop_at_checkpoint:
+                        print(f"\n[PaperWorkflow] CHECKPOINT: {stage} - approve artifacts before continuing")
+                        break
+                    self.passport.record_checkpoint(
+                        stage=stage,
+                        decision="approved",
+                        notes="Auto-approved by PaperWorkflow.run(stop_at_checkpoint=False)",
+                    )
             if self.engine.pipeline_state == PipelineState.BLOCKED: break
+            if not stop_at_checkpoint:
+                self._auto_approve_checkpoint_blockers("PaperWorkflow.run(stop_at_checkpoint=False)")
             stage = self.engine.decide_next_stage()
+        self.engine.record_and_sync()
         self.state.pipeline_state = self.engine.pipeline_state.value
         if self.engine.pipeline_state == PipelineState.CLEAN:
             self.state.completed_at = datetime.now().isoformat()
         print(f"\n[PaperWorkflow] Done: {stages_run} stage(s) | {self.state.stages_completed} ok | {self.state.stages_failed} fail")
         return self.state
+
+    def _auto_approve_checkpoint_blockers(self, notes: str) -> None:
+        for blocker in self.engine.checkpoint_blockers():
+            self.passport.record_checkpoint(
+                stage=blocker["stage"],
+                decision="approved",
+                notes=notes,
+            )
 
     def _execute_stage(self, stage_name: str) -> dict:
         print(f"\n{'='*50}\n  Executing: {stage_name}\n{'='*50}")
@@ -136,7 +218,13 @@ class PaperWorkflow:
         self.engine.record_and_sync()
         self.state.decisions.append({"stage": stage_name, "success": verify["all_passed"],
                                      "timestamp": datetime.now().isoformat()})
-        return {"success": verify["all_passed"], "stage": stage_name, "artifacts": result.get("artifacts", [])}
+        return {
+            "success": verify["all_passed"],
+            "critical": not verify["all_passed"],
+            "stage": stage_name,
+            "artifacts": result.get("artifacts", []),
+            "error": verify.get("error") or verify.get("results", []),
+        }
 
     def diagnose_failures(self) -> dict:
         engine_diag = self.engine.diagnose_failures()
