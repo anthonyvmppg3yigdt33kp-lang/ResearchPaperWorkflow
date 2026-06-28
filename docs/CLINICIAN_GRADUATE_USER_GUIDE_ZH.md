@@ -1,4 +1,4 @@
-# ResearchPaperWorkflow v4.1 临床医生与研究生使用指南
+# ResearchPaperWorkflow v4.2 临床医生与研究生使用指南
 
 本指南面向第一次接触 ResearchPaperWorkflow 的临床医生、医学研究生、生信研究生和课题组成员。它不假设你已经会写完整代码，也不把系统描述成“自动论文工厂”。正确的理解是：
 
@@ -441,3 +441,43 @@ python -m paper_workflow.cli detect-artifact-drift --paper <paper_id>
 - no artifact drift。
 - `stage_results/` 中关键阶段都有 JSON 记录。
 - 所有人工 checkpoint 都有明确 notes。
+
+## 11. v4.2 推荐入口：在 Claude/Codex 中用自然语言驱动
+
+从 v4.2 开始，临床医生和研究生不需要自己记住 Python 命令。推荐做法是把 ResearchPaperWorkflow 交给 Claude/Codex 作为工具型工作流来执行：
+
+```text
+用户：我还没起步，想做 ccRCC 合并 T2DM 的单细胞和空间转录组课题。
+模型：调用 python -m paper_workflow.cli ai --request "<你的原话>" --json
+模型：报告 paper_id、当前 stage、缺什么真实文件、是否需要 checkpoint 批准。
+```
+
+模型内部执行的统一入口是：
+
+```bash
+python -m paper_workflow.cli ai --request "<你的自然语言需求>" --json
+```
+
+如果已经有项目，模型会加上：
+
+```bash
+--paper <paper_id>
+```
+
+推荐你对模型这样说：
+
+- “我还没起步，请先帮我建立课题工作流。”
+- “我已有方向，需要选题调研和文献空白分析。”
+- “我已有选题和数据，请进入 SAP、数据审计和分析计划。”
+- “我已有部分图表和代码，请检查如何接入 workflow。”
+- “我已有多数材料，请进入论文撰写、AIGC hygiene 和 integrity check。”
+
+模型必须遵守的底线：
+
+- 每轮默认只推进一个 stage。
+- 遇到 checkpoint 必须停下让你批准或要求修改。
+- 遇到 `pending_harness` 或 `needs_input`，必须告诉你缺什么真实产物。
+- 不允许把模板、空文件、空 BibTeX、未运行 gate 说成 completed。
+- 投稿前必须运行 `validate-workflow --strict`。
+
+更完整的 Claude/Codex 对话示例见 `docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md`。

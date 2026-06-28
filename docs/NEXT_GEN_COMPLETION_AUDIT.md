@@ -2,8 +2,9 @@
 
 Audit date: 2026-06-28
 
-User-facing onboarding for clinicians and graduate students is documented in
-`docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md`.
+User-facing onboarding for Claude/Codex natural-language use is documented in
+`docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md`. Clinician and graduate-student
+onboarding is documented in `docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md`.
 
 This audit maps the requested next-generation upgrade requirements to current
 implementation evidence. It is intentionally evidence-bound: a requirement is
@@ -19,13 +20,14 @@ not considered satisfied unless a file, test, or runtime check proves it.
 | Key stage real executors | Implemented for the V4 production path | `AgentDispatcher` contains real executors for planning, data audit, figure planning, writing, review, AIGC hygiene, integrity, revision, and finalization; tests run through Phase 1-6. |
 | Pending harness is not completion | Implemented | `AgentHarness` verifies required outputs and placeholder patterns; pending/template stages cannot pass `verify_stage()`. |
 | CLI/API unified | Implemented | `WorkflowAPI` is the shared service layer; CLI handlers call `WorkflowAPI`; non-dry-run E2E delegates to `WorkflowAPI`. |
+| Claude/Codex AI harness | Implemented | `AIWorkflowHarness` routes natural-language requests to `WorkflowAPI`; `ai` / `ai-harness` CLI commands expose model-facing execution. |
 | E2E old path cannot bypass truth layer | Implemented for non-dry-run | `E2EWorkflow.run(dry_run=False)` delegates to `WorkflowAPI`; dry-run remains display-only compatibility mode. |
 | Human-in-the-loop checkpoint control | Implemented | `checkpoint_blockers()`, `checkpoint_required` state, checkpoint CLI, and validation issue `checkpoint_required`. |
 | Resume/status hydrate from persisted truth | Implemented | `PaperLoopEngine` hydrates from passport and stage result files; tests cover reload consistency. |
 | Artifact drift propagation | Implemented | `sync_artifact_stale()` uses dependency map; tests cover downstream stale propagation. |
 | Bioinformatics/clinical safeguards | Implemented in gates and executors | SAP, endpoint definition, patient-level independence, pseudoreplication, claim-artifact binding, statistics reporting, overinterpretation checks. |
 | Production validation command | Implemented | `validate-workflow --strict` checks result files, required outputs, gates, pending harness, checkpoints, and drift propagation. |
-| Global contract validation | Implemented | `validate-contract --strict` checks config stages, workflow contract, engine stages, dispatcher handlers, agent routing, and gate references. |
+| Global contract validation | Implemented | `validate-contract --strict` checks config stages, workflow contract, engine stages, dispatcher handlers, agent routing, gate references, and AI harness scenario routes. |
 | User-facing docs reflect current path | Implemented in canonical docs | `README.md`, `docs/NEXT_GEN_V4_TRUTH_LAYER.md`, and this audit document. |
 
 ## Verification Run
@@ -41,7 +43,7 @@ python -m paper_workflow.cli validate-contract --strict
 Current test result:
 
 ```text
-60 passed
+65 passed
 ```
 
 Additional CLI smoke checks performed during the upgrade:

@@ -1,5 +1,5 @@
 # =============================================================================
-# Research Paper Workflow v4.0 — Default Configuration
+# Research Paper Workflow v4.2 — Default Configuration
 # =============================================================================
 # This file defines the complete pipeline, quality gates, writing standards,
 # research domains, skills dispatching, agent routing, supervision, code library,
@@ -7,14 +7,14 @@
 # academic paper writing workflow.
 # =============================================================================
 
-version: "4.0.0"
+version: "4.2.0"
 
 # =============================================================================
 # 1. PIPELINE STAGES (20 stages)
 # =============================================================================
 pipeline:
-  version: "4.0.0"
-  description: "End-to-end academic research paper writing pipeline -- 20 stages with 44 medical evidence and AIGC text hygiene gates (v4.0)"
+  version: "4.2.0"
+  description: "End-to-end academic research paper writing pipeline -- 20 stages with 44 medical evidence and AIGC text hygiene gates, truth layer, and model-facing AI harness (v4.2)"
   stages:
     # --- STAGE 1: select_topic ---
     - id: select_topic
@@ -542,7 +542,137 @@ pipeline:
             - {action: notify_human, reason: finalization_failed}
 
 # =============================================================================
-# 2. PAPER TYPES
+# 2. MODEL-FACING AI HARNESS
+# =============================================================================
+ai_harness:
+  enabled: true
+  command_entrypoint: "python -m paper_workflow.cli ai"
+  intended_clients:
+    - "Claude Code"
+    - "Codex"
+    - "Cursor"
+    - "other tool-using AI agents"
+  default_max_stages_per_turn: 1
+  default_stop_on_failure: true
+  auto_approve_checkpoints_default: false
+  paper_resolution_policy: "explicit_or_single_existing_else_needs_input"
+  user_contract:
+    user_interaction_mode: "natural_language_only"
+    model_responsibility: "The model calls Python CLI commands; the user describes goals, supplies files, and approves checkpoints."
+    no_user_python_required: true
+    preserve_truth_layer: true
+    completion_rule: "Only WorkflowAPI -> PaperLoopEngine -> verify_stage can mark a stage completed."
+  safety_policy:
+    fail_closed_quality_gates: true
+    stop_at_human_checkpoints: true
+    do_not_treat_pending_harness_as_complete: true
+    require_validate_contract_before_production_run: true
+    require_validate_workflow_before_submission: true
+  command_catalog:
+    create_project:
+      cli_command: "create-project"
+      description: "Create a paper project from a natural-language research idea."
+      required_model_inputs:
+        - request
+      optional_model_inputs:
+        - field
+        - journal
+        - timeline
+    status:
+      cli_command: "status"
+      description: "Summarize the current paper state, stage truth, checkpoints, and drift warnings."
+    run_pipeline:
+      cli_command: "run-pipeline"
+      description: "Advance the workflow conservatively; default one stage per model turn."
+    validate_contract:
+      cli_command: "validate-contract"
+      description: "Check global config, contract, engine, dispatcher, gate, and AI harness wiring."
+    validate_workflow:
+      cli_command: "validate-workflow"
+      description: "Check a concrete paper project's result files, outputs, gates, checkpoints, and drift."
+    approve_checkpoint:
+      cli_command: "checkpoint"
+      description: "Record explicit user approval or revision decision for a human checkpoint."
+    list_harness_invocations:
+      cli_command: "list-harness-invocations"
+      description: "List pending external agent or human artifact tasks."
+    complete_harness_invocation:
+      cli_command: "complete-harness-invocation"
+      description: "Verify required outputs for a pending invocation; does not by itself complete the stage."
+    run_integrity_gate:
+      cli_command: "run-integrity-gate"
+      description: "Run manuscript integrity checks when draft artifacts exist."
+    diagnose_gate_failures:
+      cli_command: "diagnose-gate-failures"
+      description: "Explain failed stages and gate failures."
+    run_aigc_humanizer:
+      cli_command: "run-aigc-humanizer"
+      description: "Run responsible AIGC hygiene review after manuscript assembly."
+    list_papers:
+      cli_command: "list-papers"
+      description: "List existing paper projects when the user does not know the paper_id."
+  scenario_routes:
+    not_started:
+      user_situation: "User has not started and only has a broad clinical or biological idea."
+      intent: create_project
+      allowed_start_stages:
+        - select_topic
+      stop_after_stage: select_topic
+      model_action: "Create project, report paper_id, ask for research-direction approval."
+      example_user_request: "我还没有起步，想做一个肾癌和糖尿病相关的生信课题。"
+    has_direction_needs_topic_research:
+      user_situation: "User has a direction and needs topic/literature feasibility research."
+      intent: run_pipeline
+      stages:
+        - target_journal
+        - literature_search
+        - formulate_hypotheses
+      stop_after_stage: formulate_hypotheses
+      model_action: "Run one stage at a time; stop on literature pending harness or hypothesis checkpoint."
+      example_user_request: "我已有方向，需要你帮我做选题调研和文献空白分析。"
+    has_topic_needs_data_analysis:
+      user_situation: "User has a topic and needs data/SAP/analysis execution."
+      intent: run_pipeline
+      stages:
+        - design_analysis_plan
+        - data_audit
+        - figure_planning
+        - run_analysis
+        - verify_methods
+      stop_after_stage: verify_methods
+      model_action: "Freeze SAP, audit data, plan figures, then create/verify analysis outputs."
+      example_user_request: "我已有选题，需要进入数据分析和图表规划。"
+    partial_progress_needs_workflow_design:
+      user_situation: "User has scattered materials and needs workflow design, state repair, and validation."
+      intent: validate_workflow
+      stages:
+        - data_audit
+        - figure_planning
+        - verify_methods
+        - integrity_check
+      model_action: "Validate contract/workflow, import artifacts, diagnose missing outputs and stale stages."
+      example_user_request: "我已有部分进展，需要把材料接入工作流并检查缺口。"
+    mostly_materials_needs_writing:
+      user_situation: "User has most results and needs manuscript writing, integrity, and final package."
+      intent: run_pipeline
+      stages:
+        - write_methods
+        - write_results
+        - write_introduction
+        - write_discussion
+        - assemble_manuscript
+        - aigc_humanizer_review
+        - integrity_check
+        - internal_review
+        - apply_revision
+        - re_review
+        - finalize
+      stop_after_stage: finalize
+      model_action: "Write from verified artifacts, run AIGC hygiene and integrity gates, then package."
+      example_user_request: "我已有大多数材料，需要进入论文撰写和投稿包整理。"
+
+# =============================================================================
+# 3. PAPER TYPES
 # =============================================================================
 paper_types:
   original_research:

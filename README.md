@@ -1,18 +1,19 @@
-# Research Paper Workflow Framework v4.0
+# Research Paper Workflow Framework v4.2
 
-Agent-driven research paper workflow for bioinformatics, clinical research, and reproducible manuscript production.
+Agent-driven research paper workflow for bioinformatics, clinical research, and reproducible manuscript production. V4.2 adds a model-facing AI harness so Claude/Codex can execute the workflow while users describe research needs in natural language.
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-60%20passing-brightgreen.svg)](tests/)
-[![Version](https://img.shields.io/badge/Version-4.1.0-orange.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-65%20passing-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-4.2.0-orange.svg)]()
 
 ## V4 Highlights
 
+- Model-facing AI harness for Claude/Codex: users speak naturally; the model calls `python -m paper_workflow.cli ai ...`.
 - 20-stage paper loop, including `design_analysis_plan` and `aigc_humanizer_review`.
 - Truth-layer contract in `workflow_contract.yaml`: completed means real outputs, non-empty artifacts, passable gates, and checkpoint state all agree.
 - Unified `StageResult` and per-stage `stage_results/<stage>_result.json` records for audit and resume.
-- Shared `WorkflowAPI` service layer used by CLI, Python callers, and non-dry-run E2E compatibility mode.
+- Shared `WorkflowAPI` service layer used by CLI, AI harness, Python callers, and non-dry-run E2E compatibility mode.
 - Agent harness bridge for pending external skill work: pending invocations can be listed, verified, and completed only after required artifacts are real.
 - 44 integrity gates across citation, clinical design, data bias, statistics, omics, AI/ML, AIGC text hygiene, and format checks.
 - 13 routed agents, including the new `aigc_humanizer_reviewer`.
@@ -20,7 +21,46 @@ Agent-driven research paper workflow for bioinformatics, clinical research, and 
 - CLI command for standalone AIGC text hygiene review and conservative humanizer revision.
 - Clean V4 installation and migration guide for bringing your own research topic, data, references, and drafts into the workflow.
 
-## Quick Start
+## Quick Start For Claude/Codex Users
+
+Most users should not call the lower-level Python commands themselves. In Claude/Codex, describe the research task in natural language and let the model execute the harness command.
+
+User:
+
+```text
+I have not started yet. I want to design a clinical bioinformatics project about diabetes and ccRCC using single-cell or spatial transcriptomics.
+```
+
+Model executes:
+
+```bash
+python -m paper_workflow.cli ai \
+  --request "I have not started yet. I want to design a clinical bioinformatics project about diabetes and ccRCC using single-cell or spatial transcriptomics." \
+  --journal "Genome Biology" \
+  --timeline 8 \
+  --json
+```
+
+Then the model reports the `paper_id`, current stage truth, missing inputs, and whether a human checkpoint is required. To continue:
+
+```bash
+python -m paper_workflow.cli ai \
+  --request "Continue the workflow by one step and stop if human input or a quality gate is required." \
+  --paper <paper_id> \
+  --json
+```
+
+The AI harness defaults are conservative:
+
+- one stage per model turn;
+- stop on failure;
+- do not auto-approve checkpoints;
+- never treat `template`, `pending_harness`, or `needs_input` as completed;
+- use the same `WorkflowAPI -> PaperLoopEngine -> verify_stage` truth path as direct CLI runs.
+
+See [AI harness interaction guide](docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md) for Chinese Claude/Codex examples for clinicians and graduate students.
+
+## Direct CLI For Maintainers
 
 ```bash
 git clone https://github.com/anthonyvmppg3yigdt33kp-lang/ResearchPaperWorkflow.git
@@ -115,6 +155,8 @@ Set `PAPER_WORKFLOW_SKILL_TARGET` to install into another root, or `PAPER_WORKFL
 ## Core CLI
 
 ```text
+ai
+ai-harness
 create-project
 status
 run-pipeline
@@ -149,9 +191,11 @@ ResearchPaperWorkflow/
 
 ## Documentation
 
+- [AI harness interaction guide](docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md)
 - [Clinician and graduate student guide](docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md)
 - [Next-generation V4 truth-layer guide](docs/NEXT_GEN_V4_TRUTH_LAYER.md)
 - [Next-generation completion audit](docs/NEXT_GEN_COMPLETION_AUDIT.md)
+- [Release notes v4.2.0](docs/RELEASE_NOTES_v4.2.0.md)
 - [Release notes v4.1.0](docs/RELEASE_NOTES_v4.1.0.md)
 - [V4 installation and usage guide](docs/V4_INSTALLATION_AND_USAGE_GUIDE.md) (historical; see next-generation guide first)
 - [V4 configuration audit](docs/V4_CONFIGURATION_AUDIT.md)
@@ -165,7 +209,7 @@ python -m pytest -q
 python -m paper_workflow.cli validate-contract --strict
 ```
 
-Current next-generation V4 verification: `60 passed`.
+Current next-generation V4 verification: `65 passed`.
 
 ## License
 

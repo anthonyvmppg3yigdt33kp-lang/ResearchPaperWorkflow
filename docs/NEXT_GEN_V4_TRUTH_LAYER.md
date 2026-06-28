@@ -5,8 +5,9 @@ ResearchPaperWorkflow V4 upgrade. Older documents may still describe the
 pre-truth-layer 18-stage design. This document supersedes those counts and
 entrypoint rules for production use.
 
-For a clinician/graduate-student walkthrough in Chinese, start with
-`docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md`.
+For Claude/Codex natural-language use, start with
+`docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md`. For a clinician/graduate-student
+walkthrough in Chinese, start with `docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md`.
 
 ## Design Goal
 
@@ -35,7 +36,15 @@ quality-gate results, and checkpoint ledgers.
 
 ## Canonical Entrypoints
 
-Use these as the supported production paths:
+Use the AI harness as the default Claude/Codex path. Users describe the task;
+the model calls the harness:
+
+```bash
+python -m paper_workflow.cli ai --request "<natural-language user request>" --json
+python -m paper_workflow.cli ai --request "Continue one workflow step" --paper <paper_id> --json
+```
+
+Use these lower-level commands as the supported maintainer paths:
 
 ```bash
 python -m paper_workflow.cli create-project --idea "..." --field "..." --journal "Genome Biology"
@@ -57,8 +66,9 @@ created = api.create_project(
 api.run_pipeline(created["paper_id"], stop_on_failure=True)
 ```
 
-`WorkflowAPI` is the common service layer for CLI, Python callers, and non-dry-run
-`E2EWorkflow`. CLI commands should not reimplement pipeline state transitions.
+`WorkflowAPI` is the common service layer for the AI harness, CLI, Python
+callers, and non-dry-run `E2EWorkflow`. CLI and harness commands should not
+reimplement pipeline state transitions.
 
 ## E2E Compatibility
 

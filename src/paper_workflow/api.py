@@ -191,6 +191,9 @@ class WorkflowAPI:
             for stage in config.get("pipeline", {}).get("stages", [])
             if "gate_rules" in stage
         ]
+        ai_harness = config.get("ai_harness", {}) or {}
+        ai_routes = ai_harness.get("scenario_routes", {}) or {}
+        ai_command_catalog = ai_harness.get("command_catalog", {}) or {}
 
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PaperLoopEngine(self.project_root, "__contract_validation__", Path(tmpdir))
@@ -222,6 +225,13 @@ class WorkflowAPI:
         self._append_set_issues(issues, "stage_agent_missing_from_routing", stage_agents - agents - {""})
         self._append_set_issues(issues, "quality_gate_ref_missing_definition", set(gate_refs) - quality_gate_defs)
         self._append_set_issues(issues, "legacy_gate_rules_present", set(legacy_gate_rules))
+        self._validate_ai_harness_config(
+            issues,
+            ai_harness=ai_harness,
+            ai_routes=ai_routes,
+            ai_command_catalog=ai_command_catalog,
+            config_stages=set(config_stages),
+        )
 
         for mismatch in required_output_mismatches:
             issues.append({
@@ -242,6 +252,8 @@ class WorkflowAPI:
                 "agent_routing_entries": len(agents),
                 "quality_gate_definitions": len(quality_gate_defs),
                 "stage_quality_gate_refs": len(gate_refs),
+                "ai_harness_routes": len(ai_routes),
+                "ai_harness_commands": len(ai_command_catalog),
             },
             "stage_ids": {
                 "config": config_stages,
@@ -349,6 +361,94 @@ class WorkflowAPI:
                 "message": f"{code}: {value}",
                 "details": {"value": value},
             })
+
+    @staticmethod
+    def _validate_ai_harness_config(
+        issues: list[dict[str, Any]],
+        *,
+        ai_harness: dict[str, Any],
+        ai_routes: dict[str, Any],
+        ai_command_catalog: dict[str, Any],
+        config_stages: set[str],
+    ) -> None:
+        if not ai_harness:
+            issues.append({
+                "code": "missing_ai_harness_config",
+                "message": "config/default_config.yaml must define ai_harness for Claude/Codex model-facing execution.",
+            })
+            return
+        if not ai_harness.get("enabled", False):
+            issues.append({
+                "code": "ai_harness_disabled",
+                "message": "ai_harness.enabled must be true for model-facing workflow execution.",
+            })
+
+        supported_intents = {
+            "create_project", "status", "run_pipeline", "validate_contract",
+            "validate_workflow", "approve_checkpoint", "list_harness_invocations",
+            "complete_harness_invocation", "run_integrity_gate",
+            "diagnose_gate_failures", "run_aigc_humanizer", "list_papers",
+        }
+        supported_cli_commands = {
+            "ai", "ai-harness", "create-project", "status", "run-pipeline",
+            "checkpoint", "run-integrity-gate", "diagnose-gate-failures",
+            "detect-artifact-drift", "sync-artifact-stale", "validate-workflow",
+            "validate-contract", "list-harness-invocations",
+            "complete-harness-invocation", "list-papers", "strategy",
+            "install-skills", "run-aigc-humanizer",
+        }
+        required_top_level = {"command_entrypoint", "default_max_stages_per_turn", "command_catalog", "scenario_routes"}
+        for key in sorted(required_top_level - set(ai_harness)):
+            issues.append({
+                "code": "ai_harness_missing_required_key",
+                "message": f"ai_harness missing required key: {key}",
+                "details": {"key": key},
+            })
+
+        for intent, spec in sorted(ai_command_catalog.items()):
+            if intent not in supported_intents:
+                issues.append({
+                    "code": "ai_harness_unsupported_intent",
+                    "message": f"AI harness command catalog references unsupported intent: {intent}",
+                    "details": {"intent": intent},
+                })
+            command = (spec or {}).get("cli_command") or (spec or {}).get("command")
+            if command and command not in supported_cli_commands:
+                issues.append({
+                    "code": "ai_harness_unknown_cli_command",
+                    "message": f"AI harness command catalog references unknown CLI command: {command}",
+                    "details": {"intent": intent, "cli_command": command},
+                })
+
+        for route_name, route in sorted(ai_routes.items()):
+            if not isinstance(route, dict):
+                issues.append({
+                    "code": "ai_harness_invalid_route",
+                    "message": f"AI harness scenario route must be an object: {route_name}",
+                    "details": {"route": route_name},
+                })
+                continue
+            intent = route.get("intent")
+            if intent and intent not in supported_intents:
+                issues.append({
+                    "code": "ai_harness_route_unsupported_intent",
+                    "message": f"AI harness scenario route references unsupported intent: {route_name} -> {intent}",
+                    "details": {"route": route_name, "intent": intent},
+                })
+            stage_refs = set()
+            for key in ("target_stage", "stop_after_stage"):
+                value = route.get(key)
+                if value:
+                    stage_refs.add(str(value))
+            for key in ("stages", "target_stages", "allowed_start_stages"):
+                for value in route.get(key, []) or []:
+                    stage_refs.add(str(value))
+            for stage in sorted(stage_refs - config_stages):
+                issues.append({
+                    "code": "ai_harness_route_unknown_stage",
+                    "message": f"AI harness scenario route references unknown stage: {route_name} -> {stage}",
+                    "details": {"route": route_name, "stage": stage},
+                })
 
     def _resolve_checkpoint_blockers(
         self,

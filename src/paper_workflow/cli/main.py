@@ -1,7 +1,7 @@
 """
 Paper Workflow CLI — Command-line interface for the research paper workflow system.
 
-14 commands for full pipeline control.
+Full pipeline control plus a model-facing AI harness for Claude/Codex.
 """
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import json
 import sys
 from pathlib import Path
 
+from paper_workflow.ai_harness import AIWorkflowHarness
 from paper_workflow.api import WorkflowAPI
 from paper_workflow.strategy.research_strategy import ResearchStrategyManager
 from paper_workflow.utils.skill_installer import (
@@ -68,6 +69,7 @@ def cmd_run(args):
         args.paper,
         stop_on_failure=args.stop_on_failure,
         auto_approve_checkpoints=args.auto_approve_checkpoints,
+        max_stages=args.max_stages,
     )
     if not result["events"]:
         blockers = result.get("checkpoint_blockers", [])
@@ -258,6 +260,39 @@ def cmd_aigc_humanizer(args):
     print(f"[OK] {stage} complete")
 
 
+def cmd_ai_harness(args):
+    harness = AIWorkflowHarness(get_root())
+    result = harness.handle_request(
+        args.request,
+        paper_id=args.paper,
+        field=args.field,
+        journal=args.journal,
+        timeline_weeks=args.timeline,
+        max_stages=args.max_stages,
+        stop_on_failure=args.stop_on_failure,
+        auto_approve_checkpoints=args.auto_approve_checkpoints,
+        dry_run=args.dry_run,
+        invocation=args.invocation,
+        stage=args.stage,
+        decision=args.decision,
+        notes=args.notes or "",
+    )
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"[AI-HARNESS] intent={result['intent']} status={result['status']}")
+        print(f"  request: {result['request']}")
+        print(f"  command: {result['plan']['equivalent_cli_command']}")
+        print(f"  reply: {result['user_facing_reply']}")
+        actions = result.get("next_model_actions") or []
+        if actions:
+            print("  next:")
+            for action in actions:
+                print(f"    - {action}")
+    if args.strict and result["status"] in {"error", "failed", "blocked", "gate_failure", "needs_input"}:
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Paper Workflow CLI")
     sub = parser.add_subparsers(dest="command")
@@ -270,6 +305,7 @@ def main():
     p = sub.add_parser("run-pipeline"); p.add_argument("--paper", required=True)
     p.add_argument("--stop-on-failure", action="store_true")
     p.add_argument("--auto-approve-checkpoints", action="store_true")
+    p.add_argument("--max-stages", type=int)
 
     p = sub.add_parser("checkpoint"); p.add_argument("--paper", required=True); p.add_argument("--stage", required=True)
     p.add_argument("--decision", required=True, choices=["approved", "rejected", "revision_needed"]); p.add_argument("--notes")
@@ -311,6 +347,27 @@ def main():
     p = sub.add_parser("run-aigc-humanizer")
     p.add_argument("--paper", required=True)
 
+    p = sub.add_parser(
+        "ai",
+        aliases=["ai-harness"],
+        help="Model-facing natural-language harness for Claude/Codex.",
+    )
+    p.add_argument("--request", required=True, help="Natural-language user request.")
+    p.add_argument("--paper", help="Optional paper_id; if omitted, one existing project can be resolved.")
+    p.add_argument("--field", help="Optional field override for project creation.")
+    p.add_argument("--journal", help="Optional target journal override.")
+    p.add_argument("--timeline", type=int, help="Timeline in weeks for project creation.")
+    p.add_argument("--max-stages", type=int, help="Maximum stages to run in this model turn.")
+    p.add_argument("--stop-on-failure", action="store_true", default=True)
+    p.add_argument("--auto-approve-checkpoints", action="store_true")
+    p.add_argument("--dry-run", action="store_true", help="Plan only; do not execute workflow state changes.")
+    p.add_argument("--invocation", help="Harness invocation filename, stem, or stage id.")
+    p.add_argument("--stage", help="Stage id for checkpoint or harness completion.")
+    p.add_argument("--decision", default="approved", choices=["approved", "rejected", "revision_needed"])
+    p.add_argument("--notes")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--strict", action="store_true")
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help(); return
@@ -329,7 +386,8 @@ def main():
      "list-harness-invocations": cmd_list_harness_invocations,
      "complete-harness-invocation": cmd_complete_harness_invocation,
      "list-papers": cmd_list, "strategy": cmd_strategy,
-     "install-skills": cmd_install_skills, "run-aigc-humanizer": cmd_aigc_humanizer}[args.command](args)
+     "install-skills": cmd_install_skills, "run-aigc-humanizer": cmd_aigc_humanizer,
+     "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
 
 
 if __name__ == "__main__":
