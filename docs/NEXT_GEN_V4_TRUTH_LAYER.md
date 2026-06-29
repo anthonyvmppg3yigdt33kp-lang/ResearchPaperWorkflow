@@ -1,13 +1,12 @@
-# Next-Generation V4 Truth-Layer Workflow
+# Next-Generation V4.3 Truth-Layer Workflow
 
 This is the current canonical architecture guide for the next-generation
-ResearchPaperWorkflow V4 upgrade. Older documents may still describe the
-pre-truth-layer 18-stage design. This document supersedes those counts and
-entrypoint rules for production use.
+ResearchPaperWorkflow V4.3 upgrade. Archived documents may describe a
+pre-truth-layer design, but production use follows the 20-stage
+contract described here and in `ARCHITECTURE.md`.
 
 For Claude/Codex natural-language use, start with
-`docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md`. For a clinician/graduate-student
-walkthrough in Chinese, start with `docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md`.
+`docs/OPERATION_GUIDE_ZH.md`.
 
 ## Design Goal
 

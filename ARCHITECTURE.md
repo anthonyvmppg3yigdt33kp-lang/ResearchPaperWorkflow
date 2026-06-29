@@ -1,415 +1,350 @@
-# Historical Note
+# ResearchPaperWorkflow Architecture v4.3
 
-This document is retained for background. The current production architecture is
-the V4 truth-layer design documented in `docs/NEXT_GEN_V4_TRUTH_LAYER.md`.
-Older counts such as 18 stages, 16 gates, or legacy E2E execution should be
-treated as historical unless they are repeated in the next-generation guide.
+ResearchPaperWorkflow is an auditable research-production workflow for
+bioinformatics, clinical, single-cell, spatial, and other evidence-heavy
+manuscript projects. The current design is V4.3. It replaces the older
+pre-truth-layer scaffold with a 20-stage truth-layer pipeline where a stage is
+complete only when the required artifacts, gate results, checkpoint state, and
+stage result files agree.
 
-# ARCHITECTURE — ResearchPaperWorkflow v4 系统架构
+The system is designed for Claude, Codex, or another tool-using AI model to act
+as the operator. The human user describes the scientific goal, supplies data or
+files, reviews checkpoints, and approves decisions. The workflow engine keeps
+the machine-readable state.
 
-**Version**: 4.0.0 | **Layer Count**: 4 | **Design Pattern**: Layered + Event-Driven + Pipeline
+## Current Contract
 
----
+The central invariant is:
 
-## 1. 架构全景
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────────┐
-│                          ResearchPaperWorkflow v2 Architecture                          │
-│                                                                                        │
-│  ┌─────────────────────────────────────────────────────────────────────────────────┐  │
-│  │                         LAYER 4: SUPERVISION                                      │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐   │  │
-│  │  │   Passport   │  │  Integrity   │  │  Provenance  │  │  Stale Detection   │   │  │
-│  │  │   System     │  │  Gate Checker│  │  Tracker     │  │  Engine            │   │  │
-│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └────────┬───────────┘   │  │
-│  │         │                 │                 │                   │               │  │
-│  │         └─────────────────┴─────────────────┴───────────────────┘               │  │
-│  │                                    │                                             │  │
-│  └────────────────────────────────────┼─────────────────────────────────────────────┘  │
-│                                       │                                                │
-│  ┌────────────────────────────────────┼─────────────────────────────────────────────┐  │
-│  │                         LAYER 3: EXECUTION                                        │  │
-│  │  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐    │  │
-│  │  │   Pipeline           │  │   Quality Gates      │  │   CLI Surface        │    │  │
-│  │  │   Orchestrator       │  │   Engine (16 rules)  │  │   (10 commands)      │    │  │
-│  │  │   (18 stages)        │  │                      │  │                      │    │  │
-│  │  └──────────┬───────────┘  └──────────┬───────────┘  └──────────┬───────────┘    │  │
-│  │             │                         │                         │                │  │
-│  └─────────────┼─────────────────────────┼─────────────────────────┼────────────────┘  │
-│                │                         │                         │                   │
-│  ┌─────────────┼─────────────────────────┼─────────────────────────┼────────────────┐  │
-│  │             │           LAYER 2: DECISION                       │                │  │
-│  │  ┌──────────▼───────────┐  ┌──────────▼───────────┐  ┌─────────▼───────────┐    │  │
-│  │  │   Skills Dispatcher  │  │   MCP Router          │  │   Paper Loop        │    │  │
-│  │  │   (17 skills)        │  │   (PubMed/Consensus/  │  │   Engine            │    │  │
-│  │  │                      │  │    Context7/Grok)     │  │   (observe→decide→  │    │  │
-│  │  │                      │  │                       │  │    run→verify→      │    │  │
-│  │  │                      │  │                       │  │    record→repeat)   │    │  │
-│  │  └──────────┬───────────┘  └──────────┬───────────┘  └─────────┬───────────┘    │  │
-│  │             │                         │                         │                │  │
-│  └─────────────┼─────────────────────────┼─────────────────────────┼────────────────┘  │
-│                │                         │                         │                   │
-│  ┌─────────────┼─────────────────────────┼─────────────────────────┼────────────────┐  │
-│  │             │           LAYER 1: STRATEGY                       │                │  │
-│  │  ┌──────────▼───────────┐  ┌──────────▼───────────┐  ┌─────────▼───────────┐    │  │
-│  │  │   Topic Selector     │  │   Journal Targeter   │  │   Feasibility        │    │  │
-│  │  │   + PICO Framework   │  │   + Requirements DB  │  │   Assessor           │    │  │
-│  │  └──────────────────────┘  └──────────────────────┘  └──────────────────────┘    │  │
-│  │                                                                                   │  │
-│  │  ┌──────────────────────┐  ┌──────────────────────┐                               │  │
-│  │  │   Hypothesis         │  │   Research Strategy  │                               │  │
-│  │  │   Framework          │  │   Manager            │                               │  │
-│  │  └──────────────────────┘  └──────────────────────┘                               │  │
-│  └───────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                        │
-└──────────────────────────────────────────────────────────────────────────────────────┘
+```text
+completed = real execution + verified outputs + concrete gate results + checkpoint consistency
 ```
 
----
+The machine-readable contract is `workflow_contract.yaml`. It defines each
+stage's required outputs, quality gates, transition policy, and executor mode.
+The runtime uses this contract through `PaperLoopEngine.verify_stage()`, not as
+documentation only.
 
-## 2. 四层架构详解
+Completion is rejected when:
 
-### 2.1 Layer 1: Strategy（策略层）
+- a required output is missing or empty;
+- the stage result says `template`, `pending_harness`, or `needs_input`;
+- a critical or high quality gate was configured but did not produce a concrete
+  pass result;
+- a checkpoint stage has not been explicitly approved;
+- an upstream artifact drifted and the dependent stage is stale.
 
-**职责**: 研究问题定义、期刊选择、可行性评估、假设生成
+## System Overview
 
-| 组件 | 源码位置 | 功能 |
-|------|---------|------|
-| `TopicSelector` | `src/paper_workflow/strategy/topic_selector.py` | 从研究想法生成结构化主题，评估创新度 |
-| `JournalTargeter` | `src/paper_workflow/strategy/journal_targeter.py` | 匹配目标期刊，生成格式要求清单 |
-| `FeasibilityAssessor` | `src/paper_workflow/strategy/feasibility.py` | 多维度可行性评分（数据/方法/期刊/时间线） |
-| `HypothesisFramework` | `src/paper_workflow/strategy/hypothesis_framework.py` | 结构化假设生成（category + type + statement） |
-| `ResearchStrategyManager` | `src/paper_workflow/strategy/research_strategy.py` | 策略持久化、加载、版本管理 |
-
-**数据流**:
-```
-idea + field → TopicSelector → Topic (innovation_level, scope, knowledge_gaps)
-                                    ↓
-                            JournalTargeter → Journal (IF, fit_score, requirements)
-                                    ↓
-                            HypothesisFramework → [Hypothesis] (PICO-structured)
-                                    ↓
-                            FeasibilityAssessor → FeasibilityReport (go/no-go)
-```
-
-### 2.2 Layer 2: Decision（决策层）
-
-**职责**: 技能调度、MCP路由、管线循环控制
-
-| 组件 | 源码位置 | 功能 |
-|------|---------|------|
-| `SkillsDispatcher` | `config/default_config.yaml §6` | 触发词→技能映射，17技能覆盖6阶段 |
-| `MCP Router` | 内置（Claude Code harness） | PubMed/Consensus/Context7/Grok 路由 |
-| `PaperLoopEngine` | `src/paper_workflow/engine/loop_engine.py` | observe→decide→run→verify→record→sync 循环 |
-| `AgentDispatcher` | `src/paper_workflow/engine/agent_dispatcher.py` | Stage→Agent→Skill 三级调度 |
-
-**Loop Engine 状态机**:
-```
-                    ┌──────────┐
-                    │ PENDING  │
-                    └────┬─────┘
-                         │ upstream_ready()
-                         ▼
-                    ┌──────────┐
-               ┌───▶│ RUNNING  │
-               │    └────┬─────┘
-               │         │ run_stage()
-               │         ▼
-               │    ┌──────────────┐
-               │    │ VERIFY       │◀── integrity gate checks
-               │    └──┬───────┬───┘
-               │       │       │
-               │   pass│       │fail (retry_count < max)
-               │       │       ▼
-               │       │  ┌──────────┐
-               │       │  │  FAILED  │──retry──┐
-               │       │  └──────────┘         │
-               │       ▼                       │
-               │  ┌──────────┐                 │
-               │  │COMPLETED │                 │
-               │  └────┬─────┘                 │
-               │       │ upstream_changed()    │
-               │       ▼                       │
-               │  ┌──────────┐                 │
-               └───│  STALE   │                │
-                  └──────────┘                 │
-                                               │
-                  ┌────────────────────────────┘
-                  │ retry_count < max_retries
-                  ▼
-             (back to RUNNING)
+```mermaid
+flowchart TB
+    U["Human researcher\nresearch goal, files, approvals"] --> M["Claude or Codex\nnatural-language operator"]
+    M --> H["AIWorkflowHarness\nintent classification and safe plan"]
+    H --> API["WorkflowAPI\nshared service boundary"]
+    API --> L["PaperLoopEngine\nobserve decide run verify record repeat"]
+    L --> D["AgentDispatcher\nstage to agent to skill routing"]
+    D --> A["Agent cluster\nresearch, literature, data, figure, analysis, writing, review"]
+    A --> R["StageResult\nexecution_mode, outputs, gates, artifacts"]
+    R --> P["PaperPassport\nartifact ledger, checkpoint ledger, integrity ledger"]
+    P --> L
+    L --> V["validate-workflow\ntruth audit and stale propagation"]
 ```
 
-**Pipeline State 转换**:
-```
-CLEAN → IN_PROGRESS → CLEAN (all stages OK)
-CLEAN → IN_PROGRESS → GATE_FAILURE (integrity check failed)
-CLEAN → IN_PROGRESS → STALE_STAGES (upstream artifact changed)
-CLEAN → IN_PROGRESS → BLOCKED (unresolvable dependency)
-CLEAN → IN_PROGRESS → DRIFT_DETECTED (artifact hash mismatch)
-```
+The important design choice is that the AI harness is intentionally thin. It
+does not decide that work is complete. It translates a user's request into a
+safe workflow action, then the API and loop engine perform the same verification
+used by direct CLI and Python callers.
 
-### 2.3 Layer 3: Execution（执行层）
+## Four-Layer Control Model
 
-**职责**: 18阶段管线编排、质量门执行、CLI命令接口
-
-| 组件 | 源码位置 | 功能 |
-|------|---------|------|
-| `PaperWorkflow` | `src/paper_workflow/workflow.py` | 统一工作流编排器（初始化→运行→诊断） |
-| `E2EWorkflow` | `src/paper_workflow/e2e_workflow.py` | 5阶段端到端主控（含回调+检查点+报告） |
-| `IntegrityGateChecker` | `src/paper_workflow/supervision/integrity.py` | 16规则完整性检查（5C+8H+3M） |
-| CLI | `src/paper_workflow/cli/main.py` | 10命令CLI界面 |
-
-**E2E 5-Phase 结构**:
-```
-Phase 1: Topic Research (4 stages)
-  deep_research → topic_research → journal_targeting → feasibility_assessment
-  [CHECKPOINT: Review research question and approve]
-
-Phase 2: Data Analysis (7 stages)
-  data_audit → qc_filtering → clustering → cell_annotation
-  → statistical_testing → pathway_inference → figure_planning
-  [CHECKPOINT: Review analysis outputs and approve]
-
-Phase 3: Paper Writing (4 stages)
-  scientific_writing_plan → nature_writing → nature_citation → research_paper_writing
-  [CHECKPOINT: Review complete manuscript draft]
-
-Phase 4: Polish & Review (6 stages)
-  academic_polish → humanizer → nature_figure → academic_review
-  → nature_data → ai_writing_detection
-  [CHECKPOINT: Review polished manuscript + review feedback]
-
-Phase 5: Submission (3 stages)
-  cover_letter → integrity_check → presentation (optional)
-  [CHECKPOINT: Final review before submission]
+```mermaid
+flowchart TB
+    S["Strategy layer\nturn an idea into a testable research plan"]
+    De["Decision layer\nchoose the next safe stage and route work"]
+    E["Execution layer\nproduce artifacts or create pending harness tasks"]
+    Su["Supervision layer\nverify, ledger, checkpoint, stale detection"]
+    S --> De --> E --> Su
+    Su -. "truth state and drift signals" .-> De
 ```
 
-### 2.4 Layer 4: Supervision（监督层）
+| Layer | Main files | Responsibility | What it must not do |
+|---|---|---|---|
+| Strategy | `src/paper_workflow/strategy/`, `src/paper_workflow/workflow.py` | Convert a research idea into topic, target journal, feasibility, hypotheses, and initial paper state. | Mark downstream analysis or writing complete. |
+| Decision | `src/paper_workflow/engine/loop_engine.py`, `workflow_contract.yaml` | Hydrate state, choose the next eligible stage, enforce dependencies, checkpoints, and transitions. | Bypass required outputs or gates. |
+| Execution | `src/paper_workflow/engine/agent_dispatcher.py`, `src/paper_workflow/engine/agent_harness.py`, `src/paper_workflow/cli/`, `src/paper_workflow/api.py` | Run stage handlers, route to agents and skills, create real artifacts or explicit pending harness records. | Treat placeholders as success. |
+| Supervision | `src/paper_workflow/supervision/`, `src/paper_workflow/outputs/stage_result.py` | Record artifacts, hashes, checkpoints, integrity events, quality results, and workflow validation. | Mutate scientific content without routing through a stage. |
 
-**职责**: 护照追踪、完整性验证、溯源审计、过期检测
+The layers are logical boundaries, not isolated services. `PaperLoopEngine`
+bridges decision and execution because it both selects the next stage and
+verifies the result after execution. The verification path remains single and
+auditable.
 
-| 组件 | 源码位置 | 功能 |
-|------|---------|------|
-| `PaperPassport` | `src/paper_workflow/supervision/passport.py` | Hash-based artifact ledger + checkpoint记录 |
-| `IntegrityGateChecker` | `src/paper_workflow/supervision/integrity.py` | 16-rule 完整检查套件 |
-| `ErrorTracker` | `src/paper_workflow/utils/error_tracker.py` | 结构化错误日志 + 分级 |
-| `Reproducibility` | `src/paper_workflow/utils/reproducibility.py` | 种子验证 + 环境快照 |
+## V4.3 20-Stage Pipeline
 
-**Passport 数据结构**:
-```
-papers/<paper_id>/
-├── project_passport.yaml        # 项目身份 + 元数据
-├── artifact_ledger.jsonl        # Append-only 制品哈希日志
-├── checkpoint_ledger.jsonl      # 用户批准的检查点
-└── integrity_ledger.jsonl       # 完整性门事件
-```
-
----
-
-## 3. 核心数据流
-
-### 3.1 论文生产全流程数据流
-
-```
-Research Idea
-     │
-     ▼
-[TopicSelector] ──→ Topic (innovation_level, scope, gaps)
-     │
-     ▼
-[JournalTargeter] ──→ Journal (IF, fit_score, formatting reqs)
-     │
-     ▼
-[Literature Searcher] ──→ references.bib + citation_evidence.csv
-     │
-     ▼
-[HypothesisFramework] ──→ hypotheses.yaml + research_questions
-     │
-     ▼
-[Data Auditor] ──→ data_audit_report.md + data_inventory.yaml
-     │
-     ▼
-[Figure Planner] ──→ figure_plan.json + figure_specs.yaml
-     │
-     ▼
-[Analysis Executor] ──→ results/* + run_manifest.yaml
-     │
-     ▼
-[Method Verifier] ──→ methods/run_manifest.yaml (verified)
-     │
-     ▼
-[Report Writer] ×4 ──→ manuscript/{intro,methods,results,discussion}.md
-     │
-     ▼
-[Assembler] ──→ manuscript/manuscript.tex + manuscript.pdf
-     │
-     ▼
-[Integrity Checker] ──→ integrity/integrity_report.json
-     │
-     ▼
-[Internal Reviewer] ──→ review/review_report.md
-     │
-     ▼
-[Revision Applier] ──→ manuscript/manuscript_revised.tex
-     │
-     ▼
-[Re-Reviewer] ──→ review/re_review_report.md
-     │
-     ▼
-[Finalizer] ──→ submission/manuscript_final.pdf + cover_letter.pdf
+```mermaid
+flowchart LR
+    A1["1 select_topic"] --> A2["2 target_journal"] --> A3["3 literature_search"] --> A4["4 formulate_hypotheses"] --> A5["5 design_analysis_plan"]
+    A5 --> B1["6 data_audit"] --> B2["7 figure_planning"] --> B3["8 run_analysis"] --> B4["9 verify_methods"]
+    B4 --> C1["10 write_methods"] --> C2["11 write_results"] --> C3["12 write_introduction"] --> C4["13 write_discussion"] --> C5["14 assemble_manuscript"]
+    C5 --> D1["15 aigc_humanizer_review"] --> D2["16 integrity_check"] --> D3["17 internal_review"] --> D4["18 apply_revision"] --> D5["19 re_review"] --> D6["20 finalize"]
 ```
 
-### 3.2 Agent 间通信数据流
+| # | Stage | Main agent | Required truth output |
+|---:|---|---|---|
+| 1 | `select_topic` | `research_strategist` | `research_plan/research_question.md`, `research_plan/hypotheses.yaml` |
+| 2 | `target_journal` | `research_strategist` | `research_plan/journal_profile.md` |
+| 3 | `literature_search` | `literature_reviewer` | `references/library.bib` |
+| 4 | `formulate_hypotheses` | `research_strategist` | `research_plan/feasibility_decision.md` |
+| 5 | `design_analysis_plan` | `statistician` | SAP, study protocol, causal-assumption audit |
+| 6 | `data_audit` | `data_auditor` | data audit report, data inventory |
+| 7 | `figure_planning` | `figure_planner` | figure plan, figure specs |
+| 8 | `run_analysis` | `analysis_executor` | `results/run_manifest.yaml` |
+| 9 | `verify_methods` | `pipeline_engineer` | `methods/run_manifest.yaml` |
+| 10 | `write_methods` | `report_writer` | `manuscript/methods.md` |
+| 11 | `write_results` | `report_writer` | `manuscript/results.md` |
+| 12 | `write_introduction` | `report_writer` | `manuscript/introduction.md` |
+| 13 | `write_discussion` | `report_writer` | `manuscript/discussion.md` |
+| 14 | `assemble_manuscript` | `report_writer` | `manuscript/manuscript_full.md` |
+| 15 | `aigc_humanizer_review` | `aigc_humanizer_reviewer` | AIGC report, revision plan, humanized manuscript |
+| 16 | `integrity_check` | `integrity_checker` | JSON and Markdown integrity reports |
+| 17 | `internal_review` | `team_orchestrator` | internal review report |
+| 18 | `apply_revision` | `report_writer` | revised manuscript |
+| 19 | `re_review` | `team_orchestrator` | re-review report |
+| 20 | `finalize` | `integrity_checker` | final manuscript, cover letter, data and code statements |
 
-```
-research_strategist ──(topic, hypotheses)──▶ literature_reviewer
-        │                                            │
-        │                                    (citation_evidence)
-        │                                            │
-        ▼                                            ▼
-  data_auditor ◀──────────────▶ figure_planner
-        │                            │
-   (data_inventory)           (figure_plan)
-        │                            │
-        ▼                            ▼
-  analysis_executor ──(results)──▶ pipeline_engineer
-        │                                │
-        │                         (verified_manifest)
-        │                                │
-        ▼                                ▼
-  report_writer ◀────────────────────────┘
-        │
-   (manuscript sections)
-        │
-        ▼
-  integrity_checker ──(integrity_report)──▶ team_orchestrator
-        │                                        │
-        │                                 (review_report)
-        │                                        │
-        ▼                                        ▼
-  report_writer (revision) ◀─────────────────────┘
-        │
-   (revised_manuscript)
-        │
-        ▼
-  integrity_checker (final) ──▶ submission_package
+## Loop State Machine
+
+The loop model is:
+
+```text
+observe -> decide -> run -> verify -> record -> mark_stale -> diagnose -> repeat
 ```
 
----
-
-## 4. 状态管理
-
-### 4.1 StageState（管线阶段状态）
-
-```python
-@dataclass
-class StageState:
-    definition: StageDefinition    # 阶段定义（不可变）
-    status: StageStatus            # PENDING|RUNNING|COMPLETED|FAILED|STALE|SKIPPED|BLOCKED
-    started_at: Optional[str]
-    completed_at: Optional[str]
-    retry_count: int
-    artifacts_produced: list[str]  # 产出文件路径
-    artifact_hashes: dict[str, str]  # SHA-256 哈希
-    errors: list[str]
-    gate_results: list[dict]       # 质量门检查结果
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> RUNNING: dependencies ready
+    RUNNING --> COMPLETED: real result + outputs + gates pass
+    RUNNING --> FAILED: executor or gate failure
+    RUNNING --> BLOCKED: needs input or pending harness
+    FAILED --> RUNNING: retry allowed
+    FAILED --> BLOCKED: retry exhausted or human decision required
+    COMPLETED --> STALE: upstream artifact drift
+    STALE --> RUNNING: rerun after drift
+    BLOCKED --> PENDING: user supplies input or approves checkpoint
+    COMPLETED --> [*]
 ```
 
-### 4.2 WorkflowState（工作流状态）
+Stage states:
 
-```python
-@dataclass
-class WorkflowState:
-    paper_id: str
-    started_at: str
-    completed_at: Optional[str]
-    strategy: Optional[ResearchStrategy]
-    pipeline_state: str            # clean|drift_detected|stale_stages|gate_failure|in_progress|blocked
-    stages_completed: int
-    stages_failed: int
-    errors: list[dict]
-    decisions: list[dict]          # 每个阶段的决策记录
+- `pending`: not yet eligible or not yet run.
+- `running`: currently executing.
+- `completed`: verified by the truth layer.
+- `failed`: execution or quality gate failed.
+- `stale`: output was previously valid but an upstream dependency changed.
+- `skipped`: intentionally skipped for a supported paper type.
+- `blocked`: waiting for input, checkpoint approval, or external harness output.
+
+Pipeline states:
+
+- `clean`: no unresolved failure or drift is known.
+- `in_progress`: the workflow is advancing.
+- `checkpoint_required`: a human decision is required.
+- `gate_failure`: one or more quality gates failed.
+- `drift_detected`: artifact hashes changed.
+- `stale_stages`: downstream stages have been invalidated.
+- `blocked`: progress is impossible until input or human decision arrives.
+
+## AI Harness Architecture
+
+```mermaid
+sequenceDiagram
+    participant User as Human user
+    participant Model as Claude or Codex
+    participant Harness as AIWorkflowHarness
+    participant API as WorkflowAPI
+    participant Engine as PaperLoopEngine
+    participant Passport as PaperPassport
+
+    User->>Model: Natural-language research request
+    Model->>Harness: Route request with paper context
+    Harness->>Harness: classify intent and build safe plan
+    Harness->>API: create/status/run/validate/checkpoint action
+    API->>Engine: hydrate state and execute one safe step
+    Engine->>Engine: verify outputs, gates, checkpoints
+    Engine->>Passport: record artifacts, results, ledgers
+    Passport-->>Engine: drift and checkpoint truth
+    Engine-->>API: structured result
+    API-->>Harness: machine-readable outcome
+    Harness-->>Model: next actions and user-facing reply
+    Model-->>User: concise status, missing inputs, decision request
 ```
 
-### 4.3 状态持久化
+Supported AI harness intents include project creation, status, one-step
+pipeline advance, contract validation, workflow validation, checkpoint approval,
+pending harness listing, harness completion, integrity gate runs, AIGC hygiene
+review, failure diagnosis, and paper listing.
 
-```
-每次 run() 调用后:
-  ┌─ _execute_stage(stage) → self.engine.run_stage()
-  │   └─ 写入 project_passport.yaml (updated_at + stages snapshot)
-  ├─ verify_stage(stage) → self.engine.verify_stage()
-  │   └─ integrity gate checks
-  ├─ passport.record_artifact(art, stage=stage)
-  │   └─ Append to artifact_ledger.jsonl (SHA-256 hash + timestamp)
-  ├─ engine.record_and_sync()
-  │   └─ _update_passport() + _sync_stale()
-  └─ state.decisions.append(...)
-      └─ 内存中累积，save_state() 时写入 workflow_state/*.json
-```
+The harness defaults are conservative:
 
----
+- one stage per model turn;
+- stop on failure;
+- do not auto-approve checkpoints;
+- require explicit `paper_id` unless exactly one project exists;
+- preserve the normal `WorkflowAPI -> PaperLoopEngine -> verify_stage` path;
+- never promote pending harness work into completed stage truth.
 
-## 5. 可扩展性设计
+## Agent Cluster
 
-### 5.1 扩展点（来自 `default_config.yaml §12`）
-
-| 扩展类型 | 注册方式 | 约束 |
-|---------|---------|------|
-| 自定义分析脚本 | 放入 `scripts/custom/` 自动发现 | 语法检查 + 导入验证 |
-| 自定义 Agent | `config/custom_agents.yaml` 清单 | 必须声明 primary_skills + stages |
-| 自定义 Skill | `config/custom_skills.yaml` 清单 | 必须声明 triggers + phase + agent |
-| 自定义 Gate Rule | 在 quality_gates 块添加 | 声明 severity + check type + rule |
-
-### 5.2 配置覆盖链
-
-```
-default_config.yaml (基線)
-    ↓
-<paper_dir>/paper_config.yaml (项目级覆盖)
-    ↓
-环境变量 PAPER_WORKFLOW_* (运行时覆盖)
-    ↓
-CLI --config 参数 (命令行覆盖)
+```mermaid
+flowchart TB
+    R["research_strategist"] --> L["literature_reviewer"]
+    R --> S["statistician"]
+    L --> W["report_writer"]
+    S --> DA["data_auditor"]
+    DA --> FP["figure_planner"]
+    FP --> AE["analysis_executor"]
+    AE --> PE["pipeline_engineer"]
+    PE --> W
+    W --> AH["aigc_humanizer_reviewer"]
+    AH --> IC["integrity_checker"]
+    IC --> TO["team_orchestrator"]
+    TO --> W
+    CL["code_librarian"] --> AE
+    MO["multi_omics_integrator"] --> AE
 ```
 
----
+Primary routed agents:
 
-## 6. 技术栈
+- `research_strategist`: topic, journal, feasibility, hypotheses.
+- `literature_reviewer`: reference search, citation substrate, literature gaps.
+- `statistician`: SAP, endpoint, independence, statistical assumptions.
+- `data_auditor`: input data inventory, availability, quality limitations.
+- `figure_planner`: figure plan, panel logic, figure evidence map.
+- `analysis_executor`: computational analysis outputs and manifests.
+- `pipeline_engineer`: reproducibility, method verification, run manifests.
+- `report_writer`: manuscript sections, assembly, revision.
+- `aigc_humanizer_reviewer`: responsible AIGC hygiene report and conservative revision plan.
+- `integrity_checker`: citation, claim, reporting, data and code availability gates.
+- `team_orchestrator`: internal review, re-review, multi-agent coordination.
+- `code_librarian`: code provenance and reusable analysis script inventory.
+- `multi_omics_integrator`: modality-specific analysis support for multi-omics projects.
 
-| 层面 | 技术选择 |
-|------|---------|
-| 语言 | Python 3.9+ (核心管线) + R 4.0+ (分析模块) |
-| 配置 | YAML (default_config.yaml, 2100+ 行) |
-| 状态持久化 | JSONL (append-only ledgers) + YAML (passport) |
-| 制品哈希 | SHA-256 |
-| 包管理 | pip (Python) + renv (R) |
-| 容器化 | Docker (Dockerfile.template) |
-| 测试 | pytest (test_all.py + test_integration.py) |
-| CLI | argparse (10 命令) |
-| 输出格式 | Markdown, LaTeX, PDF, SVG, JSON, YAML |
+## Task, Version, And Progress Preservation
 
----
+Every paper project lives under `papers/<paper_id>/`. The generated project is
+not a loose folder of drafts; it is an event-sourced research state.
 
-## 7. 关键设计决策
+```mermaid
+flowchart LR
+    P["project_passport.yaml\nproject identity and stage snapshot"]
+    A["artifact_ledger.jsonl\nappend-only artifact hashes"]
+    C["checkpoint_ledger.jsonl\nhuman decisions"]
+    I["integrity_ledger.jsonl\ngate events"]
+    S["stage_results/*.json\nper-stage truth result"]
+    H["workflow_state/pending_invocations/*.json\nexternal work requests"]
+    P --> S
+    A --> S
+    C --> S
+    I --> S
+    H --> S
+```
 
-### 决策 1: 硬编码 + 配置双轨制
-- **选择**: `loop_engine.py` 内置 `PIPELINE_STAGES` 硬编码回退 + YAML 配置覆盖
-- **理由**: 配置损坏时管线仍可运行；配置可用时灵活调整阶段定义
-- **实现**: `PaperLoopEngine.__init__` 的 `config_path` 参数
+The important persistence rules are:
 
-### 决策 2: Append-Only Ledger
-- **选择**: `artifact_ledger.jsonl` 和 `checkpoint_ledger.jsonl` 使用 append-only 模式
-- **理由**: 完整审计追踪；支持时间旅行调试；不可篡改
-- **代价**: 文件持续增长（通过 checkpoint 归档管理）
+- `project_passport.yaml` holds the project identity and current stage snapshot.
+- `stage_results/<stage>_result.json` records the normalized `StageResult`.
+- `artifact_ledger.jsonl` is append-only and stores SHA-256 hashes.
+- `checkpoint_ledger.jsonl` records explicit human approvals or revision decisions.
+- `integrity_ledger.jsonl` stores quality-gate events.
+- `workflow_state/pending_invocations/` records external or human work that is
+  required before a stage can become real.
+- `WorkflowAPI.status()` and `PaperLoopEngine` hydrate state from those records,
+  so status, resume, and validation reconstruct the same truth.
 
-### 决策 3: 阶段级 Gate 而非管线级 Gate
-- **选择**: 每个 StageDefinition 携带自己的 gate_rules
-- **理由**: 不同阶段有不同质量要求；失败隔离更精确
-- **实现**: `StageDefinition.gate_rules: list[dict]`
+## Quality Gates And Information Chain
 
-### 决策 4: Human Checkpoint 而非全自动
-- **选择**: 关键阶段（select_topic, formulate_hypotheses, figure_planning, internal_review, finalize）标记 `human_checkpoint: true`
-- **理由**: 科研决策不能全自动化；人在回路保证质量
-- **实现**: `stop_at_checkpoint=True` 时在 checkpoint 阶段暂停
+```mermaid
+flowchart LR
+    O["Required outputs"] --> SR["StageResult"]
+    G["Quality gate results"] --> SR
+    CP["Checkpoint ledger"] --> SR
+    AL["Artifact hashes"] --> SR
+    SR --> VS["verify_stage"]
+    VS --> OK["completed"]
+    VS --> NO["failed, blocked, or stale"]
+```
+
+Gate categories are tuned for biomedical and bioinformatics risks:
+
+- statistical analysis plan exists before primary analysis;
+- endpoint definition is complete;
+- patient-level, donor-level, or subject-level independence is preserved;
+- pseudoreplication is blocked where biological-unit inference is claimed;
+- results claims are bound to artifacts and statistics;
+- Results sections avoid unsupported citations or overinterpretation;
+- local paths and private machine artifacts are removed from Methods;
+- citation targets exist in BibTeX;
+- data and code availability statements are present;
+- AIGC hygiene detects model-interface artifacts and formulaic style density.
+
+Critical and high gates are fail-closed. A missing gate result is not a pass.
+
+## Human In The Loop
+
+The system deliberately keeps human review at scientific decision points:
+
+- research direction and scope;
+- target journal suitability when needed;
+- hypothesis feasibility and testability;
+- SAP freeze before primary analysis;
+- figure plan and claim structure;
+- Methods and Results acceptance;
+- AIGC hygiene decision;
+- internal review and revision routing;
+- final submission package.
+
+Human approval is not a comment in chat. It is a checkpoint ledger entry that
+the engine can verify on resume.
+
+## Artifact Drift And Resume
+
+The supervision layer recalculates hashes for recorded artifacts. When an
+upstream artifact changes, the dependency map marks downstream stages `stale`.
+That means a manuscript section written from an older run manifest cannot remain
+completed after the analysis manifest changes.
+
+Resume uses the same truth sources:
+
+1. load `project_passport.yaml`;
+2. load stage result files;
+3. compare artifact ledger hashes;
+4. apply checkpoint blockers;
+5. apply drift and stale propagation;
+6. choose the next eligible stage.
+
+## Validation Surfaces
+
+Production readiness is checked at two levels:
+
+- Contract validation: config, contract, engine stages, dispatcher handlers,
+  quality gate references, agent routing, and AI harness command catalog agree.
+- Workflow validation: a concrete paper project has consistent stage state,
+  non-empty required outputs, concrete gate results, no incorrect completed
+  pending harness stages, and no unpropagated drift.
+
+## Design Principle
+
+V4.3 follows a minimal, truth-first design. It does not try to become a fully
+autonomous paper factory. It first makes the facts hard:
+
+- real artifacts before completion;
+- fail-closed quality gates;
+- explicit human decisions;
+- resumable state;
+- auditable agent routing;
+- no silent promotion of templates or pending work.
+
+The result is a workflow kernel that is suitable for research supervision:
+Codex or Claude can operate it, but the state remains inspectable by a human
+researcher and recoverable from files.

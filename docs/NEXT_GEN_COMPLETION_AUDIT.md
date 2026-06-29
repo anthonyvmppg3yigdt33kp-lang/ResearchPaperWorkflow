@@ -2,9 +2,9 @@
 
 Audit date: 2026-06-28
 
-User-facing onboarding for Claude/Codex natural-language use is documented in
-`docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md`. Clinician and graduate-student
-onboarding is documented in `docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md`.
+User-facing onboarding for Claude/Codex natural-language use, clinician users,
+graduate students, and bioinformatics operators is now consolidated in
+`docs/OPERATION_GUIDE_ZH.md`.
 
 This audit maps the requested next-generation upgrade requirements to current
 implementation evidence. It is intentionally evidence-bound: a requirement is
@@ -28,7 +28,7 @@ not considered satisfied unless a file, test, or runtime check proves it.
 | Bioinformatics/clinical safeguards | Implemented in gates and executors | SAP, endpoint definition, patient-level independence, pseudoreplication, claim-artifact binding, statistics reporting, overinterpretation checks. |
 | Production validation command | Implemented | `validate-workflow --strict` checks result files, required outputs, gates, pending harness, checkpoints, and drift propagation. |
 | Global contract validation | Implemented | `validate-contract --strict` checks config stages, workflow contract, engine stages, dispatcher handlers, agent routing, gate references, and AI harness scenario routes. |
-| User-facing docs reflect current path | Implemented in canonical docs | `README.md`, `docs/NEXT_GEN_V4_TRUTH_LAYER.md`, and this audit document. |
+| User-facing docs reflect current path | Implemented in canonical docs | `README.md`, `ARCHITECTURE.md`, `USER_GUIDE.md`, `docs/OPERATION_GUIDE_ZH.md`, `docs/NEXT_GEN_V4_TRUTH_LAYER.md`, and this audit document. |
 
 ## Verification Run
 
@@ -78,8 +78,9 @@ These are explicit boundaries, not hidden completions:
 - PaperQA2/STORM/AI-Scientist-style literature engines are reserved behind the
   `claim_evidence_audit_interface`; they are not part of this minimal truth-layer
   upgrade.
-- Existing historical docs may still contain old counts; use
-  `docs/NEXT_GEN_V4_TRUTH_LAYER.md` as the canonical current guide.
+- Archived audit and release-note files may still mention earlier counts as
+  history; use `ARCHITECTURE.md`, `docs/NEXT_GEN_V4_TRUTH_LAYER.md`, and
+  `workflow_contract.yaml` as the current truth source.
 
 ## Completion Standard
 

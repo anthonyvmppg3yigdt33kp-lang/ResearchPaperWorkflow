@@ -14,7 +14,7 @@ Usage:
     wf.run()
 """
 
-__version__ = "4.2.0"
+__version__ = "4.3.0"
 __author__ = "Research Paper Workflow Framework"
 
 from paper_workflow.workflow import PaperWorkflow, WorkflowState, create_and_run_paper

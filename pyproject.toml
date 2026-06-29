@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "paper-workflow"
-version = "4.2.0"
+version = "4.3.0"
 description = "Domain-agnostic research paper workflow system for bioinformatics and clinical research"
 readme = "README.md"
 license = {text = "MIT"}
