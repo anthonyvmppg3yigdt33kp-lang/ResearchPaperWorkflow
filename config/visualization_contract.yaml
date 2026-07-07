@@ -1,0 +1,60 @@
+schema_version: "1.0.0"
+purpose: "Required visualization outputs and figure-source metadata for biomedical projects."
+
+global_rules:
+  require_figure_source_map: true
+  require_table_source_map: true
+  require_statistical_unit: true
+  require_input_file_paths: true
+  require_script_path: true
+  require_method_summary: true
+  require_scientific_interpretation: true
+  forbid_unmapped_final_figures: true
+  forbid_claim_strength_above_evidence: true
+
+figure_source_map_schema:
+  figure_id: ""
+  panel_id: ""
+  title: ""
+  source_data:
+    - path: ""
+      type: ""
+      role: ""
+  script: ""
+  method: ""
+  statistical_unit: "sample|patient|donor|cell|spot|feature|other"
+  plot_type: ""
+  statistics:
+    test: ""
+    effect_size: ""
+    multiple_testing: ""
+    p_value_source: ""
+  interpretation: ""
+  claim_boundary: ""
+  reviewer_risk: ""
+
+required_plot_families:
+  single_cell:
+    qc: ["QC summary", "sample/cell count barplot"]
+    embedding: ["UMAP or tSNE by cell type", "UMAP by condition"]
+    annotation: ["marker dotplot", "marker heatmap"]
+    composition: ["sample-level cell type proportion barplot"]
+    differential_expression: ["pseudobulk DEG table", "volcano plot", "DEG heatmap"]
+    enrichment: ["GO/KEGG/Reactome/MSigDB dotplot", "GSEA running-score or ridge plot"]
+    communication: ["ligand-receptor bubble plot", "communication heatmap", "network/chord/circle plot when supported"]
+  spatial:
+    qc: ["spatial QC summary", "tissue coordinate overview"]
+    feature: ["spatial feature plot", "cell type proportion map"]
+    domain: ["spatial domain plot", "boundary differential result"]
+    svg: ["SVG heatmap or ranked SVG plot"]
+    interaction: ["spatial ligand-receptor summary", "colocalization plot"]
+  multi_omics:
+    qc: ["modality QC summary", "batch assessment plot"]
+    integration: ["factor heatmap", "variance explained plot"]
+    association: ["cross-omics correlation heatmap", "network module plot"]
+    validation: ["sensitivity analysis plot", "external validation summary when available"]
+
+closeout_required_files:
+  - "results/figure_source_map.yaml"
+  - "results/table_source_map.yaml"
+  - "results/current_run.yaml"

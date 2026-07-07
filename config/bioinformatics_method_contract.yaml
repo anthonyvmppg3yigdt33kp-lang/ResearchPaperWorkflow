@@ -1,0 +1,76 @@
+schema_version: "1.0.0"
+purpose: "Method and analysis-design requirements before running biomedical analyses."
+
+analysis_design_required_fields:
+  - research_question
+  - primary_contrast
+  - data_type
+  - statistical_unit
+  - inclusion_exclusion
+  - covariates
+  - batch_or_confounder_plan
+  - normalization_or_preprocessing
+  - primary_methods
+  - validation_plan
+  - sensitivity_plan
+  - expected_outputs
+  - run_id
+  - user_approval
+
+execution_rules:
+  require_design_before_execution: true
+  require_user_approval_for_new_analysis: true
+  require_run_manifest: true
+  require_session_info: true
+  forbid_agent_phase_package_install: true
+  forbid_agent_phase_database_download: true
+  forbid_raw_data_mutation: true
+
+environment_contract:
+  python_dependency_declaration:
+    source: "pyproject.toml"
+    optional_extra: "paper-workflow[bioinformatics]"
+    required_packages:
+      - anndata
+      - scanpy
+      - squidpy
+      - decoupler
+      - gseapy
+      - gprofiler-official
+  r_dependency_declaration:
+    preferred: "renv.lock"
+    fallback: "documented setup phase before execution_mode"
+    forbidden_during_agent_phase:
+      - "install.packages"
+      - "BiocManager::install"
+      - "download database/reference inside analysis execution"
+  setup_phase_required_before:
+    - "single-cell analysis"
+    - "spatial transcriptomics"
+    - "pathway enrichment requiring external gene-set databases"
+    - "cell-cell communication requiring ligand-receptor resources"
+
+statistical_unit_policy:
+  cell_level: "Visualization or localization only unless aggregated to sample/donor/patient for inference."
+  spot_level: "Spatial visualization or local association only unless model accounts for sample structure."
+  sample_level: "Default unit for disease-group inference."
+  patient_level: "Required for clinical claims."
+
+method_modules:
+  single_cell:
+    required: ["QC", "normalization/integration", "PCA/UMAP", "clustering", "cell type annotation", "marker evidence", "sample-level composition"]
+    conditional: ["pseudobulk DEG", "pathway enrichment", "cell-cell communication", "external validation"]
+  spatial:
+    required: ["spatial QC", "coordinate visualization", "spatial feature plots"]
+    conditional: ["domain detection", "SVG", "deconvolution", "colocalization", "spatial ligand-receptor"]
+  bulk_rnaseq:
+    required: ["QC", "normalization", "DE model", "multiple testing", "effect-size reporting"]
+    conditional: ["WGCNA", "immune deconvolution", "GSEA/GSVA", "machine learning"]
+  multi_omics:
+    required: ["modality-specific QC", "sample matching", "batch assessment"]
+    conditional: ["MOFA/MOFA2", "DIABLO/mixOmics", "cross-omics correlation", "network modules"]
+
+claim_boundary_policy:
+  exploratory: "Use candidate, associated with, consistent with, supports the possibility."
+  validation_required: ["causality", "mechanism proven", "clinical biomarker", "diagnostic classifier", "spatial niche validated"]
+  forbidden_without_direct_evidence: ["prove", "establish", "clinically ready", "definitive", "causes"]

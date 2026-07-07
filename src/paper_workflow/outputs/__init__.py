@@ -7,6 +7,7 @@ from paper_workflow.outputs.stage_result import (
     ExecutionMode,
     RESULT_SCHEMA_VERSION,
 )
+from paper_workflow.outputs.result_run_manager import ResultRunManager, RunEvaluation
 
 __all__ = [
     "StageResult",
@@ -14,4 +15,6 @@ __all__ = [
     "StageStatus",
     "ExecutionMode",
     "RESULT_SCHEMA_VERSION",
+    "ResultRunManager",
+    "RunEvaluation",
 ]

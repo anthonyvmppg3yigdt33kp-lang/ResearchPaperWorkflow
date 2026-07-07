@@ -1,0 +1,39 @@
+schema_version: "1.0.0"
+purpose: "Prevent duplicate result folders and make current results discoverable."
+
+required_layout:
+  run_root: "results/runs/<run_id>/"
+  current_run_file: "results/current_run.yaml"
+  current_pointer: "results/current/"
+
+run_id_policy:
+  format: "<project_or_analysis>_<YYYYMMDD>_v<N>"
+  require_manifest_before_outputs: true
+  require_unique_run_id: true
+  prohibit_timestamp_only_names: true
+
+write_rules:
+  new_analysis_outputs: "Write only under results/runs/<run_id>/ unless a project-specific legacy root is explicitly approved."
+  updated_current: "Update results/current_run.yaml after successful QA or approved pointer change."
+  legacy_results: "Do not move or delete in the same pass that creates pointers. Inventory first, migrate after user approval."
+  figures: "Figures must have figure_source_map entries before being considered PPT/manuscript ready."
+  tables: "Tables must have table_source_map entries before being considered manuscript ready."
+
+current_run_schema:
+  paper_id: ""
+  active_run_id: ""
+  active_run_path: ""
+  status: "exploratory|prepared|qa_passed|stage_completed|stale"
+  workflow_truth: ""
+  updated_at: ""
+  source_manifest: ""
+  supporting_runs: []
+  previous_current: ""
+  user_approved: false
+  notes: ""
+
+forbidden_actions:
+  - "Creating another sibling folder under results/ for small revisions."
+  - "Calling the newest timestamp folder current without updating current_run.yaml."
+  - "Deleting duplicate result folders without an archive plan and user approval."
+  - "Copying large raw matrices into result runs."

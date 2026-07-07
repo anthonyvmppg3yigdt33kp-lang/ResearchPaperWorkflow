@@ -1,0 +1,172 @@
+schema_version: "1.0.0"
+purpose: "Curated capability registry for analysis agents. Entries are references or dependency targets unless explicitly vendored after provenance review."
+
+ingestion_policy:
+  default_strategy: "dependency_or_adapter_first"
+  require_license_review_before_vendoring: true
+  forbid_dataset_mirroring: true
+  forbid_large_binary_mirroring: true
+  require_retained_file_manifest_for_snapshots: true
+  require_commit_or_release_pin_for_snapshots: true
+
+capabilities:
+  - id: scanpy
+    source: "https://github.com/scverse/scanpy"
+    area: "single_cell"
+    use_class: "dependency_adapter"
+    language: "Python"
+    stars_observed: 2506
+    capability_tags: ["single-cell", "scanpy", "qc", "clustering", "umap", "differential-expression"]
+    initial_decision: "Declare dependency and provide workflow adapter; do not vendor source."
+    local_status: "declared_optional_dependency"
+
+  - id: anndata
+    source: "https://github.com/scverse/anndata"
+    area: "single_cell"
+    use_class: "dependency_adapter"
+    language: "Python"
+    stars_observed: 756
+    capability_tags: ["anndata", "h5ad", "single-cell-data-model"]
+    initial_decision: "Use as Python data model dependency."
+    local_status: "declared_optional_dependency"
+
+  - id: seurat
+    source: "https://github.com/satijalab/seurat"
+    area: "single_cell"
+    use_class: "r_setup_dependency"
+    language: "R"
+    stars_observed: 2764
+    capability_tags: ["single-cell", "seurat", "rds", "integration", "visualization"]
+    initial_decision: "Use through R setup or renv.lock; do not vendor source."
+    local_status: "setup_contract_required"
+
+  - id: squidpy
+    source: "https://github.com/scverse/squidpy"
+    area: "spatial"
+    use_class: "dependency_adapter"
+    language: "Python"
+    stars_observed: 581
+    capability_tags: ["spatial-transcriptomics", "neighborhood", "spatial-graphs", "scanpy"]
+    initial_decision: "Declare dependency and provide adapter only when spatial data exist."
+    local_status: "declared_optional_dependency"
+
+  - id: scvi-tools
+    source: "https://github.com/scverse/scvi-tools"
+    area: "single_cell_ai"
+    use_class: "optional_dependency_adapter"
+    language: "Python"
+    stars_observed: 1654
+    capability_tags: ["single-cell", "deep-generative-model", "batch-correction", "spatial-omics"]
+    initial_decision: "Optional advanced adapter; require setup gate and claim-boundary audit."
+    local_status: "candidate"
+
+  - id: celltypist
+    source: "https://github.com/Teichlab/celltypist"
+    area: "single_cell_annotation"
+    use_class: "optional_dependency_adapter"
+    language: "Python"
+    stars_observed: 491
+    capability_tags: ["cell-type-annotation", "single-cell", "classifier"]
+    initial_decision: "Optional annotation adapter; require model/source provenance."
+    local_status: "candidate"
+
+  - id: pyscenic
+    source: "https://github.com/aertslab/pySCENIC"
+    area: "grn"
+    use_class: "optional_dependency_adapter"
+    language: "Python"
+    stars_observed: 622
+    capability_tags: ["grn", "regulon", "single-cell", "transcription-factor"]
+    initial_decision: "Use only when GRN evidence is appropriate; no causal language without validation."
+    local_status: "candidate"
+
+  - id: mixomics
+    source: "https://github.com/mixOmicsTeam/mixOmics"
+    area: "multi_omics"
+    use_class: "r_setup_dependency"
+    language: "R"
+    stars_observed: 256
+    capability_tags: ["multi-omics", "DIABLO", "PLS-DA", "integration"]
+    initial_decision: "Use through R setup or renv.lock; adapter should preserve sample-matching evidence."
+    local_status: "setup_contract_required"
+
+  - id: movics
+    source: "https://github.com/xlucpu/MOVICS"
+    area: "multi_omics_cancer"
+    use_class: "reference_adapter"
+    language: "R"
+    stars_observed: 147
+    capability_tags: ["multi-omics", "cancer-subtyping", "visualization"]
+    initial_decision: "Reference for cancer subtype workflows; vendoring requires license/provenance review."
+    local_status: "candidate"
+
+  - id: decoupler
+    source: "https://github.com/scverse/decoupler"
+    area: "pathway_enrichment"
+    use_class: "dependency_adapter"
+    language: "Python"
+    stars_observed: 272
+    capability_tags: ["enrichment", "pathway", "omics", "activity-inference"]
+    initial_decision: "Declare dependency for Python enrichment adapters."
+    local_status: "declared_optional_dependency"
+
+  - id: clusterProfiler
+    source: "https://github.com/YuLab-SMU/clusterProfiler"
+    area: "pathway_enrichment"
+    use_class: "r_setup_dependency"
+    language: "R"
+    stars_observed: 1212
+    capability_tags: ["GO", "KEGG", "GSEA", "enrichment", "R"]
+    initial_decision: "Use through R setup; do not download databases during execution mode."
+    local_status: "setup_contract_required"
+
+  - id: mzmine
+    source: "https://github.com/mzmine/mzmine"
+    area: "metabolomics"
+    use_class: "external_tool"
+    language: "Java"
+    stars_observed: 286
+    capability_tags: ["metabolomics", "LC-MS", "feature-detection", "mzmine"]
+    initial_decision: "Treat as external setup tool; workflow records commands/manifests only."
+    local_status: "candidate"
+
+  - id: xcms
+    source: "https://bioconductor.org/packages/xcms"
+    area: "metabolomics"
+    use_class: "r_setup_dependency"
+    language: "R"
+    stars_observed: null
+    capability_tags: ["metabolomics", "LC-MS", "Bioconductor", "xcms"]
+    initial_decision: "Use Bioconductor package through setup phase; avoid low-quality script mirroring."
+    local_status: "setup_contract_required"
+
+  - id: twosamplemr
+    source: "https://github.com/MRCIEU/TwoSampleMR"
+    area: "mendelian_randomization"
+    use_class: "r_setup_dependency"
+    language: "R"
+    stars_observed: 551
+    capability_tags: ["MR", "GWAS", "IEU", "causal-inference"]
+    initial_decision: "Use through R setup; require instrument, harmonization, pleiotropy, and sensitivity reports."
+    local_status: "setup_contract_required"
+
+  - id: ieugwasr
+    source: "https://github.com/MRCIEU/ieugwasr"
+    area: "mendelian_randomization"
+    use_class: "r_setup_dependency"
+    language: "R"
+    stars_observed: 109
+    capability_tags: ["GWAS", "IEU", "API", "MR"]
+    initial_decision: "Use only after API/data-access setup is declared."
+    local_status: "setup_contract_required"
+
+  - id: genomic_agent_skills_index
+    source: "https://github.com/GoekeLab/awesome-genomic-skills"
+    area: "agent_skills"
+    use_class: "reference_index"
+    language: "mixed"
+    stars_observed: 64
+    capability_tags: ["agent-skills", "bioinformatics", "MCP", "benchmarks"]
+    initial_decision: "Use as discovery index only; do not import blindly."
+    local_status: "reference_only"
+

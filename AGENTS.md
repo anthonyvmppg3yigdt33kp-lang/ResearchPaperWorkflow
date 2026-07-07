@@ -1,16 +1,15 @@
-# AGENTS.md - ResearchPaperWorkflow v4.3
+# AGENTS.md -- ResearchPaperWorkflow lightweight entry
 
-This file is read by AI assistants working in the repository. The current
-system is the V4.3 truth-layer workflow: 4 logical layers, a 20-stage pipeline,
-AI harness operation for Claude/Codex, explicit human checkpoints, and
-fail-closed quality gates.
+This file is loaded at session start. Keep it short. Detailed agent maps,
+quality gates, case studies, and long skill inventories are read on demand from
+`docs/`, `config/`, `.claude/`, and `.agents/skills/`.
 
 ## Project Identity
 
-ResearchPaperWorkflow is a deterministic, auditable, multi-agent research paper
-workflow for bioinformatics and clinical manuscripts. It converts research work
-from ad-hoc scripting and chat-based drafting into stage results, required
-artifacts, ledgers, checkpoints, and validation reports.
+ResearchPaperWorkflow is an auditable research-paper workflow for biomedical,
+bioinformatics, and clinical manuscripts. The user is the final scientific
+decision maker. Never invent data, statistics, cohorts, citations, clinical
+facts, mechanisms, or approvals.
 
 Current invariant:
 
@@ -18,136 +17,90 @@ Current invariant:
 completed = real execution + verified outputs + concrete gate results + checkpoint consistency
 ```
 
-The user is the final scientific decision maker. The workflow must never invent
-data, results, clinical facts, references, or approvals.
+## Operating Modes
 
-## Required Reading
+Choose one mode before doing substantial work.
 
-Before major work, read:
+| Mode | Use When | Allowed Inputs | Forbidden Actions | User Approval |
+|---|---|---|---|---|
+| `exploration_mode` | Locate code, files, project state, or evidence. | `AGENTS.md`, `README.md`, small config files, file names, manifests, ledgers. | Editing, running analyses, creating result directories. | No, unless scope is unclear. |
+| `analysis_design_mode` | Plan bioinformatics/statistical analyses before execution. | `brief/PROJECT_BRIEF.yaml`, `data/data_inventory.yaml`, `results/current_run.yaml`, prior manifests. | Running R/Python analysis, downloading data, installing packages. | Yes before execution. |
+| `execution_mode` | Run an approved, bounded command or patch owned files. | Approved design, owned scripts, manifests, small configs. | Unapproved raw-data changes, ad hoc result folders, package installs. | Yes unless already explicit. |
+| `closeout_audit_mode` | Submission readiness, integrity gates, final QA. | Passport, ledgers, manuscript, figure maps, citation records. | Treating exploratory outputs as completion. | Yes for full gates. |
+| `ppt_briefing_mode` | Stage summary, slide deck, journal club, progress report. | `brief/PROJECT_BRIEF.yaml`, `brief/SLIDE_BRIEF.md`, `brief/FIGURE_STORYLINE.md`, `results/current_run.yaml`, `results/figure_source_map.yaml`. | Reading raw matrices by default, recomputing figures, broad audits. | No for read-only briefing. |
 
-- `README.md`
-- `ARCHITECTURE.md`
-- `USER_GUIDE.md`
-- `docs/OPERATION_GUIDE_ZH.md`
-- `workflow_contract.yaml`
-- `config/default_config.yaml`
+## Minimal Reading
 
-For a paper project, also inspect:
+Default read set:
 
+- `AGENTS.md`
+- `brief/PROJECT_BRIEF.yaml` if present
+- `results/current_run.yaml` if present
+- the specific files named by the user
+
+Read on demand:
+
+- `README.md`, `ARCHITECTURE.md`, `USER_GUIDE.md`, `docs/*.md`
+- `docs/CODEX_COLLABORATION_SYSTEM.md` for human-Codex collaboration design,
+  orchestration patterns, system-prompt proposals, and ratchet improvements
+- `config/default_config.yaml`, `workflow_contract.yaml`
 - `papers/<paper_id>/project_passport.yaml`
-- `papers/<paper_id>/stage_results/`
-- `papers/<paper_id>/artifact_ledger.jsonl`
-- `papers/<paper_id>/checkpoint_ledger.jsonl`
-- `papers/<paper_id>/integrity_ledger.jsonl`
-- `papers/<paper_id>/workflow_state/pending_invocations/`
+- ledgers and `stage_results/`
+- `.claude/SKILL_REGISTRY.md`
 
-## Core Rules
+Do not load long docs, all ledgers, all stage results, or entire result folders
+unless the selected mode requires them.
 
-1. Do not modify raw data or final results without explicit confirmation.
-2. Do not fabricate references, statistics, cohorts, datasets, or validation.
-3. Do not treat cells, spots, features, or images as independent patients.
-4. Distinguish observation, association, interpretation, hypothesis, and
-   experimentally validated conclusion.
-5. Do not turn correlation into causation.
-6. All manuscript claims must bind to a figure, table, result artifact, or
-   verified citation.
-7. Methods text must match actual code, parameters, versions, and run manifests.
-8. Use relative project paths in generated artifacts.
-9. Preserve human checkpoints as ledgered decisions.
-10. Never mark `template`, `pending_harness`, or `needs_input` as completed.
-11. Run or recommend `validate-contract` before production execution changes.
-12. Run or recommend `validate-workflow` before submission readiness claims.
+## Hard Rules
 
-## Four Layers
+- Do not modify raw data, final results, or user-authored drafts without
+  explicit confirmation.
+- Do not create a new result directory when updating an existing run would be
+  more correct. Use `results/runs/<run_id>/`, `results/current_run.yaml`, and a
+  `results/current` pointer.
+- Every generated figure or table must have source data, script, method,
+  statistical unit, and interpretation recorded in a source map or manifest.
+- Distinguish observed result, statistical association, biological
+  interpretation, mechanistic hypothesis, and experimentally validated
+  conclusion.
+- Do not treat cells, spots, features, images, or reads as independent patients
+  when the correct unit is sample, donor, or patient.
+- Methods text must match actual code, parameters, software versions, and run
+  manifests.
+- Do not treat `template`, `pending_harness`, or `needs_input` as completed.
+- Run or recommend `validate-contract --strict` before production execution
+  changes.
+- Run or recommend `validate-workflow --strict` before submission readiness
+  claims.
+- Run full validation only in `closeout_audit_mode` or when explicitly asked.
+- If `fast-context` is unavailable, say so and use `rg` plus direct reads.
 
-| Layer | Responsibility |
-|---|---|
-| Strategy | Topic, journal fit, feasibility, hypotheses, SAP context. |
-| Decision | Next-stage selection, dependency control, checkpoint blockers, stale routing. |
-| Execution | Agent and skill routing, artifact generation, pending harness records. |
-| Supervision | Passport, artifacts, hashes, checkpoints, integrity events, validation. |
+## Skill Routing
 
-## 20-Stage Pipeline
+Prefer repository skills under `.agents/skills/<skill>/SKILL.md` for Codex.
+Legacy Claude skills under `.claude/skills/*.md` are reference material only
+unless mirrored or explicitly requested.
 
-1. `select_topic`
-2. `target_journal`
-3. `literature_search`
-4. `formulate_hypotheses`
-5. `design_analysis_plan`
-6. `data_audit`
-7. `figure_planning`
-8. `run_analysis`
-9. `verify_methods`
-10. `write_methods`
-11. `write_results`
-12. `write_introduction`
-13. `write_discussion`
-14. `assemble_manuscript`
-15. `aigc_humanizer_review`
-16. `integrity_check`
-17. `internal_review`
-18. `apply_revision`
-19. `re_review`
-20. `finalize`
+High-value skills:
 
-## Agent Routing
+- `codex-collaboration-orchestrator`
+- `workflow-light-mode`
+- `bioinformatics-analysis-design`
+- `single-cell-analysis`
+- `spatial-transcriptomics-analysis`
+- `multi-omics-analysis`
+- `figure-storyline-planning`
+- `research-ppt-briefing`
+- `result-run-management`
+- `codex-self-audit`
 
-| Agent | Primary responsibility |
-|---|---|
-| `research_strategist` | Research direction, journal fit, feasibility, hypotheses. |
-| `literature_reviewer` | Literature search, BibTeX, citation evidence. |
-| `statistician` | SAP, endpoint definition, independence and statistical design. |
-| `data_auditor` | Data inventory, quality, availability, statistical unit. |
-| `figure_planner` | Figure architecture and evidence-to-panel mapping. |
-| `analysis_executor` | Computational analysis outputs and result manifests. |
-| `pipeline_engineer` | Reproducibility, method verification, environment evidence. |
-| `report_writer` | Manuscript sections, assembly, and revision application. |
-| `aigc_humanizer_reviewer` | Responsible AI-text hygiene and conservative revision plan. |
-| `integrity_checker` | Quality gates, claim-evidence checks, final package checks. |
-| `team_orchestrator` | Internal review, re-review, multi-agent coordination. |
-| `code_librarian` | Code provenance and reusable analysis inventory. |
-| `multi_omics_integrator` | Multi-omics analysis support. |
+## Closeout Format
 
-## AI Harness Use
+End substantive work with:
 
-For ordinary users, prefer natural-language operation through Codex or Claude.
-The model should translate the request to the AI harness and report:
-
-- `paper_id`;
-- current pipeline state;
-- stage changed;
-- artifacts created or missing;
-- gate pass/fail status;
-- checkpoint requirement;
-- pending harness records;
-- stale or drifted artifacts;
-- next safest action.
-
-## Quality Gate Policy
-
-Critical and high gates are fail-closed. Missing gate results are not passes.
-
-High-risk biomedical gates include:
-
-- statistical analysis plan exists;
-- endpoint definition complete;
-- patient-level independence;
-- pseudoreplication check;
-- methods parameters complete;
-- claim-artifact binding;
-- statistics reported;
-- results no overinterpretation;
-- BibTeX citation existence;
-- data availability statement;
-- code availability statement;
-- AIGC artifact scan.
-
-## Closeout Standard
-
-Every substantial agent session should end with:
-
+- mode used;
 - files changed;
-- commands or validations run;
-- remaining blockers;
-- whether the workflow state is complete, blocked, failed, or stale;
-- next recommended step.
+- commands run;
+- tests or checks run;
+- unresolved risks;
+- next safe action.

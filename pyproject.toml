@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "paper-workflow"
-version = "4.3.0"
+version = "4.4.0"
 description = "Domain-agnostic research paper workflow system for bioinformatics and clinical research"
 readme = "README.md"
 license = {text = "MIT"}
@@ -33,10 +33,25 @@ plotting = [
     "numpy>=1.24",
     "scipy>=1.10",
 ]
-full = [
+bioinformatics = [
     "paper-workflow[plotting]",
+    "anndata>=0.10",
+    "scanpy>=1.10",
+    "squidpy>=1.6",
+    "decoupler>=1.8",
+    "gseapy>=1.1",
+    "gprofiler-official>=1.0",
+]
+singlecell = [
+    "paper-workflow[bioinformatics]",
+]
+full = [
+    "paper-workflow[bioinformatics]",
     "scikit-learn>=1.3",
     "statsmodels>=0.14",
+]
+dev = [
+    "pytest>=8.0",
 ]
 
 [project.scripts]
@@ -44,3 +59,16 @@ paper-workflow = "paper_workflow.cli.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+norecursedirs = [
+    ".git",
+    ".pytest_cache",
+    "__pycache__",
+    "code_library/external_repos",
+    "code_library/external_skill_sources",
+    "papers",
+    "tmp",
+    "output",
+    "outputs",
+]
