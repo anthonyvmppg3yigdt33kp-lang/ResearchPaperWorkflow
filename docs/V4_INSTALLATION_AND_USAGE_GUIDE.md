@@ -330,7 +330,7 @@ python -m pytest -q
 当前 V4 验收结果：
 
 ```text
-42 passed
+88 passed
 ```
 
 Smoke test：

@@ -1,5 +1,20 @@
 version: "1.0.0"
 description: "Truth-layer contract for the 20-stage ResearchPaperWorkflow pipeline."
+mode_routing_policy:
+  resolver: "paper_workflow.routing.mode_resolver"
+  default_fuzzy_mode: exploration_mode
+  default_fuzzy_profile: quick_status
+  preserve_truth_path: "WorkflowAPI -> PaperLoopEngine -> verify_stage"
+journal_timing_policy:
+  explicit_target_journal:
+    allow_early_target_journal: true
+    required_field: target_journal
+  exploratory_project:
+    early_field: candidate_journal_class
+    final_target_journal_required_now: false
+    defer_final_target_journal_to:
+      - evidence_maturation
+      - submission_closeout
 truth_policy:
   completed_requires:
     - "real execution_mode"
@@ -88,6 +103,15 @@ stages:
     executor_mode: real
     required_outputs:
       - results/run_manifest.yaml
+    dynamic_required_outputs:
+      active_run_pointer: results/current_run.yaml
+      run_scoped_outputs:
+        - results/runs/<active_run_id>/run_manifest.yaml
+        - results/runs/<active_run_id>/evaluation_report.yaml
+        - results/runs/<active_run_id>/figure_source_map.yaml
+        - results/runs/<active_run_id>/table_source_map.yaml
+      legacy_fallback_outputs:
+        - results/run_manifest.yaml
     quality_gates: []
     transition_policy:
       on_pass: {action: advance_to, stage: verify_methods}

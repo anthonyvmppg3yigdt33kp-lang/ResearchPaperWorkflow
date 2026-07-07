@@ -88,6 +88,15 @@ Codex classifies every task into one primary mode:
 Mode must be explicit in the first progress update. If the mode is unclear,
 choose `exploration_mode` and narrow the scope.
 
+Repository support:
+
+```powershell
+python -m paper_workflow.cli.main route-task --request "<request>" --json
+```
+
+The route packet includes mode, profile, active/deferred stages, forbidden
+actions, and journal timing policy.
+
 ### Layer 3: Evidence Map
 
 Before scientific writing or manuscript claims, Codex maps:
@@ -295,9 +304,19 @@ Use MCP when the task needs live or authorized external data:
 - PubMed MCP: citation verification and biomedical metadata.
 - node_repl: browser automation, in-app browser, Chrome, JavaScript analysis.
 - browser/chrome/computer-use plugins: UI, website, or desktop-app operations.
-- fast-context MCP: desired for semantic code search, but not currently active
-  in the observed `config.toml`; use `rg` and direct reads until configured.
+- fast-context MCP: desired for semantic code search. If it is not exposed in
+  the current Codex session, run `paper-workflow doctor --json` and use `rg`
+  plus direct reads until configured.
 - GitHub app/tools: repo, issue, PR, release, CI, review workflows.
+
+Repository tool check:
+
+```powershell
+python -m paper_workflow.cli.main doctor --json
+```
+
+`doctor` verifies bundled skill sources, required `.agents/skills` mirrors,
+configured `.claude/agents`, and search/tool fallback status.
 
 ### Subagents
 

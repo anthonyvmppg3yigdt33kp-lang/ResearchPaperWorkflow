@@ -1,9 +1,10 @@
-# Research Paper Workflow Framework v4.4
+# Research Paper Workflow Framework v4.4+
 
 Agent-operated research paper workflow for bioinformatics, clinical research,
-and reproducible manuscript production. V4.4 keeps the V4.3 truth-layer
-architecture and adds clinical research collaboration modes, run-scoped result
-management, bounded analysis execution, code-library routing, and CI preflight.
+and reproducible manuscript production. The current development baseline keeps
+the v4.4.0 truth-layer architecture and adds first-class mode/profile routing,
+tool/skill/agent doctor checks, run-scoped result management, bounded analysis
+execution, code-library routing, and CI preflight.
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -39,6 +40,19 @@ completed = real execution + verified outputs + concrete gate results + checkpoi
   reporting, workflow modes, and curated code-library routing.
 - CI preflight for YAML/config validation, large-file guards, CLI smoke, and
   pytest.
+
+## Current Development Additions
+
+- `route-task` resolves natural-language requests into mode, profile, active
+  stages, deferred stages, forbidden actions, and journal timing policy before
+  execution.
+- `doctor` checks local tools, fast-context fallback state, bundled skills,
+  `.agents/skills` mirrors, and configured `.claude/agents`.
+- Exploratory projects can record `candidate_journal_class` and defer a final
+  `target_journal` until evidence maturation or submission closeout.
+- `workflow_contract.yaml` preserves legacy `results/run_manifest.yaml`
+  compatibility while declaring the `results/current_run.yaml` ->
+  `results/runs/<run_id>/run_manifest.yaml` resolver.
 
 ## Highlights
 
@@ -123,6 +137,8 @@ list-papers
 strategy
 install-skills
 run-aigc-humanizer
+route-task
+doctor
 new-run
 set-current-run
 plan-analysis
@@ -182,6 +198,7 @@ Generated paper projects store recoverable state under `papers/<paper_id>/`:
 - [V4.3 Chinese operation guide](docs/OPERATION_GUIDE_ZH.md)
 - [V4.4 clinical research Codex workflow guide](docs/CLINICAL_RESEARCH_CODEX_WORKFLOW_GUIDE.md)
 - [V4.4 Codex collaboration system](docs/CODEX_COLLABORATION_SYSTEM.md)
+- [Codex mode interaction guide](docs/CODEX_MODE_INTERACTION_GUIDE_ZH.md)
 - [V4.4 optimization master plan](docs/WORKFLOW_OPTIMIZATION_MASTER_PLAN_2026-07-07.md)
 - [Release notes v4.4.0](docs/RELEASE_NOTES_v4.4.0.md)
 - [Next-generation truth-layer guide](docs/NEXT_GEN_V4_TRUTH_LAYER.md)
@@ -207,10 +224,12 @@ python scripts/ci_quality_check.py
 python scripts/ci_cli_smoke.py
 python -m pytest -q
 python -m paper_workflow.cli validate-contract --strict
+python -m paper_workflow.cli doctor --json
 ```
 
-Current v4.4 local preflight: compileall passed, CI quality passed with 0
-issues, CLI smoke passed, and `79 passed` under pytest.
+Current local preflight: compileall passed, CI quality passed with 0 issues,
+CLI smoke passed, `validate-contract --strict` passed, doctor found no missing
+bundled skill sources or configured agent files, and `88 passed` under pytest.
 
 ## License
 

@@ -1,13 +1,13 @@
-# ResearchPaperWorkflow User Guide v4.3
+# ResearchPaperWorkflow User Guide v4.4+
 
-This guide describes how to use ResearchPaperWorkflow v4.3 through Claude,
-Codex, or another tool-using AI model. It intentionally avoids asking ordinary
+This guide describes how to use ResearchPaperWorkflow through Claude, Codex, or
+another tool-using AI model. It intentionally avoids asking ordinary
 research users to run Python commands. The model operates the workflow tools;
 the user describes the research need, supplies evidence, and makes scientific
 decisions at checkpoints.
 
-For the full architecture, see `ARCHITECTURE.md`. For Chinese prompt patterns,
-see `docs/OPERATION_GUIDE_ZH.md`.
+For the full architecture, see `ARCHITECTURE.md`. For mode-based Chinese prompt
+patterns, see `docs/CODEX_MODE_INTERACTION_GUIDE_ZH.md`.
 
 ## What The Workflow Is
 
@@ -60,6 +60,25 @@ Better than:
 
 ```text
 Write me a paper.
+```
+
+For non-trivial Codex work, use this fixed shape:
+
+```text
+Mode:
+Canonical root:
+Goal:
+Allowed inputs:
+Forbidden actions:
+Output:
+Evidence standard:
+Closeout:
+```
+
+If the mode is unclear, ask the model to route first:
+
+```text
+route-task this request first; do not execute if the resolved mode is not execution_mode.
 ```
 
 The workflow performs best when you include:
