@@ -1,5 +1,5 @@
 # =============================================================================
-# Research Paper Workflow v4.3 -- Default Configuration
+# Research Paper Workflow v4.4 -- Default Configuration
 # =============================================================================
 # This file defines the complete pipeline, quality gates, writing standards,
 # research domains, skills dispatching, agent routing, supervision, code library,
@@ -7,14 +7,14 @@
 # academic paper writing workflow.
 # =============================================================================
 
-version: "4.3.0"
+version: "4.4.0"
 
 # =============================================================================
 # 1. PIPELINE STAGES (20 stages)
 # =============================================================================
 pipeline:
-  version: "4.3.0"
-  description: "End-to-end academic research paper writing pipeline -- 20 stages with 44 medical evidence and AIGC text hygiene gates, truth layer, and model-facing AI harness (v4.3)"
+  version: "4.4.0"
+  description: "End-to-end academic research paper writing pipeline -- 20 stages with 44 medical evidence/AIGC gates, truth layer, model-facing AI harness, collaboration modes, and run-scoped results (v4.4)"
   stages:
     # --- STAGE 1: select_topic ---
     - id: select_topic

@@ -1,0 +1,51 @@
+schema_version: "1.0.0"
+purpose: "Stable truth sources for progress summaries, PPTs, and stage reports."
+
+brief_layer:
+  root: "brief/"
+  required_files:
+    - "brief/PROJECT_BRIEF.yaml"
+    - "brief/STAGE_SUMMARY.md"
+    - "brief/SLIDE_BRIEF.md"
+    - "brief/FIGURE_STORYLINE.md"
+
+project_brief_required_fields:
+  - paper_id
+  - project_title
+  - research_question
+  - target_journal
+  - data_types
+  - statistical_unit
+  - current_stage
+  - pipeline_state
+  - approved_decisions
+  - pending_user_decisions
+  - main_hypotheses
+  - analysis_design
+  - figure_storyline
+  - key_results
+  - limitations
+  - next_7_days_tasks
+  - ppt_ready_summary
+
+ppt_read_order:
+  - "brief/PROJECT_BRIEF.yaml"
+  - "brief/SLIDE_BRIEF.md"
+  - "brief/FIGURE_STORYLINE.md"
+  - "results/current_run.yaml"
+  - "results/figure_source_map.yaml"
+  - "manuscript/results.md"
+  - "manuscript/methods.md"
+
+do_not_read_by_default:
+  - "raw data matrices"
+  - "entire results directory"
+  - "all stage_results"
+  - "all ledgers"
+  - "long project logs"
+
+summary_format:
+  sections: ["completed", "in_progress", "blockers", "next_safe_action"]
+  require_evidence_paths: true
+  require_workflow_truth_boundary: true
+  forbid_weak_inference: true

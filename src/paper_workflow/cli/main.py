@@ -11,7 +11,9 @@ import sys
 from pathlib import Path
 
 from paper_workflow.ai_harness import AIWorkflowHarness
+from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
+from paper_workflow.outputs.result_run_manager import ResultRunManager
 from paper_workflow.strategy.research_strategy import ResearchStrategyManager
 from paper_workflow.utils.skill_installer import (
     ensure_skills_available,
@@ -37,6 +39,16 @@ def get_papers_dir(root: Path) -> Path:
 
 def get_api() -> WorkflowAPI:
     return WorkflowAPI(get_root())
+
+
+def get_paper_dir(args, must_exist: bool = True) -> Path:
+    root = get_root()
+    papers_dir = get_papers_dir(root)
+    paper_dir = papers_dir / args.paper
+    if must_exist and not paper_dir.exists():
+        print(f"[ERROR] Paper not found: {args.paper}")
+        sys.exit(1)
+    return paper_dir
 
 
 def cmd_create(args):
@@ -293,6 +305,185 @@ def cmd_ai_harness(args):
         sys.exit(1)
 
 
+def cmd_new_run(args):
+    paper_dir = get_paper_dir(args)
+    manager = ResultRunManager(paper_dir)
+    try:
+        manifest = manager.create_run(
+            run_id=args.run_id,
+            mode=args.mode,
+            status=args.status,
+            notes=args.notes or "",
+            allow_existing=args.allow_existing,
+        )
+        current = None
+        if args.set_current:
+            current = manager.set_current_run(
+                run_id=args.run_id,
+                status=args.status,
+                user_approved=args.user_approved,
+                notes=args.notes or "",
+            )
+    except (ValueError, FileExistsError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+
+    if args.json:
+        print(json.dumps({"run": manifest, "current_run": current}, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Run created: {args.run_id}")
+        print(f"     Path: {manager.run_path(args.run_id)}")
+        if current:
+            print(f"     Current pointer: {manager.current_run_file}")
+
+
+def cmd_set_current_run(args):
+    paper_dir = get_paper_dir(args)
+    manager = ResultRunManager(paper_dir)
+    try:
+        current = manager.set_current_run(
+            run_id=args.run_id,
+            status=args.status,
+            user_approved=args.user_approved,
+            notes=args.notes or "",
+        )
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+
+    if args.json:
+        print(json.dumps(current, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Current run set: {args.run_id}")
+        print(f"     Status: {current['status']}")
+        print(f"     Pointer: {manager.current_run_file}")
+
+
+def cmd_brief_status(args):
+    paper_dir = get_paper_dir(args)
+    manager = ResultRunManager(paper_dir)
+    status = manager.brief_status()
+    if args.json:
+        print(json.dumps(status, indent=2, ensure_ascii=False))
+    else:
+        print(f"Paper: {status['paper_id']}")
+        print(f"State: {status['pipeline_state']}")
+        current = status.get("current_run") or {}
+        print(f"Current run: {current.get('active_run_id', '(none)')}")
+        print(f"Truth source: {status['truth_source']}")
+        if status.get("brief_path"):
+            print(f"Brief: {status['brief_path']}")
+        else:
+            print("Brief: (missing)")
+
+
+def cmd_evaluate_run(args):
+    paper_dir = get_paper_dir(args)
+    manager = ResultRunManager(paper_dir)
+    try:
+        evaluation = manager.evaluate_run(args.run_id, write_report=args.write_report)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+
+    data = evaluation.to_dict()
+    if args.json:
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+    else:
+        print(f"Run: {data['run_id']}")
+        print(f"Status: {data['status']}")
+        print(f"Files: {data['output_file_count']} ({data['output_size_bytes']} bytes)")
+        print(f"Missing required files: {', '.join(data['missing_required_files']) or 'none'}")
+        print(f"Figure source map: {data['has_figure_source_map']}")
+        print(f"Table source map: {data['has_table_source_map']}")
+        if args.write_report:
+            print(f"Report: {manager.run_path(args.run_id) / 'evaluation_report.yaml'}")
+
+
+def cmd_plan_analysis(args):
+    paper_dir = get_paper_dir(args)
+    manager = ResultRunManager(paper_dir)
+    try:
+        if not manager.run_path(args.run_id).exists():
+            manager.create_run(
+                run_id=args.run_id,
+                mode="analysis_design_mode",
+                status="prepared",
+                notes=args.notes or "",
+            )
+        design = manager.write_analysis_design(
+            run_id=args.run_id,
+            goal=args.goal,
+            modality=args.modality,
+            inputs=args.input or [],
+            primary_contrast=args.primary_contrast,
+            group_column=args.group_column,
+            sample_id_column=args.sample_id_column,
+            execution_backend=args.execution_backend,
+        )
+        if args.set_current:
+            manager.set_current_run(
+                run_id=args.run_id,
+                status="prepared",
+                user_approved=False,
+                notes="analysis design prepared; execution not approved",
+            )
+    except (ValueError, FileExistsError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+
+    if args.json:
+        print(json.dumps(design, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Analysis design written: {manager.run_path(args.run_id) / 'analysis_design.yaml'}")
+        print("     Execution status: not_executed")
+        print("     Human checkpoint required before execution.")
+
+
+def cmd_run_analysis(args):
+    paper_dir = get_paper_dir(args)
+    manager = ResultRunManager(paper_dir)
+    try:
+        run_dir = manager.run_path(args.run_id)
+        if not run_dir.exists():
+            raise FileNotFoundError(f"Run does not exist: {run_dir}")
+        design_path = run_dir / "analysis_design.yaml"
+        if not design_path.exists():
+            raise FileNotFoundError(f"Analysis design not found: {design_path}")
+        design = AnalysisDesign.from_file(design_path)
+        if args.approved:
+            design.user_approval = True
+        result = run_analysis_adapter(design, run_dir, execute=args.execute, backend=args.backend)
+        evaluation = manager.evaluate_run(args.run_id, write_report=True)
+        if args.set_current:
+            manager.set_current_run(
+                run_id=args.run_id,
+                status="prepared" if not args.execute else "exploratory",
+                user_approved=args.approved,
+                notes=f"run-analysis adapter status: {result.status}",
+            )
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+
+    payload = {"adapter_result": result.to_dict(), "evaluation": evaluation.to_dict()}
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        print(f"Run: {args.run_id}")
+        print(f"Adapter: {result.adapter}")
+        print(f"Status: {result.status}")
+        print(f"Artifacts: {len(result.artifacts)}")
+        print(f"Warnings: {len(result.warnings)}")
+        print(f"Errors: {len(result.errors)}")
+        print(f"Evaluation: {evaluation.status}")
+        print(f"Report: {manager.run_path(args.run_id) / 'evaluation_report.yaml'}")
+        if result.errors:
+            print("Blocked/errors:")
+            for err in result.errors:
+                print(f"  - {err}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Paper Workflow CLI")
     sub = parser.add_subparsers(dest="command")
@@ -347,6 +538,65 @@ def main():
     p = sub.add_parser("run-aigc-humanizer")
     p.add_argument("--paper", required=True)
 
+    p = sub.add_parser("new-run")
+    p.add_argument("--paper", required=True)
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--mode", default="analysis_design_mode",
+                   choices=["exploration_mode", "analysis_design_mode", "execution_mode",
+                            "closeout_audit_mode", "ppt_briefing_mode", "retrospective_mode"])
+    p.add_argument("--status", default="prepared",
+                   choices=["exploratory", "prepared", "qa_passed", "stage_completed", "stale"])
+    p.add_argument("--notes")
+    p.add_argument("--allow-existing", action="store_true")
+    p.add_argument("--set-current", action="store_true")
+    p.add_argument("--user-approved", action="store_true")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("set-current-run")
+    p.add_argument("--paper", required=True)
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--status", default="prepared",
+                   choices=["exploratory", "prepared", "qa_passed", "stage_completed", "stale"])
+    p.add_argument("--notes")
+    p.add_argument("--user-approved", action="store_true")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("brief-status")
+    p.add_argument("--paper", required=True)
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("evaluate-run")
+    p.add_argument("--paper", required=True)
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--write-report", action="store_true")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("plan-analysis")
+    p.add_argument("--paper", required=True)
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--goal", required=True)
+    p.add_argument("--modality", default="general",
+                   choices=["general", "bulk_rnaseq", "scrna", "spatial",
+                            "multiomics", "metabolomics", "mr", "ml_biomarker"])
+    p.add_argument("--input", action="append")
+    p.add_argument("--primary-contrast", default="requires_human_input")
+    p.add_argument("--group-column", default="condition")
+    p.add_argument("--sample-id-column", default="sample_id")
+    p.add_argument("--execution-backend", default="dry_run",
+                   choices=["dry_run", "python_builtin_pilot"])
+    p.add_argument("--notes")
+    p.add_argument("--set-current", action="store_true")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("run-analysis")
+    p.add_argument("--paper", required=True)
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--execute", action="store_true")
+    p.add_argument("--approved", action="store_true")
+    p.add_argument("--backend", choices=["dry_run", "python_builtin_pilot"])
+    p.add_argument("--set-current", action="store_true")
+    p.add_argument("--json", action="store_true")
+
     p = sub.add_parser(
         "ai",
         aliases=["ai-harness"],
@@ -387,6 +637,9 @@ def main():
      "complete-harness-invocation": cmd_complete_harness_invocation,
      "list-papers": cmd_list, "strategy": cmd_strategy,
      "install-skills": cmd_install_skills, "run-aigc-humanizer": cmd_aigc_humanizer,
+     "new-run": cmd_new_run, "set-current-run": cmd_set_current_run,
+     "brief-status": cmd_brief_status, "evaluate-run": cmd_evaluate_run,
+     "plan-analysis": cmd_plan_analysis, "run-analysis": cmd_run_analysis,
      "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
 
 

@@ -1,0 +1,115 @@
+schema_version: "1.0.0"
+purpose: "Route user tasks to the smallest useful workflow profile instead of activating the full paper loop by default."
+
+modes:
+  exploration_mode:
+    intent: "Read-only project orientation, source lookup, and evidence mapping."
+    default_writes: []
+    forbidden_actions:
+      - "run analysis code"
+      - "install packages"
+      - "download databases"
+      - "modify manuscript or results"
+    human_checkpoint_required: false
+
+  analysis_design_mode:
+    intent: "Design statistical or bioinformatics analysis before execution."
+    default_writes:
+      - "results/runs/<run_id>/analysis_design.yaml"
+      - "results/runs/<run_id>/intent_packet.md"
+    forbidden_actions:
+      - "run analysis code"
+      - "install packages"
+      - "download databases"
+      - "promote workflow stages"
+    human_checkpoint_required: true
+
+  execution_mode:
+    intent: "Run an approved bounded command or write owned workflow outputs."
+    default_writes:
+      - "results/runs/<run_id>/"
+      - "results/current_run.yaml"
+    forbidden_actions:
+      - "mutate raw data"
+      - "install packages outside setup phase"
+      - "write outputs outside results/runs/<run_id>/"
+      - "overwrite old runs"
+    human_checkpoint_required: true
+
+  closeout_audit_mode:
+    intent: "Run final gates before checkpoint promotion, manuscript submission, or release."
+    default_writes:
+      - "results/runs/<run_id>/closeout_audit.md"
+    forbidden_actions:
+      - "create new analysis results"
+      - "rewrite manuscript claims without source map"
+      - "promote stale stages without explicit evidence"
+    human_checkpoint_required: true
+
+  ppt_briefing_mode:
+    intent: "Prepare a briefing or slide source map from confirmed outputs."
+    default_writes:
+      - "brief/SLIDE_BRIEF.md"
+      - "brief/FIGURE_STORYLINE.md"
+    forbidden_actions:
+      - "guess figure sources"
+      - "run new analysis"
+      - "use unmapped figures as final evidence"
+    human_checkpoint_required: true
+
+  retrospective_mode:
+    intent: "Turn repeated friction into durable rules, skills, contracts, or prompt macros."
+    default_writes:
+      - "docs/"
+      - "config/"
+      - ".agents/skills/"
+    forbidden_actions:
+      - "rewrite workflow truth"
+      - "edit memory unless explicitly requested"
+    human_checkpoint_required: false
+
+profiles:
+  quick_status:
+    active_layers: ["supervision", "brief"]
+    active_stages: []
+    deferred_stages: ["run_analysis", "target_journal", "write_results"]
+    output_contract: "chat_or_brief_only"
+
+  exploratory_omics:
+    active_layers: ["strategy_light", "execution", "supervision"]
+    active_stages: ["design_analysis_plan", "data_audit", "run_analysis", "verify_methods"]
+    deferred_stages: ["target_journal", "assemble_manuscript", "finalize"]
+    output_contract: "results/runs/<run_id>/"
+
+  analysis_design:
+    active_layers: ["strategy", "decision"]
+    active_stages: ["formulate_hypotheses", "design_analysis_plan"]
+    deferred_stages: ["run_analysis", "write_results", "finalize"]
+    output_contract: "results/runs/<run_id>/analysis_design.yaml"
+
+  evidence_maturation:
+    active_layers: ["execution", "supervision", "writing_light"]
+    active_stages: ["verify_methods", "write_methods", "write_results"]
+    deferred_stages: ["finalize"]
+    output_contract: "source_maps_required"
+
+  manuscript_build:
+    active_layers: ["writing", "review"]
+    active_stages: ["write_methods", "write_results", "write_introduction", "write_discussion", "assemble_manuscript", "aigc_humanizer_review"]
+    deferred_stages: ["run_analysis"]
+    output_contract: "manuscript_with_evidence_map"
+
+  submission_closeout:
+    active_layers: ["supervision", "review", "finalize"]
+    active_stages: ["integrity_check", "internal_review", "finalize"]
+    deferred_stages: ["run_analysis"]
+    output_contract: "closeout_audit_required"
+
+default_route:
+  fuzzy_request: "exploration_mode"
+  new_analysis: "analysis_design_mode"
+  approved_analysis: "execution_mode"
+  progress_report: "quick_status"
+  slide_request: "ppt_briefing_mode"
+  manuscript_submission: "closeout_audit_mode"
+

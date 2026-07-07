@@ -15,6 +15,9 @@ from typing import Any, Callable, Optional
 
 import yaml
 
+from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
+from paper_workflow.outputs.result_run_manager import ResultRunManager
+
 # Try to import StageResult; fall back to dict if unavailable
 try:
     from paper_workflow.outputs.stage_result import (
@@ -1017,22 +1020,63 @@ class AgentDispatcher:
             results_dir = paper_dir / "results"
             results_dir.mkdir(parents=True, exist_ok=True)
 
-            manifest_path = results_dir / "run_manifest.yaml"
-            if not manifest_path.exists():
-                manifest_path.write_text(
-                    yaml.dump({
-                        "executed_at": datetime.now().isoformat(),
-                        "stages": {},
-                        "code_modules_used": [],
-                        "outputs_generated": [],
-                    }, allow_unicode=True),
-                    encoding="utf-8"
+            manager = ResultRunManager(paper_dir)
+            current_run = manager.get_current_run()
+            run_id = current_run.get("active_run_id", "")
+            used_run_scoped_adapter = False
+
+            if run_id:
+                run_dir = manager.run_path(run_id)
+                design_path = run_dir / "analysis_design.yaml"
+                if design_path.exists():
+                    design = AnalysisDesign.from_file(design_path)
+                    adapter_result = run_analysis_adapter(design, run_dir, execute=False)
+                    evaluation = manager.evaluate_run(run_id, write_report=True)
+                    artifacts.extend(adapter_result.artifacts)
+                    artifacts.append({
+                        "path": f"results/runs/{run_id}/evaluation_report.yaml",
+                        "mime_type": "application/yaml",
+                        "source_stage": stage_name,
+                    })
+                    metrics.update(adapter_result.metrics)
+                    metrics["run_id"] = run_id
+                    metrics["adapter_status"] = adapter_result.status
+                    metrics["run_evaluation_status"] = evaluation.status
+                    warnings.extend(adapter_result.warnings)
+                    errors = adapter_result.errors
+                    used_run_scoped_adapter = True
+                    agent_log.append(
+                        f"Run-scoped analysis adapter used for {run_id}: {adapter_result.adapter}"
+                    )
+                    if errors:
+                        warnings.extend(errors)
+                else:
+                    warnings.append(
+                        f"Current run {run_id} has no analysis_design.yaml; run plan-analysis first"
+                    )
+
+            if not used_run_scoped_adapter:
+                manifest_path = results_dir / "run_manifest.yaml"
+                if not manifest_path.exists():
+                    manifest_path.write_text(
+                        yaml.dump({
+                            "executed_at": datetime.now().isoformat(),
+                            "stages": {},
+                            "code_modules_used": [],
+                            "outputs_generated": [],
+                            "status": "legacy_manifest_only",
+                            "warning": "No run-scoped analysis design was available.",
+                        }, allow_unicode=True),
+                        encoding="utf-8"
+                    )
+                artifacts.append({
+                    "path": "results/run_manifest.yaml",
+                    "mime_type": "application/yaml",
+                    "source_stage": stage_name,
+                })
+                warnings.append(
+                    "run_analysis created only the legacy manifest because no current run-scoped design was available"
                 )
-            artifacts.append({
-                "path": "results/run_manifest.yaml",
-                "mime_type": "application/yaml",
-                "source_stage": stage_name,
-            })
 
             # Try to discover and list available code modules
             code_lib = self.project_root / "code_library"
@@ -1047,7 +1091,7 @@ class AgentDispatcher:
             else:
                 warnings.append("code_library/ not found — no analysis code available")
 
-            agent_log.append("Analysis manifest created")
+            agent_log.append("Analysis manifest or run-scoped dry-run package created")
 
         elif stage_name == "verify_methods":
             methods_dir = paper_dir / "methods"
@@ -1250,6 +1294,55 @@ class AgentDispatcher:
         outputs_dir = results_dir / "analysis_outputs"
         results_dir.mkdir(parents=True, exist_ok=True)
         outputs_dir.mkdir(parents=True, exist_ok=True)
+
+        manager = ResultRunManager(paper_dir)
+        current_run = manager.get_current_run()
+        run_id = current_run.get("active_run_id", "")
+        if run_id:
+            run_dir = manager.run_path(run_id)
+            design_path = run_dir / "analysis_design.yaml"
+            if design_path.exists():
+                design = AnalysisDesign.from_file(design_path)
+                adapter_result = run_analysis_adapter(design, run_dir, execute=False)
+                evaluation = manager.evaluate_run(run_id, write_report=True)
+                artifacts = list(adapter_result.artifacts)
+                artifacts.append({
+                    "path": f"results/runs/{run_id}/evaluation_report.yaml",
+                    "mime_type": "application/yaml",
+                    "source_stage": stage_name,
+                })
+                artifact_paths = [
+                    a.get("path", "") for a in artifacts
+                    if isinstance(a, dict) and a.get("path")
+                ]
+                metrics = dict(adapter_result.metrics)
+                metrics.update({
+                    "run_id": run_id,
+                    "adapter_status": adapter_result.status,
+                    "run_evaluation_status": evaluation.status,
+                    "run_scoped": True,
+                })
+                warnings = list(adapter_result.warnings)
+                if adapter_result.errors:
+                    warnings.extend(adapter_result.errors)
+                agent_log.append(
+                    f"Run-scoped analysis adapter used for {run_id}: {adapter_result.adapter}"
+                )
+                return {
+                    "status": "warning" if adapter_result.errors else "success",
+                    "artifacts": artifacts,
+                    "metrics": metrics,
+                    "warnings": warnings,
+                    "errors": [],
+                    "execution_mode": "pending_harness",
+                    "outputs_verified": False,
+                    "required_outputs": artifact_paths,
+                    "missing_outputs": [],
+                }
+            agent_log.append(
+                f"Current run {run_id} has no analysis_design.yaml; falling back to legacy analysis_outputs harness"
+            )
+
         inventory = self._load_yaml_file(paper_dir / "data" / "data_inventory.yaml")
         figure_plan = self._load_json_file(results_dir / "figure_plan.json")
         analysis_outputs = [

@@ -1,16 +1,16 @@
-# Research Paper Workflow Framework v4.3
+# Research Paper Workflow Framework v4.4
 
 Agent-operated research paper workflow for bioinformatics, clinical research,
-and reproducible manuscript production. V4.3 aligns the documentation with the
-current truth-layer architecture, merges the Chinese Claude/Codex user guides,
-and promotes the latest 20-stage workflow as the canonical design.
+and reproducible manuscript production. V4.4 keeps the V4.3 truth-layer
+architecture and adds clinical research collaboration modes, run-scoped result
+management, bounded analysis execution, code-library routing, and CI preflight.
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-65%20passing-brightgreen.svg)](tests/)
-[![Version](https://img.shields.io/badge/Version-4.3.0-orange.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-CI%20preflight-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-4.4.0-orange.svg)]()
 
-## What V4.3 Is
+## What V4.4 Is
 
 ResearchPaperWorkflow is not a prompt pack that asks an AI to write a paper in
 one pass. It is an auditable workflow kernel where Claude, Codex, or another
@@ -22,6 +22,23 @@ The current invariant is:
 ```text
 completed = real execution + verified outputs + concrete gate results + checkpoint consistency
 ```
+
+## V4.4 Additions
+
+- Lightweight collaboration modes:
+  `exploration_mode`, `analysis_design_mode`, `execution_mode`,
+  `closeout_audit_mode`, `ppt_briefing_mode`, and `retrospective_mode`.
+- Run-scoped output layout under `results/runs/<run_id>/` with
+  `results/current_run.yaml` and `results/current/RUN_POINTER.txt`.
+- Analysis-design-first CLI flow: `new-run`, `set-current-run`,
+  `plan-analysis`, `run-analysis`, `brief-status`, and `evaluate-run`.
+- Built-in bulk RNA-seq pilot backend for workflow smoke execution, source-map
+  generation, QC reports, and preview figures without external bioinformatics
+  package installation.
+- Contract files for result writing, visualization, bioinformatics methods,
+  reporting, workflow modes, and curated code-library routing.
+- CI preflight for YAML/config validation, large-file guards, CLI smoke, and
+  pytest.
 
 ## Highlights
 
@@ -106,6 +123,12 @@ list-papers
 strategy
 install-skills
 run-aigc-humanizer
+new-run
+set-current-run
+plan-analysis
+run-analysis
+brief-status
+evaluate-run
 ```
 
 ## 20-Stage Pipeline
@@ -157,6 +180,10 @@ Generated paper projects store recoverable state under `papers/<paper_id>/`:
 - [V4.3 architecture](ARCHITECTURE.md)
 - [V4.3 user guide](USER_GUIDE.md)
 - [V4.3 Chinese operation guide](docs/OPERATION_GUIDE_ZH.md)
+- [V4.4 clinical research Codex workflow guide](docs/CLINICAL_RESEARCH_CODEX_WORKFLOW_GUIDE.md)
+- [V4.4 Codex collaboration system](docs/CODEX_COLLABORATION_SYSTEM.md)
+- [V4.4 optimization master plan](docs/WORKFLOW_OPTIMIZATION_MASTER_PLAN_2026-07-07.md)
+- [Release notes v4.4.0](docs/RELEASE_NOTES_v4.4.0.md)
 - [Next-generation truth-layer guide](docs/NEXT_GEN_V4_TRUTH_LAYER.md)
 - [Next-generation completion audit](docs/NEXT_GEN_COMPLETION_AUDIT.md)
 - [Release notes v4.3.0](docs/RELEASE_NOTES_v4.3.0.md)
@@ -176,11 +203,14 @@ Recommended maintainer checks:
 
 ```bash
 python -m compileall -q src
+python scripts/ci_quality_check.py
+python scripts/ci_cli_smoke.py
 python -m pytest -q
 python -m paper_workflow.cli validate-contract --strict
 ```
 
-Current next-generation V4 verification baseline: `65 passed`.
+Current v4.4 local preflight: compileall passed, CI quality passed with 0
+issues, CLI smoke passed, and `79 passed` under pytest.
 
 ## License
 
