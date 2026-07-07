@@ -11,7 +11,9 @@ Current implementation paper root:
 
 GitHub repo: `anthonyvmppg3yigdt33kp-lang/ResearchPaperWorkflow`
 
-Active release observed on 2026-07-07: `v4.3.0`, published 2026-06-29.
+Active release observed after the 2026-07-07 update: `v4.4.0`.
+The current implementation batch is not a release batch and must not create a
+new tag until the final documentation/version/release thread is complete.
 
 ## 1. Mode And Scope
 
@@ -559,7 +561,7 @@ data execution yet.
 | Figure polish hides weak evidence | figure source map requires claim boundary and statistical unit |
 | Early journal choice biases analysis | defer final target journal unless user specifies it |
 | Missing R/Python packages cause partial outputs | setup phase or `BLOCKED`, never silent install during execution |
-| fast-context unavailable | configure MCP separately; fallback to `rg` until callable |
+| fast-context unavailable | report through `paper-workflow doctor`; fallback to `rg` until callable |
 | CI unavailable on GitHub | add Actions workflow and verify on PR before release |
 
 ## 9. Immediate Next Safe Action
@@ -587,7 +589,7 @@ Files changed: this master plan only.
 
 Commands run: `git status`, `rg`, `Get-Content`, `gh repo view`,
 `gh workflow list`, `gh release list`, `gh search repos`,
-`agent-reach doctor --json`.
+`paper-workflow doctor --json`.
 
 Current truth source: framework worktree plus IgG4 paper-level
 `project_passport.yaml`; GitHub live metadata from `gh`.

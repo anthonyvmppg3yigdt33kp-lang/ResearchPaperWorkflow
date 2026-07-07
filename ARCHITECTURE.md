@@ -1,8 +1,9 @@
-# ResearchPaperWorkflow Architecture v4.3
+# ResearchPaperWorkflow Architecture v4.4+
 
 ResearchPaperWorkflow is an auditable research-production workflow for
 bioinformatics, clinical, single-cell, spatial, and other evidence-heavy
-manuscript projects. The current design is V4.3. It replaces the older
+manuscript projects. The current design keeps the V4 truth layer and adds
+first-class Codex/Claude routing before execution. It replaces the older
 pre-truth-layer scaffold with a 20-stage truth-layer pipeline where a stage is
 complete only when the required artifacts, gate results, checkpoint state, and
 stage result files agree.
@@ -39,7 +40,8 @@ Completion is rejected when:
 ```mermaid
 flowchart TB
     U["Human researcher\nresearch goal, files, approvals"] --> M["Claude or Codex\nnatural-language operator"]
-    M --> H["AIWorkflowHarness\nintent classification and safe plan"]
+    M --> R["ModeResolver\nmode/profile/stage boundary"]
+    R --> H["AIWorkflowHarness\nintent classification and safe plan"]
     H --> API["WorkflowAPI\nshared service boundary"]
     API --> L["PaperLoopEngine\nobserve decide run verify record repeat"]
     L --> D["AgentDispatcher\nstage to agent to skill routing"]
@@ -79,7 +81,7 @@ bridges decision and execution because it both selects the next stage and
 verifies the result after execution. The verification path remains single and
 auditable.
 
-## V4.3 20-Stage Pipeline
+## 20-Stage Pipeline
 
 ```mermaid
 flowchart LR
@@ -168,6 +170,7 @@ sequenceDiagram
 
     User->>Model: Natural-language research request
     Model->>Harness: Route request with paper context
+    Harness->>Harness: resolve mode/profile before intent execution
     Harness->>Harness: classify intent and build safe plan
     Harness->>API: create/status/run/validate/checkpoint action
     API->>Engine: hydrate state and execute one safe step
@@ -180,7 +183,8 @@ sequenceDiagram
     Model-->>User: concise status, missing inputs, decision request
 ```
 
-Supported AI harness intents include project creation, status, one-step
+Supported AI harness intents include route preview, doctor checks, project
+creation, status, one-step
 pipeline advance, contract validation, workflow validation, checkpoint approval,
 pending harness listing, harness completion, integrity gate runs, AIGC hygiene
 review, failure diagnosis, and paper listing.
@@ -193,6 +197,35 @@ The harness defaults are conservative:
 - require explicit `paper_id` unless exactly one project exists;
 - preserve the normal `WorkflowAPI -> PaperLoopEngine -> verify_stage` path;
 - never promote pending harness work into completed stage truth.
+
+## Mode Resolver And Tool Doctor
+
+`src/paper_workflow/routing/mode_resolver.py` reads
+`config/workflow_modes.yaml` and returns the smallest useful operating profile:
+
+- `exploration_mode`: read-only status, scan, and evidence mapping.
+- `analysis_design_mode`: design statistical or bioinformatics analysis before
+  any execution.
+- `execution_mode`: run only an approved bounded command or write owned
+  outputs.
+- `closeout_audit_mode`: run final gates before submission, release, or stage
+  promotion.
+- `ppt_briefing_mode`: prepare slide/source-map briefs from confirmed outputs.
+- `retrospective_mode`: convert repeated friction into docs, skills,
+  contracts, or prompt macros.
+
+`src/paper_workflow/routing/tool_doctor.py` checks repository-controlled
+capabilities:
+
+- bundled skills listed in `config/required_skills.yaml`;
+- required `.agents/skills/<skill>/SKILL.md` mirrors;
+- configured `agent_routing.agents` against `.claude/agents/*.md`;
+- local command availability for Python, Git, GitHub CLI, `rg`, and
+  fast-context fallback.
+
+fast-context is treated as an external optional MCP capability. If it is not
+callable, `doctor` reports degraded status and uses `rg --line-number`, direct
+file reads, and Python file scans as the fallback path.
 
 ## Agent Cluster
 
@@ -335,7 +368,7 @@ Production readiness is checked at two levels:
 
 ## Design Principle
 
-V4.3 follows a minimal, truth-first design. It does not try to become a fully
+The workflow follows a minimal, truth-first design. It does not try to become a fully
 autonomous paper factory. It first makes the facts hard:
 
 - real artifacts before completion;

@@ -14,6 +14,8 @@ from paper_workflow.ai_harness import AIWorkflowHarness
 from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
 from paper_workflow.outputs.result_run_manager import ResultRunManager
+from paper_workflow.routing.mode_resolver import ModeResolver
+from paper_workflow.routing.tool_doctor import ToolDoctor, format_doctor_report
 from paper_workflow.strategy.research_strategy import ResearchStrategyManager
 from paper_workflow.utils.skill_installer import (
     ensure_skills_available,
@@ -167,6 +169,43 @@ def cmd_validate_contract(args):
     result = get_api().validate_contract()
     print(json.dumps(result, indent=2, ensure_ascii=False))
     if args.strict and not result["valid"]:
+        sys.exit(1)
+
+
+def cmd_route_task(args):
+    resolver = ModeResolver(get_root())
+    try:
+        route = resolver.resolve_route(
+            args.request,
+            explicit_mode=args.mode,
+            explicit_profile=args.profile,
+            paper_id=args.paper,
+            explicit_journal=args.journal,
+        )
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.check_tools:
+        route["doctor"] = ToolDoctor(get_root()).run()
+    if args.json:
+        print(json.dumps(route, indent=2, ensure_ascii=False))
+    else:
+        print(f"Mode: {route['mode']}")
+        print(f"Profile: {route['profile']}")
+        print(f"Active layers: {', '.join(route['active_layers']) or 'none'}")
+        print(f"Active stages: {', '.join(route['active_stages']) or 'none'}")
+        print(f"Deferred stages: {', '.join(route['deferred_stages']) or 'none'}")
+        print(f"Output contract: {route['output_contract'] or 'none'}")
+        print(f"Journal policy: {json.dumps(route['journal_policy'], ensure_ascii=False)}")
+
+
+def cmd_doctor(args):
+    report = ToolDoctor(get_root()).run()
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(format_doctor_report(report))
+    if args.strict and report["status"] == "fail":
         sys.exit(1)
 
 
@@ -511,6 +550,20 @@ def main():
     p = sub.add_parser("validate-contract")
     p.add_argument("--strict", action="store_true")
 
+    p = sub.add_parser("route-task")
+    p.add_argument("--request", required=True)
+    p.add_argument("--mode", choices=["exploration_mode", "analysis_design_mode", "execution_mode",
+                                      "closeout_audit_mode", "ppt_briefing_mode", "retrospective_mode"])
+    p.add_argument("--profile")
+    p.add_argument("--paper")
+    p.add_argument("--journal")
+    p.add_argument("--check-tools", action="store_true")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("doctor")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--strict", action="store_true")
+
     p = sub.add_parser("list-harness-invocations")
     p.add_argument("--paper", required=True)
     p.add_argument("--status")
@@ -622,7 +675,7 @@ def main():
     if args.command is None:
         parser.print_help(); return
 
-    if args.command != "install-skills":
+    if args.command not in {"install-skills", "route-task", "doctor"}:
         try:
             ensure_skills_available(get_root(), auto_install=True, quiet=True)
         except Exception as exc:
@@ -633,6 +686,7 @@ def main():
      "diagnose-gate-failures": cmd_diagnose, "detect-artifact-drift": cmd_drift,
      "sync-artifact-stale": cmd_sync, "validate-workflow": cmd_validate_workflow,
      "validate-contract": cmd_validate_contract,
+     "route-task": cmd_route_task, "doctor": cmd_doctor,
      "list-harness-invocations": cmd_list_harness_invocations,
      "complete-harness-invocation": cmd_complete_harness_invocation,
      "list-papers": cmd_list, "strategy": cmd_strategy,

@@ -18,6 +18,8 @@ from typing import Any, Optional
 import yaml
 
 from paper_workflow.api import WorkflowAPI
+from paper_workflow.routing.mode_resolver import ModeResolver
+from paper_workflow.routing.tool_doctor import ToolDoctor
 
 
 class AIWorkflowHarness:
@@ -38,6 +40,8 @@ class AIWorkflowHarness:
         "diagnose_gate_failures",
         "run_aigc_humanizer",
         "list_papers",
+        "route_task",
+        "doctor",
     }
 
     INTENT_COMMANDS = {
@@ -53,6 +57,8 @@ class AIWorkflowHarness:
         "diagnose_gate_failures": "diagnose-gate-failures",
         "run_aigc_humanizer": "run-aigc-humanizer",
         "list_papers": "list-papers",
+        "route_task": "route-task",
+        "doctor": "doctor",
     }
 
     STAGE_IDS = (
@@ -128,6 +134,7 @@ class AIWorkflowHarness:
         self.project_root = self.api.project_root
         self.config = self._load_config()
         self.harness_config = self.config.get("ai_harness", {}) or {}
+        self.mode_resolver = ModeResolver(self.project_root)
 
     def handle_request(
         self,
@@ -150,7 +157,13 @@ class AIWorkflowHarness:
         request = (request or "").strip()
         paper_id = self._extract_paper_id(request) or paper_id
         resolved_paper = self._resolve_paper_id(paper_id)
+        route = self.mode_resolver.resolve_route(
+            request,
+            paper_id=resolved_paper.get("paper_id") or paper_id,
+            explicit_journal=journal,
+        )
         intent = self.classify_request(request, paper_id=resolved_paper.get("paper_id"))
+        intent = self._apply_route_guard(intent, request=request, route=route, resolved_paper=resolved_paper)
         timeline_weeks = timeline_weeks or self._infer_timeline(request) or 8
         max_stages = (
             max_stages
@@ -172,6 +185,7 @@ class AIWorkflowHarness:
             stage=stage or self._infer_stage(request),
             decision=decision,
             notes=notes,
+            route=route,
         )
 
         payload = {
@@ -180,6 +194,7 @@ class AIWorkflowHarness:
             "project_root": str(self.project_root),
             "request": request,
             "intent": intent,
+            "route": route,
             "paper_resolution": resolved_paper,
             "plan": plan,
             "dry_run": dry_run,
@@ -194,7 +209,8 @@ class AIWorkflowHarness:
             payload["user_facing_reply"] = self._planned_reply(payload)
             return payload
 
-        if intent != "create_project" and not resolved_paper.get("paper_id"):
+        paperless_intents = {"create_project", "list_papers", "validate_contract", "route_task", "doctor"}
+        if intent not in paperless_intents and not resolved_paper.get("paper_id"):
             payload["status"] = "needs_input"
             payload["result"] = {
                 "message": "A paper_id is required, or exactly one existing paper project must be present.",
@@ -222,6 +238,7 @@ class AIWorkflowHarness:
                 stage=stage or self._infer_stage(request),
                 decision=decision,
                 notes=notes,
+                route=route,
             )
             payload["executed"] = True
             payload["status"] = self._result_status(intent, result)
@@ -245,6 +262,11 @@ class AIWorkflowHarness:
     def classify_request(self, request: str, *, paper_id: Optional[str] = None) -> str:
         text = request.lower()
         compact = re.sub(r"\s+", "", request.lower())
+
+        if self._has_any(text, compact, ("route task", "route-task", "resolve mode", "mode/profile", "模式路由", "模式匹配")):
+            return "route_task"
+        if self._has_any(text, compact, ("doctor", "tool check", "fast-context", "fast_context", "skill check", "agent check", "工具不可用", "工具检查")):
+            return "doctor"
 
         if self._has_any(text, compact, ("列出项目", "有哪些项目", "list papers")):
             return "list_papers"
@@ -320,7 +342,12 @@ class AIWorkflowHarness:
         stage: Optional[str],
         decision: str,
         notes: str,
+        route: dict[str, Any],
     ) -> Any:
+        if intent == "route_task":
+            return route
+        if intent == "doctor":
+            return ToolDoctor(self.project_root).run()
         if intent == "create_project":
             with contextlib.redirect_stdout(io.StringIO()):
                 return self.api.create_project(
@@ -410,6 +437,10 @@ class AIWorkflowHarness:
             "run_aigc_humanizer",
         }:
             args.extend(["--paper", kwargs["paper_id"] or "<paper_id>"])
+        elif intent == "route_task":
+            args.extend(["--request", kwargs["request"], "--json"])
+        elif intent == "doctor":
+            args.append("--json")
         elif intent == "complete_harness_invocation":
             args.extend(["--paper", kwargs["paper_id"] or "<paper_id>"])
             args.extend(["--invocation", kwargs["invocation"] or kwargs["stage"] or "<invocation>"])
@@ -424,6 +455,7 @@ class AIWorkflowHarness:
             "intent": intent,
             "equivalent_cli_command": equivalent,
             "model_harness_command": harness,
+            "route": kwargs.get("route") or {},
             "stop_policy": {
                 "max_stages_per_turn": kwargs["max_stages"],
                 "stop_on_failure": kwargs["stop_on_failure"],
@@ -450,6 +482,10 @@ class AIWorkflowHarness:
                 return "blocked"
             if intent == "run_aigc_humanizer" and not result.get("success", False):
                 return "blocked"
+            if intent == "doctor" and result.get("status") == "fail":
+                return "failed"
+            if intent == "doctor" and result.get("status") == "degraded":
+                return "ok"
         return "ok"
 
     def _next_actions(self, intent: str, result: Any) -> list[str]:
@@ -472,10 +508,15 @@ class AIWorkflowHarness:
             return ["Fix reported issues before running pipeline."] if not result.get("valid") else ["Proceed with one workflow step."]
         if intent == "list_harness_invocations":
             return ["Complete the pending external task, then run complete-harness-invocation and rerun pipeline."]
+        if intent == "route_task":
+            return ["Use the returned mode/profile packet before selecting any workflow command."]
+        if intent == "doctor":
+            return ["Repair required failures first; use listed fallbacks for degraded optional tools."]
         return ["Report the result to the user and ask for approval if a checkpoint is required."]
 
     def _next_actions_for_plan(self, intent: str, resolved_paper: dict[str, Any]) -> list[str]:
-        if intent != "create_project" and not resolved_paper.get("paper_id"):
+        paperless_intents = {"create_project", "list_papers", "validate_contract", "route_task", "doctor"}
+        if intent not in paperless_intents and not resolved_paper.get("paper_id"):
             return ["Ask the user for the paper_id or create a new project first."]
         return ["Execute the planned harness command if the user confirms the intent."]
 
@@ -494,6 +535,23 @@ class AIWorkflowHarness:
 
     def _planned_reply(self, payload: dict[str, Any]) -> str:
         return f"已生成执行计划，intent={payload['intent']}，尚未运行工作流。"
+
+    def _apply_route_guard(
+        self,
+        intent: str,
+        *,
+        request: str,
+        route: dict[str, Any],
+        resolved_paper: dict[str, Any],
+    ) -> str:
+        """Prevent fuzzy exploration requests from becoming pipeline actions."""
+        if route.get("mode") != "exploration_mode":
+            return intent
+        if intent == "run_pipeline" and self._looks_like_orientation_request(request):
+            return "status" if resolved_paper.get("paper_id") else "list_papers"
+        if intent == "create_project" and self._looks_like_orientation_request(request):
+            return "status" if resolved_paper.get("paper_id") else "list_papers"
+        return intent
 
     def _resolve_paper_id(self, paper_id: Optional[str]) -> dict[str, Any]:
         candidates = self._paper_candidates()
@@ -598,6 +656,18 @@ class AIWorkflowHarness:
     def _extract_paper_id(self, request: str) -> Optional[str]:
         match = re.search(r"\b((?:strat|paper)[-_][A-Za-z0-9_.-]+)\b", request)
         return match.group(1) if match else None
+
+    def _looks_like_orientation_request(self, request: str) -> bool:
+        text = request.lower()
+        compact = re.sub(r"\s+", "", text)
+        return self._has_any(
+            text,
+            compact,
+            (
+                "scan", "audit", "optimize", "improve workflow", "fast-context",
+                "tool unavailable", "skill", "agent", "检查", "扫描", "优化", "工具不可用",
+            ),
+        )
 
     def _load_config(self) -> dict[str, Any]:
         path = self.project_root / "config" / "default_config.yaml"

@@ -388,6 +388,7 @@ class WorkflowAPI:
             "validate_workflow", "approve_checkpoint", "list_harness_invocations",
             "complete_harness_invocation", "run_integrity_gate",
             "diagnose_gate_failures", "run_aigc_humanizer", "list_papers",
+            "route_task", "doctor",
         }
         supported_cli_commands = {
             "ai", "ai-harness", "create-project", "status", "run-pipeline",
@@ -395,7 +396,7 @@ class WorkflowAPI:
             "detect-artifact-drift", "sync-artifact-stale", "validate-workflow",
             "validate-contract", "list-harness-invocations",
             "complete-harness-invocation", "list-papers", "strategy",
-            "install-skills", "run-aigc-humanizer",
+            "install-skills", "run-aigc-humanizer", "route-task", "doctor",
         }
         required_top_level = {"command_entrypoint", "default_max_stages_per_turn", "command_catalog", "scenario_routes"}
         for key in sorted(required_top_level - set(ai_harness)):

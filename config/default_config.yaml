@@ -611,6 +611,12 @@ ai_harness:
     list_papers:
       cli_command: "list-papers"
       description: "List existing paper projects when the user does not know the paper_id."
+    route_task:
+      cli_command: "route-task"
+      description: "Resolve a natural-language request to mode/profile/stage boundaries before execution."
+    doctor:
+      cli_command: "doctor"
+      description: "Check local tools, fast-context fallback, bundled skills, and configured agents."
   scenario_routes:
     not_started:
       user_situation: "User has not started and only has a broad clinical or biological idea."
