@@ -1,0 +1,18 @@
+module_id: bulk_rnaseq.fgsea_enrichment.v1
+modality: bulk_rnaseq
+step: fgsea_enrichment
+language: r
+source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/fgsea_enrichment/main.R, origin: code_library/r/bioinformatics_analysis.R::run_fgsea}
+environment: {env_id: r_bulk_rnaseq, required_packages: [fgsea, clusterProfiler, ggplot2]}
+execution: {type: rscript, script: code_library/modules/bulk_rnaseq/fgsea_enrichment/main.R, timeout_seconds: 1800}
+input_schema: {required: [{name: ranked_genes, type: ranked_gene_statistic}, {name: gene_sets, type: gene_set_collection}], optional: [{name: dry-run, type: flag}]}
+output_schema: {artifacts: [tables/gene_set_source.csv, tables/fgsea_results.csv, figures/fgsea_dotplot.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [records gene universe, database version, gene-set source, multiple-testing method]
+reviewer_risk: [pathway results depend on gene ranking and database choice, enrichment does not prove pathway activity]
+claim_boundary: "Pathway enrichment is interpretive and depends on the ranked statistic and gene-set database."
+figure_outputs: [fgsea_dotplot]
+table_outputs: [gene_set_source, fgsea_results]
+compatible_upstream_modules: [bulk_rnaseq.deseq2_de.v1, bulk_rnaseq.limma_voom_de.v1, bulk_rnaseq.wgcna.v1]
+compatible_downstream_modules: []
+validation_status: publication_oriented_dry_run_verified
+method_maturity: validated_publication_oriented_wrapper

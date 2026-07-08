@@ -1,0 +1,4 @@
+schema_version: toy_input_manifest.v1
+module_id: bulk_rnaseq.wgcna.v1
+dry_run_command: Rscript main.R --dry-run --out <tmp> --run-id toy_wgcna
+real_input_type: normalized_expression_matrix_plus_traits

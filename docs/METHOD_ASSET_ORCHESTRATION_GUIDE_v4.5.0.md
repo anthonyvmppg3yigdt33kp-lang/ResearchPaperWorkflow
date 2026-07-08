@@ -172,3 +172,26 @@ Dry-run writes `node_manifest.yaml`, `parameters.yaml`,
 `outputs_manifest.yaml`, `logs/sessionInfo.txt`, and node-level figure/table
 source maps. Real execution still requires an approved graph, declared inputs,
 and an environment that satisfies the package and lock policy.
+
+## Batch 8 Bulk RNA-seq Assets
+
+Bulk RNA-seq now has publication-oriented method assets in addition to the
+Python pilot:
+
+- `bulk_rnaseq.deseq2_de.v1`
+- `bulk_rnaseq.limma_voom_de.v1`
+- `bulk_rnaseq.wgcna.v1`
+- `bulk_rnaseq.fgsea_enrichment.v1`
+- `bulk_rnaseq.immune_deconvolution_adapter.v1`
+
+These modules are intentionally stricter than the Python pilot. They declare
+contrast/design requirements, required R packages, reviewer risks, and claim
+boundaries. Their dry-run wrappers verify output contracts without treating the
+result as publication evidence.
+
+```bash
+paper-workflow list-modules --modality bulk_rnaseq
+paper-workflow list-capabilities \
+  --question "publication-oriented bulk RNA-seq DESeq2 limma WGCNA fgsea" \
+  --modality bulk_rnaseq
+```

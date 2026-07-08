@@ -1,0 +1,18 @@
+module_id: bulk_rnaseq.immune_deconvolution_adapter.v1
+modality: bulk_rnaseq
+step: immune_deconvolution_adapter
+language: r
+source: {type: adapter_contract, path: code_library/modules/bulk_rnaseq/immune_deconvolution_adapter/main.R, origin: deconvolution_contract}
+environment: {env_id: r_bulk_rnaseq, required_packages: [GSVA, ggplot2, pheatmap]}
+execution: {type: rscript, script: code_library/modules/bulk_rnaseq/immune_deconvolution_adapter/main.R, timeout_seconds: 1800}
+input_schema: {required: [{name: expression_matrix, type: normalized_expression}, {name: signature_matrix, type: reviewed_signature_matrix}], optional: [{name: dry-run, type: flag}]}
+output_schema: {artifacts: [tables/deconvolution_reference.csv, tables/immune_fraction_estimates.csv, figures/immune_fraction_heatmap.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [records signature matrix provenance, separates estimation from validation, exports sample-level fractions]
+reviewer_risk: [deconvolution is model-based, signature mismatch can bias fractions, orthogonal validation is required]
+claim_boundary: "Cell-fraction deconvolution is model-based estimation and requires orthogonal validation."
+figure_outputs: [immune_fraction_heatmap]
+table_outputs: [deconvolution_reference, immune_fraction_estimates]
+compatible_upstream_modules: []
+compatible_downstream_modules: []
+validation_status: publication_oriented_dry_run_verified
+method_maturity: adapter_contract

@@ -1,0 +1,18 @@
+module_id: bulk_rnaseq.deseq2_de.v1
+modality: bulk_rnaseq
+step: deseq2_de
+language: r
+source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/deseq2_de/main.R, origin: DESeq2_publication_oriented_contract}
+environment: {env_id: r_bulk_rnaseq, required_packages: [DESeq2, edgeR, limma, ggplot2, pheatmap]}
+execution: {type: rscript, script: code_library/modules/bulk_rnaseq/deseq2_de/main.R, timeout_seconds: 1800}
+input_schema: {required: [{name: counts, type: count_matrix}, {name: metadata, type: sample_metadata}, {name: condition_column, type: metadata_column}], optional: [{name: dry-run, type: flag}]}
+output_schema: {artifacts: [tables/normalized_counts_summary.csv, tables/deseq2_de_results.csv, figures/deseq2_volcano.png, figures/deseq2_heatmap.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [records normalized counts summary, exports DE table, records FDR method and contrast]
+reviewer_risk: [requires valid design matrix, low sample size limits inference, association is not mechanism]
+claim_boundary: "Publication-oriented association testing only; causal or mechanism claims require validation."
+figure_outputs: [deseq2_volcano, deseq2_heatmap]
+table_outputs: [normalized_counts_summary, deseq2_de_results]
+compatible_upstream_modules: []
+compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+validation_status: publication_oriented_dry_run_verified
+method_maturity: validated_publication_oriented_wrapper

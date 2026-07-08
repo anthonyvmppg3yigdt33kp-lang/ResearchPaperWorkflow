@@ -102,3 +102,37 @@ environments:
         runner_available: true
         packages_available: true
         lock_file_present: true
+
+  r_bulk_rnaseq:
+    env_id: r_bulk_rnaseq
+    language: R
+    manager: renv_or_system
+    runner: Rscript
+    lock_file: ""
+    required_packages:
+      - DESeq2
+      - edgeR
+      - limma
+      - WGCNA
+      - fgsea
+      - clusterProfiler
+      - GSVA
+      - ggplot2
+      - pheatmap
+    required_package_check:
+      type: r_requireNamespace
+    session_info_required: true
+    seed_policy: required
+    compatible_modules:
+      - bulk_rnaseq.deseq2_de.v1
+      - bulk_rnaseq.limma_voom_de.v1
+      - bulk_rnaseq.wgcna.v1
+      - bulk_rnaseq.fgsea_enrichment.v1
+      - bulk_rnaseq.immune_deconvolution_adapter.v1
+    validation:
+      last_checked: "2026-07-09"
+      status: runner_detected_or_pending_package_check
+      checks:
+        runner_available: null
+        packages_available: null
+        lock_file_present: null

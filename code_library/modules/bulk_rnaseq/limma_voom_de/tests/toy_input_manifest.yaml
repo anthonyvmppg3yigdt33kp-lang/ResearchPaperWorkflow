@@ -1,0 +1,4 @@
+schema_version: toy_input_manifest.v1
+module_id: bulk_rnaseq.limma_voom_de.v1
+dry_run_command: Rscript main.R --dry-run --out <tmp> --run-id toy_limma
+real_input_type: count_matrix_plus_sample_metadata

@@ -1,0 +1,5 @@
+env_id: r_bulk_rnaseq
+language: R
+required_packages: [WGCNA, ggplot2, pheatmap]
+execution_policy: {package_install_in_agent_phase: forbidden, raw_data_mutation: forbidden}
+outputs: {session_info: logs/sessionInfo.txt, node_manifest: node_manifest.yaml}

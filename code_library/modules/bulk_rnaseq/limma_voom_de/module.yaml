@@ -1,0 +1,18 @@
+module_id: bulk_rnaseq.limma_voom_de.v1
+modality: bulk_rnaseq
+step: limma_voom_de
+language: r
+source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/limma_voom_de/main.R, origin: limma_voom_publication_oriented_contract}
+environment: {env_id: r_bulk_rnaseq, required_packages: [limma, edgeR, ggplot2, pheatmap]}
+execution: {type: rscript, script: code_library/modules/bulk_rnaseq/limma_voom_de/main.R, timeout_seconds: 1800}
+input_schema: {required: [{name: counts, type: count_matrix}, {name: metadata, type: sample_metadata}, {name: condition_column, type: metadata_column}], optional: [{name: block_column, type: metadata_column}, {name: dry-run, type: flag}]}
+output_schema: {artifacts: [tables/voom_normalization_summary.csv, tables/limma_voom_de_results.csv, figures/limma_voom_heatmap.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [supports small-sample moderated inference, records design matrix, exports voom normalization summary]
+reviewer_risk: [paired/block design must be correct, empirical Bayes cannot fix confounding]
+claim_boundary: "Publication-oriented association testing; design matrix and covariates must be reviewed."
+figure_outputs: [limma_voom_heatmap]
+table_outputs: [voom_normalization_summary, limma_voom_de_results]
+compatible_upstream_modules: []
+compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+validation_status: publication_oriented_dry_run_verified
+method_maturity: validated_publication_oriented_wrapper

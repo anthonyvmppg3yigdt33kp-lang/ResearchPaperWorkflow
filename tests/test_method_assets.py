@@ -29,6 +29,13 @@ BATCH7_SINGLE_CELL_MODULES = [
     "single_cell.pseudobulk_aggregate.v1",
     "single_cell.pseudobulk_deseq2.v1",
 ]
+BATCH8_BULK_MODULES = [
+    "bulk_rnaseq.deseq2_de.v1",
+    "bulk_rnaseq.limma_voom_de.v1",
+    "bulk_rnaseq.wgcna.v1",
+    "bulk_rnaseq.fgsea_enrichment.v1",
+    "bulk_rnaseq.immune_deconvolution_adapter.v1",
+]
 
 
 def make_paper_dir():
@@ -249,3 +256,79 @@ def test_cli_list_modules_returns_batch7_single_cell_assets():
     assert len(ids) >= 7
     for module_id in BATCH7_SINGLE_CELL_MODULES:
         assert module_id in ids
+
+
+def test_module_registry_includes_batch8_bulk_assets():
+    registry = ModuleRegistry(REPO_ROOT)
+    modules = registry.list_modules(modality="bulk_rnaseq")
+    ids = {module["id"] for module in modules}
+
+    assert len(modules) >= 6
+    assert "bulk_rnaseq.python_builtin_pilot.v1" in ids
+    for module_id in BATCH8_BULK_MODULES:
+        assert module_id in ids
+        assert registry.validate_module(module_id) == []
+
+
+def test_batch8_bulk_module_directories_have_contract_files():
+    required = [
+        "module.yaml",
+        "env_profile.yaml",
+        "main.R",
+        "README.md",
+        "tests/toy_input_manifest.yaml",
+        "tests/expected_outputs.yaml",
+    ]
+    registry = ModuleRegistry(REPO_ROOT)
+    for module_id in BATCH8_BULK_MODULES:
+        module = registry.get(module_id)
+        module_dir = (REPO_ROOT / module["source"]["path"]).parent
+        for rel in required:
+            assert (module_dir / rel).exists(), f"{module_id} missing {rel}"
+
+
+def test_batch8_bulk_wrappers_support_direct_dry_run():
+    rscript = shutil.which("Rscript") or EnvironmentRegistry(REPO_ROOT).resolve_runner("r_bulk_rnaseq", language="r")
+    if not rscript or not Path(rscript).exists():
+        pytest.skip("Rscript is not available for direct bulk wrapper dry-run")
+
+    registry = ModuleRegistry(REPO_ROOT)
+    for module_id in BATCH8_BULK_MODULES:
+        module = registry.get(module_id)
+        script = REPO_ROOT / module["source"]["path"]
+        expected_path = script.parent / "tests" / "expected_outputs.yaml"
+        expected = yaml.safe_load(expected_path.read_text(encoding="utf-8")) or {}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            completed = subprocess.run(
+                [
+                    rscript,
+                    str(script),
+                    "--dry-run",
+                    "--out",
+                    tmpdir,
+                    "--run-id",
+                    f"toy_{module_id.split('.')[-2]}",
+                ],
+                cwd=str(REPO_ROOT),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                timeout=60,
+            )
+            assert completed.returncode == 0, completed.stdout + completed.stderr
+            for rel in expected["required_outputs"]:
+                assert (Path(tmpdir) / rel).exists(), f"{module_id} did not write {rel}"
+
+
+def test_bulk_method_selection_includes_publication_oriented_assets():
+    selector = MethodSelector(REPO_ROOT)
+    selected = selector.select(
+        goal="Plan publication-oriented bulk RNA-seq DESeq2 limma WGCNA and fgsea analysis.",
+        modalities=["bulk_rnaseq"],
+        max_modules=4,
+    )
+    ids = {module["id"] for module in selected}
+
+    assert ids - {"bulk_rnaseq.python_builtin_pilot.v1"}
+    assert any(module_id in ids for module_id in {"bulk_rnaseq.deseq2_de.v1", "bulk_rnaseq.limma_voom_de.v1"})

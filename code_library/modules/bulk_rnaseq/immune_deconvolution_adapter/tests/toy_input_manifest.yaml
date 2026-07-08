@@ -1,0 +1,4 @@
+schema_version: toy_input_manifest.v1
+module_id: bulk_rnaseq.immune_deconvolution_adapter.v1
+dry_run_command: Rscript main.R --dry-run --out <tmp> --run-id toy_immune
+real_input_type: normalized_expression_plus_reviewed_signature_matrix

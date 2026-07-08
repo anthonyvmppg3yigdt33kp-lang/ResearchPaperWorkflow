@@ -1,0 +1,18 @@
+module_id: bulk_rnaseq.wgcna.v1
+modality: bulk_rnaseq
+step: wgcna
+language: r
+source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/wgcna/main.R, origin: code_library/r/bioinformatics_analysis.R::run_wgcna}
+environment: {env_id: r_bulk_rnaseq, required_packages: [WGCNA, ggplot2, pheatmap]}
+execution: {type: rscript, script: code_library/modules/bulk_rnaseq/wgcna/main.R, timeout_seconds: 3600}
+input_schema: {required: [{name: expression_matrix, type: normalized_expression}, {name: traits, type: sample_trait_table}], optional: [{name: dry-run, type: flag}]}
+output_schema: {artifacts: [tables/wgcna_parameters.csv, tables/wgcna_module_trait_correlation.csv, figures/wgcna_sample_clustering.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [records soft power, module count, module-trait correlation, sample clustering and outlier handling]
+reviewer_risk: [module-trait associations are observational, sample outliers and batch effects can dominate modules]
+claim_boundary: "Co-expression module association only; hub genes and modules do not prove mechanism."
+figure_outputs: [wgcna_sample_clustering]
+table_outputs: [wgcna_parameters, wgcna_module_trait_correlation]
+compatible_upstream_modules: []
+compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+validation_status: publication_oriented_dry_run_verified
+method_maturity: validated_publication_oriented_wrapper
