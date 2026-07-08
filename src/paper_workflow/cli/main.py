@@ -10,9 +10,13 @@ import json
 import sys
 from pathlib import Path
 
+import yaml
+
 from paper_workflow.ai_harness import AIWorkflowHarness
 from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
+from paper_workflow.bioinformatics.module_registry import ModuleRegistry
+from paper_workflow.bioinformatics.module_selector import MethodSelector
 from paper_workflow.outputs.result_run_manager import ResultRunManager
 from paper_workflow.routing.mode_resolver import ModeResolver
 from paper_workflow.routing.tool_doctor import ToolDoctor, format_doctor_report
@@ -459,6 +463,7 @@ def cmd_plan_analysis(args):
             group_column=args.group_column,
             sample_id_column=args.sample_id_column,
             execution_backend=args.execution_backend,
+            from_code_library=args.from_code_library,
         )
         if args.set_current:
             manager.set_current_run(
@@ -475,6 +480,9 @@ def cmd_plan_analysis(args):
         print(json.dumps(design, indent=2, ensure_ascii=False))
     else:
         print(f"[OK] Analysis design written: {manager.run_path(args.run_id) / 'analysis_design.yaml'}")
+        if (manager.run_path(args.run_id) / "analysis_graph.yaml").exists():
+            print(f"     Analysis graph: {manager.run_path(args.run_id) / 'analysis_graph.yaml'}")
+            print(f"     Method selection: {manager.run_path(args.run_id) / 'method_selection_report.md'}")
         print("     Execution status: not_executed")
         print("     Human checkpoint required before execution.")
 
@@ -490,6 +498,12 @@ def cmd_run_analysis(args):
         if not design_path.exists():
             raise FileNotFoundError(f"Analysis design not found: {design_path}")
         design = AnalysisDesign.from_file(design_path)
+        graph_path = run_dir / "analysis_graph.yaml"
+        if not design.analysis_graph and graph_path.exists():
+            graph_data = yaml.safe_load(graph_path.read_text(encoding="utf-8")) or {}
+            if isinstance(graph_data, dict):
+                design.raw.update(graph_data)
+                design.analysis_graph = dict((graph_data.get("analysis_graph") or {}))
         if args.approved:
             design.user_approval = True
         result = run_analysis_adapter(design, run_dir, execute=args.execute, backend=args.backend)
@@ -521,6 +535,65 @@ def cmd_run_analysis(args):
             print("Blocked/errors:")
             for err in result.errors:
                 print(f"  - {err}")
+
+
+def cmd_list_modules(args):
+    registry = ModuleRegistry(get_root())
+    modules = registry.list_modules(modality=args.modality or "", step=args.step or "", language=args.language or "")
+    payload = {"summary": registry.capability_summary(), "modules": modules}
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    print(f"Registry: {registry.registry_path}")
+    print(f"Modules: {len(modules)} / {payload['summary']['module_count']}")
+    for module in modules:
+        print(
+            f"  - {module.get('id') or module.get('module_id')} | "
+            f"{module.get('modality')} | {module.get('step')} | {module.get('language')}"
+        )
+
+
+def cmd_inspect_module(args):
+    registry = ModuleRegistry(get_root())
+    module = registry.get(args.module_id)
+    if not module:
+        print(f"[ERROR] Module not found: {args.module_id}")
+        sys.exit(1)
+    issues = registry.validate_module(args.module_id)
+    payload = {"module_id": args.module_id, "module": module, "issues": issues}
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        print(f"Module: {args.module_id}")
+        print(f"Name: {module.get('name', '')}")
+        print(f"Modality/step: {module.get('modality', '')} / {module.get('step', '')}")
+        print(f"Language: {module.get('language', '')}")
+        print(f"Source: {(module.get('source') or {}).get('path', '')}")
+        print(f"Claim boundary: {module.get('claim_boundary', '')}")
+        print(f"Issues: {', '.join(issues) if issues else 'none'}")
+    if args.strict and issues:
+        sys.exit(1)
+
+
+def cmd_list_capabilities(args):
+    selector = MethodSelector(project_root=get_root(), paper_dir=get_paper_dir(args, must_exist=bool(args.paper)) if args.paper else None)
+    selected = selector.select(goal=args.question, modalities=args.modality or [], max_modules=args.limit)
+    payload = {
+        "question": args.question,
+        "modalities": args.modality or [],
+        "selected_modules": selected,
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    print(f"Question: {args.question}")
+    for module in selected:
+        score = module.get("method_selection_score", {})
+        print(
+            f"  - {module.get('id') or module.get('module_id')} | "
+            f"score={score.get('total')} env={score.get('environment_status')} "
+            f"risk={score.get('reviewer_risk')}"
+        )
 
 
 def main():
@@ -637,6 +710,7 @@ def main():
     p.add_argument("--sample-id-column", default="sample_id")
     p.add_argument("--execution-backend", default="dry_run",
                    choices=["dry_run", "python_builtin_pilot"])
+    p.add_argument("--from-code-library", action="store_true")
     p.add_argument("--notes")
     p.add_argument("--set-current", action="store_true")
     p.add_argument("--json", action="store_true")
@@ -648,6 +722,24 @@ def main():
     p.add_argument("--approved", action="store_true")
     p.add_argument("--backend", choices=["dry_run", "python_builtin_pilot"])
     p.add_argument("--set-current", action="store_true")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("list-modules")
+    p.add_argument("--modality")
+    p.add_argument("--step")
+    p.add_argument("--language")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("inspect-module")
+    p.add_argument("module_id")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--strict", action="store_true")
+
+    p = sub.add_parser("list-capabilities")
+    p.add_argument("--question", required=True)
+    p.add_argument("--modality", action="append")
+    p.add_argument("--paper")
+    p.add_argument("--limit", type=int, default=6)
     p.add_argument("--json", action="store_true")
 
     p = sub.add_parser(
@@ -694,6 +786,8 @@ def main():
      "new-run": cmd_new_run, "set-current-run": cmd_set_current_run,
      "brief-status": cmd_brief_status, "evaluate-run": cmd_evaluate_run,
      "plan-analysis": cmd_plan_analysis, "run-analysis": cmd_run_analysis,
+     "list-modules": cmd_list_modules, "inspect-module": cmd_inspect_module,
+     "list-capabilities": cmd_list_capabilities,
      "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
 
 

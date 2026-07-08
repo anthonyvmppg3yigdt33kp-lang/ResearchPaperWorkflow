@@ -1,17 +1,17 @@
-# Research Paper Workflow Framework v4.4+
+# Research Paper Workflow Framework v4.5+
 
 Agent-operated research paper workflow for bioinformatics, clinical research,
 and reproducible manuscript production. The current development baseline keeps
-the v4.4.0 truth-layer architecture and adds first-class mode/profile routing,
-tool/skill/agent doctor checks, run-scoped result management, bounded analysis
-execution, code-library routing, and CI preflight.
+the truth-layer architecture and adds first-class mode/profile routing,
+tool/skill/agent doctor checks, run-scoped result management, method-asset
+analysis graph orchestration, code-library capability planning, and CI preflight.
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-CI%20preflight-brightgreen.svg)](tests/)
-[![Version](https://img.shields.io/badge/Version-4.4.0-orange.svg)]()
+[![Version](https://img.shields.io/badge/Version-4.5.0-orange.svg)]()
 
-## What V4.4 Is
+## What V4.5 Is
 
 ResearchPaperWorkflow is not a prompt pack that asks an AI to write a paper in
 one pass. It is an auditable workflow kernel where Claude, Codex, or another
@@ -24,7 +24,7 @@ The current invariant is:
 completed = real execution + verified outputs + concrete gate results + checkpoint consistency
 ```
 
-## V4.4 Additions
+## V4.5 Additions
 
 - Lightweight collaboration modes:
   `exploration_mode`, `analysis_design_mode`, `execution_mode`,
@@ -33,11 +33,24 @@ completed = real execution + verified outputs + concrete gate results + checkpoi
   `results/current_run.yaml` and `results/current/RUN_POINTER.txt`.
 - Analysis-design-first CLI flow: `new-run`, `set-current-run`,
   `plan-analysis`, `run-analysis`, `brief-status`, and `evaluate-run`.
+- Method-asset code library:
+  `code_library/module_registry.yaml`, `code_library/environment_registry.yaml`,
+  and module-level `module.yaml` / `env_profile.yaml` contracts.
+- Capability-aware strategy planning through `list-capabilities` and
+  `plan-analysis --from-code-library`, producing `analysis_graph.yaml` and
+  `method_selection_report.md`.
+- Analysis graph execution through `analysis_graph_executor`, with per-node
+  manifests, stdout/stderr logs, session information, source maps, and run
+  evaluation.
+- Official Seurat PBMC3K tutorial wrapper under
+  `code_library/modules/single_cell/seurat_pbmc3k_basic/`, validated locally
+  as a single-cell method-asset smoke path.
 - Built-in bulk RNA-seq pilot backend for workflow smoke execution, source-map
   generation, QC reports, and preview figures without external bioinformatics
   package installation.
 - Contract files for result writing, visualization, bioinformatics methods,
-  reporting, workflow modes, and curated code-library routing.
+  reporting, workflow modes, data governance, environments, module registries,
+  analysis graphs, and curated code-library routing.
 - CI preflight for YAML/config validation, large-file guards, CLI smoke, and
   pytest.
 
@@ -53,6 +66,8 @@ completed = real execution + verified outputs + concrete gate results + checkpoi
 - `workflow_contract.yaml` preserves legacy `results/run_manifest.yaml`
   compatibility while declaring the `results/current_run.yaml` ->
   `results/runs/<run_id>/run_manifest.yaml` resolver.
+- `doctor` now reports method-asset registry health in addition to tools,
+  skills, and configured agents.
 
 ## Highlights
 
@@ -143,8 +158,22 @@ new-run
 set-current-run
 plan-analysis
 run-analysis
+list-modules
+inspect-module
+list-capabilities
 brief-status
 evaluate-run
+```
+
+Example method-asset planning and execution:
+
+```bash
+paper-workflow list-capabilities --question "Seurat PBMC3K QC UMAP markers" --modality scrna
+paper-workflow plan-analysis --paper <paper_id> --run-id pbmc3k_seurat_20260708_v1 \
+  --goal "Use the official Seurat PBMC3K workflow for QC, PCA, clustering, UMAP, and marker plots." \
+  --modality scrna --input data/raw/pbmc3k/filtered_gene_bc_matrices/hg19 \
+  --primary-contrast "tutorial fixture; no disease contrast" --from-code-library --set-current
+paper-workflow run-analysis --paper <paper_id> --run-id pbmc3k_seurat_20260708_v1 --approved --execute --set-current
 ```
 
 ## 20-Stage Pipeline
@@ -193,13 +222,16 @@ Generated paper projects store recoverable state under `papers/<paper_id>/`:
 
 ## Documentation
 
-- [V4.3 architecture](ARCHITECTURE.md)
-- [V4.3 user guide](USER_GUIDE.md)
+- [V4.5 architecture](ARCHITECTURE.md)
+- [V4.5 user guide](USER_GUIDE.md)
+- [V4.5 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.5.0.md)
+- [V4.5 method-asset architecture](docs/METHOD_ASSET_ARCHITECTURE_v4.5.0.md)
 - [V4.3 Chinese operation guide](docs/OPERATION_GUIDE_ZH.md)
 - [V4.4 clinical research Codex workflow guide](docs/CLINICAL_RESEARCH_CODEX_WORKFLOW_GUIDE.md)
 - [V4.4 Codex collaboration system](docs/CODEX_COLLABORATION_SYSTEM.md)
 - [Codex mode interaction guide](docs/CODEX_MODE_INTERACTION_GUIDE_ZH.md)
 - [V4.4 optimization master plan](docs/WORKFLOW_OPTIMIZATION_MASTER_PLAN_2026-07-07.md)
+- [Release notes v4.5.0](docs/RELEASE_NOTES_v4.5.0.md)
 - [Release notes v4.4.0](docs/RELEASE_NOTES_v4.4.0.md)
 - [Next-generation truth-layer guide](docs/NEXT_GEN_V4_TRUTH_LAYER.md)
 - [Next-generation completion audit](docs/NEXT_GEN_COMPLETION_AUDIT.md)
@@ -227,9 +259,8 @@ python -m paper_workflow.cli validate-contract --strict
 python -m paper_workflow.cli doctor --json
 ```
 
-Current local preflight: compileall passed, CI quality passed with 0 issues,
-CLI smoke passed, `validate-contract --strict` passed, doctor found no missing
-bundled skill sources or configured agent files, and `88 passed` under pytest.
+For source-tree validation without an editable install, set `PYTHONPATH=src`
+before CLI commands.
 
 ## License
 

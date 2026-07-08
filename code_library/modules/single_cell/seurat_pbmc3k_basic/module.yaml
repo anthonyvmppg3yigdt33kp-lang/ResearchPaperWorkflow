@@ -1,0 +1,10 @@
+module_id: single_cell.seurat_pbmc3k_basic.v1
+registry: code_library/module_registry.yaml
+entrypoint: main.R
+origin_url: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html
+data_url: https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
+status: executable_wrapper
+notes:
+  - "Adapted from the official Seurat PBMC3K guided clustering tutorial into a parameterized workflow module."
+  - "Does not install R packages or download data during execution."
+  - "Writes node-scoped outputs, source maps, and session information."

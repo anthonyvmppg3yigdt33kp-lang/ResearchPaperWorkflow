@@ -211,13 +211,26 @@ The quality gate checks:
 - required collaboration modes and pipeline profiles;
 - result-write policy and current-run contract;
 - bioinformatics analysis-design contract;
-- curated code-library registry;
+- curated method-asset registry and legacy code-library capability registry;
 - large-file guard outside excluded runtime/output directories.
 
-## 9. Code Library Registry
+## 9. Code Library And Method-Asset Registries
 
-Use `config/code_library_registry.yaml` as the first lookup surface when an
-analysis agent needs external method capability. The registry records:
+Use `code_library/module_registry.yaml` as the first lookup surface when an
+analysis agent needs to choose executable or auditable local method assets. Use
+`config/code_library_registry.yaml` only for broader external capability
+discovery and dependency/reference decisions. The method-asset registry records:
+
+- modality and analysis step;
+- input/output schema;
+- environment profile;
+- execution contract when available;
+- reviewer value and reviewer risk;
+- claim boundary;
+- figure/table outputs and source-map requirements;
+- validation status and method maturity.
+
+The external capability registry records:
 
 - source URL;
 - analysis area;

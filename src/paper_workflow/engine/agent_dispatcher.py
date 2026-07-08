@@ -16,6 +16,7 @@ from typing import Any, Callable, Optional
 import yaml
 
 from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
+from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.outputs.result_run_manager import ResultRunManager
 
 # Try to import StageResult; fall back to dict if unavailable
@@ -907,6 +908,20 @@ class AgentDispatcher:
         return ""
 
     def _discover_code_modules(self) -> list[dict[str, Any]]:
+        registry = ModuleRegistry(self.project_root)
+        if registry.exists():
+            return [
+                {
+                    "module_id": module.get("id") or module.get("module_id"),
+                    "modality": module.get("modality", ""),
+                    "step": module.get("step", ""),
+                    "language": module.get("language", ""),
+                    "source_path": (module.get("source") or {}).get("path", ""),
+                    "validation_status": module.get("validation_status", ""),
+                    "claim_boundary": module.get("claim_boundary", ""),
+                }
+                for module in registry.list_modules()
+            ]
         code_lib = self.project_root / "code_library"
         if not code_lib.exists():
             return []

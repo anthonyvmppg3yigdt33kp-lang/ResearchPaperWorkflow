@@ -1,0 +1,297 @@
+"""Execute approved analysis graphs with source maps and per-node manifests."""
+
+from __future__ import annotations
+
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from time import perf_counter
+from typing import Any
+
+import yaml
+
+from paper_workflow.bioinformatics.analysis_graph import AnalysisGraph
+from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
+from paper_workflow.bioinformatics.module_registry import ModuleRegistry
+from paper_workflow.outputs.result_run_manager import read_yaml, utc_now, write_yaml
+
+
+@dataclass
+class GraphRunResult:
+    status: str
+    run_id: str
+    artifacts: list[dict[str, str]]
+    metrics: dict[str, Any]
+    warnings: list[str]
+    errors: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "status": self.status,
+            "run_id": self.run_id,
+            "artifacts": self.artifacts,
+            "metrics": self.metrics,
+            "warnings": self.warnings,
+            "errors": self.errors,
+        }
+
+
+def _find_project_root(path: Path) -> Path:
+    current = Path(path).resolve()
+    for candidate in [current, *current.parents]:
+        if (candidate / "AGENTS.md").exists() and (candidate / "src").exists():
+            return candidate
+    return current
+
+
+def _artifact(path: Path, paper_dir: Path, stage: str = "run_analysis") -> dict[str, str]:
+    suffix = path.suffix.lower()
+    mime = "text/plain"
+    if suffix in {".yaml", ".yml"}:
+        mime = "application/yaml"
+    elif suffix == ".md":
+        mime = "text/markdown"
+    elif suffix == ".csv":
+        mime = "text/csv"
+    elif suffix in {".png", ".jpg", ".jpeg"}:
+        mime = f"image/{suffix[1:].replace('jpg', 'jpeg')}"
+    elif suffix == ".pdf":
+        mime = "application/pdf"
+    elif suffix == ".rds":
+        mime = "application/octet-stream"
+    return {"path": str(path.relative_to(paper_dir)).replace("\\", "/"), "mime_type": mime, "source_stage": stage}
+
+
+class AnalysisGraphExecutor:
+    """Run a graph node-by-node without mutating raw data."""
+
+    def __init__(self, project_root: Path):
+        self.project_root = _find_project_root(project_root)
+        self.modules = ModuleRegistry(self.project_root)
+        self.environments = EnvironmentRegistry(self.project_root)
+
+    def run(self, graph: AnalysisGraph, run_dir: Path, execute: bool = False) -> GraphRunResult:
+        start = perf_counter()
+        run_dir = Path(run_dir)
+        paper_dir = run_dir.parents[2]
+        artifacts: list[dict[str, str]] = []
+        warnings: list[str] = []
+        errors: list[str] = []
+
+        graph.write(run_dir / "analysis_graph.yaml")
+        artifacts.append(_artifact(run_dir / "analysis_graph.yaml", paper_dir))
+        graph_issues = graph.validate()
+        if graph_issues:
+            errors.extend(graph_issues)
+
+        node_records = []
+        if not errors:
+            for node in graph.topological_nodes():
+                record = self._run_node(graph, node.to_dict(), run_dir, paper_dir, execute=execute)
+                node_records.append(record)
+                warnings.extend(record.get("warnings", []) or [])
+                errors.extend(record.get("errors", []) or [])
+                for rel in record.get("artifacts", []) or []:
+                    artifacts.append(_artifact(paper_dir / rel, paper_dir))
+
+        self._write_aggregate_source_maps(run_dir, paper_dir, node_records, artifacts)
+        artifacts.append(_artifact(run_dir / "figure_source_map.yaml", paper_dir))
+        artifacts.append(_artifact(run_dir / "table_source_map.yaml", paper_dir))
+
+        status = "blocked" if errors else ("completed" if execute else "dry_run_completed")
+        manifest = read_yaml(run_dir / "run_manifest.yaml")
+        output_paths = [a["path"] for a in artifacts]
+        manifest.update({
+            "schema_version": "analysis_graph_run.v1",
+            "run_id": graph.run_id,
+            "mode": "execution_mode" if execute else "analysis_design_mode",
+            "status": status,
+            "analysis_adapter": "analysis_graph_executor",
+            "execution_status": status,
+            "executed_at": utc_now(),
+            "dry_run": not execute,
+            "analysis_graph": "analysis_graph.yaml",
+            "module_registry": str(self.modules.registry_path),
+            "module_registry_hash": self.modules.content_hash(),
+            "nodes": node_records,
+            "outputs_generated": output_paths,
+            "warnings": warnings,
+            "errors": errors,
+        })
+        write_yaml(run_dir / "run_manifest.yaml", manifest)
+        artifacts.append(_artifact(run_dir / "run_manifest.yaml", paper_dir))
+        write_yaml(
+            run_dir / "outputs_manifest.yaml",
+            {
+                "schema_version": "analysis_graph_outputs.v1",
+                "run_id": graph.run_id,
+                "execution_mode": "real" if execute else "dry_run",
+                "outputs": [{"path": path, "status": "generated"} for path in output_paths],
+                "updated_at": utc_now(),
+            },
+        )
+        artifacts.append(_artifact(run_dir / "outputs_manifest.yaml", paper_dir))
+        metrics = {
+            "runtime_seconds": round(perf_counter() - start, 6),
+            "node_count": len(node_records),
+            "executed_node_count": len([n for n in node_records if n.get("status") == "completed"]),
+            "blocked_node_count": len([n for n in node_records if n.get("status") == "blocked"]),
+        }
+        return GraphRunResult(status=status, run_id=graph.run_id, artifacts=artifacts, metrics=metrics, warnings=warnings, errors=errors)
+
+    def _run_node(
+        self,
+        graph: AnalysisGraph,
+        node: dict[str, Any],
+        run_dir: Path,
+        paper_dir: Path,
+        *,
+        execute: bool,
+    ) -> dict[str, Any]:
+        node_id = str(node.get("node_id", "node"))
+        module_id = str(node.get("module_id", ""))
+        module = self.modules.get(module_id)
+        node_dir = run_dir / "nodes" / node_id
+        node_dir.mkdir(parents=True, exist_ok=True)
+        logs_dir = node_dir / "logs"
+        logs_dir.mkdir(exist_ok=True)
+        record = {
+            "node_id": node_id,
+            "module_id": module_id,
+            "status": "planned",
+            "artifacts": [],
+            "warnings": [],
+            "errors": [],
+        }
+        write_yaml(node_dir / "parameters.yaml", {"node": node, "module": module_id, "updated_at": utc_now()})
+        record["artifacts"].append(str((node_dir / "parameters.yaml").relative_to(paper_dir)).replace("\\", "/"))
+
+        if not module:
+            record["status"] = "blocked"
+            record["errors"].append(f"module not found: {module_id}")
+            self._write_node_manifest(node_dir, paper_dir, record)
+            return record
+
+        env_id = str((module.get("environment") or {}).get("env_id", ""))
+        env_status = self.environments.validate_environment(env_id, language=str(module.get("language", "")))
+        record["environment"] = env_status
+        if env_status["status"] != "pass":
+            record["warnings"].extend(env_status["issues"])
+
+        if not execute:
+            record["status"] = "dry_run_completed"
+            record["warnings"].append("node was planned but not executed; pass --execute with approval for real execution")
+            self._write_node_manifest(node_dir, paper_dir, record)
+            return record
+
+        execution = module.get("execution") or {}
+        exec_type = str(execution.get("type", "")).lower()
+        if exec_type != "rscript":
+            record["status"] = "blocked"
+            record["errors"].append(f"unsupported execution type for graph executor: {exec_type or 'not_declared'}")
+            self._write_node_manifest(node_dir, paper_dir, record)
+            return record
+
+        runner = env_status.get("runner") or self.environments.resolve_runner(env_id, language="r")
+        script_rel = str((module.get("source") or {}).get("path") or execution.get("script") or "")
+        script_path = self.project_root / script_rel
+        if not script_path.exists():
+            record["status"] = "blocked"
+            record["errors"].append(f"module script missing: {script_rel}")
+            self._write_node_manifest(node_dir, paper_dir, record)
+            return record
+        if not runner:
+            record["status"] = "blocked"
+            record["errors"].append(f"runner unavailable for environment: {env_id}")
+            self._write_node_manifest(node_dir, paper_dir, record)
+            return record
+
+        parameters = dict(module.get("default_parameters", {}) or {})
+        parameters.update(node.get("parameters", {}) or {})
+        input_dir = parameters.get("input_dir") or graph.data_bindings.get("single_cell") or graph.data_bindings.get("input_dir") or ""
+        if input_dir:
+            input_path = Path(str(input_dir))
+            if not input_path.is_absolute():
+                input_dir = str((paper_dir / input_path).resolve())
+        parameters["input_dir"] = str(input_dir)
+        arg_template = list(execution.get("args", []) or [])
+        replacements = {
+            "run_id": graph.run_id,
+            "node_id": node_id,
+            "node_dir": str(node_dir.resolve()),
+            "input_dir": str(input_dir),
+            "project_root": str(self.project_root),
+            **{k: str(v) for k, v in parameters.items()},
+        }
+        args = [str(item).format(**replacements) for item in arg_template]
+        command = [str(runner), str(script_path), *args]
+        record["command"] = command
+        timeout = int(execution.get("timeout_seconds", 1800))
+        completed = subprocess.run(
+            command,
+            cwd=str(self.project_root),
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=timeout,
+        )
+        (logs_dir / "stdout.log").write_text(completed.stdout or "", encoding="utf-8")
+        (logs_dir / "stderr.log").write_text(completed.stderr or "", encoding="utf-8")
+        record["artifacts"].extend([
+            str((logs_dir / "stdout.log").relative_to(paper_dir)).replace("\\", "/"),
+            str((logs_dir / "stderr.log").relative_to(paper_dir)).replace("\\", "/"),
+        ])
+        record["exit_code"] = completed.returncode
+        if completed.returncode == 0:
+            record["status"] = "completed"
+            for path in node_dir.rglob("*"):
+                if path.is_file() and path.name not in {"node_manifest.yaml", "parameters.yaml"}:
+                    rel = str(path.relative_to(paper_dir)).replace("\\", "/")
+                    if rel not in record["artifacts"]:
+                        record["artifacts"].append(rel)
+        else:
+            record["status"] = "blocked"
+            record["errors"].append(f"node command failed with exit code {completed.returncode}")
+        self._write_node_manifest(node_dir, paper_dir, record)
+        return record
+
+    @staticmethod
+    def _write_node_manifest(node_dir: Path, paper_dir: Path, record: dict[str, Any]) -> None:
+        write_yaml(node_dir / "node_manifest.yaml", {**record, "updated_at": utc_now()})
+        rel = str((node_dir / "node_manifest.yaml").relative_to(paper_dir)).replace("\\", "/")
+        if rel not in record["artifacts"]:
+            record["artifacts"].append(rel)
+
+    @staticmethod
+    def _write_aggregate_source_maps(
+        run_dir: Path,
+        paper_dir: Path,
+        node_records: list[dict[str, Any]],
+        artifacts: list[dict[str, str]],
+    ) -> None:
+        figures = []
+        tables = []
+        for record in node_records:
+            for rel in record.get("artifacts", []) or []:
+                suffix = Path(rel).suffix.lower()
+                if suffix in {".png", ".pdf", ".svg", ".jpg", ".jpeg"}:
+                    figures.append({
+                        "figure_id": Path(rel).stem,
+                        "path": str(Path(rel).relative_to(Path("results") / "runs" / run_dir.name)).replace("\\", "/") if rel.startswith(f"results/runs/{run_dir.name}/") else rel,
+                        "source_data": "node input and parameters",
+                        "script": record.get("module_id", ""),
+                        "method": "module-declared analysis graph node",
+                        "statistical_unit": "sample",
+                        "claim_boundary": "workflow-generated analysis artifact; interpret with module risk notes",
+                    })
+                elif suffix in {".csv", ".tsv"}:
+                    tables.append({
+                        "table_id": Path(rel).stem,
+                        "path": str(Path(rel).relative_to(Path("results") / "runs" / run_dir.name)).replace("\\", "/") if rel.startswith(f"results/runs/{run_dir.name}/") else rel,
+                        "source_inputs": "node input and parameters",
+                        "method": record.get("module_id", ""),
+                        "statistical_unit": "sample",
+                    })
+        write_yaml(run_dir / "figure_source_map.yaml", {"schema_version": "analysis_graph_source_map.v1", "figures": figures})
+        write_yaml(run_dir / "table_source_map.yaml", {"schema_version": "analysis_graph_source_map.v1", "tables": tables})

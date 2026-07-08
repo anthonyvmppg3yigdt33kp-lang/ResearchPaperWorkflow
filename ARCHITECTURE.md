@@ -1,9 +1,10 @@
-# ResearchPaperWorkflow Architecture v4.4+
+# ResearchPaperWorkflow Architecture v4.5+
 
 ResearchPaperWorkflow is an auditable research-production workflow for
 bioinformatics, clinical, single-cell, spatial, and other evidence-heavy
 manuscript projects. The current design keeps the V4 truth layer and adds
-first-class Codex/Claude routing before execution. It replaces the older
+first-class Codex/Claude routing, method-asset capability planning, and
+analysis graph execution before manuscript claims are promoted. It replaces the older
 pre-truth-layer scaffold with a 20-stage truth-layer pipeline where a stage is
 complete only when the required artifacts, gate results, checkpoint state, and
 stage result files agree.
@@ -80,6 +81,61 @@ The layers are logical boundaries, not isolated services. `PaperLoopEngine`
 bridges decision and execution because it both selects the next stage and
 verifies the result after execution. The verification path remains single and
 auditable.
+
+## Method-Asset Orchestration Layer
+
+V4.5 upgrades `run_analysis` from a single adapter surface into a method-asset
+orchestrator. The old `code_library/plugin_registry.yaml` remains as a legacy
+file inventory, but planning and execution now use these canonical surfaces:
+
+- `code_library/module_registry.yaml`: method assets with modality, step,
+  input/output schema, environment, reviewer value, reviewer risk, claim
+  boundary, maturity, and execution contract.
+- `code_library/environment_registry.yaml`: runner and package declarations for
+  executable modules.
+- `analysis_graph.yaml`: run-scoped DAG produced by capability-aware planning.
+- `nodes/<node_id>/node_manifest.yaml`: per-node command, environment, outputs,
+  warnings, errors, and provenance.
+
+```mermaid
+flowchart TB
+    Q["Scientific question"] --> D["DataRegistry\npaper data inventory"]
+    Q --> M["ModuleRegistry\nmethod assets"]
+    Q --> E["EnvironmentRegistry\nrunners and packages"]
+    D --> S["MethodSelector\nfit, maturity, env, reviewer value"]
+    M --> S
+    E --> S
+    S --> G["AnalysisGraph\nmodule DAG"]
+    G --> X["AnalysisGraphExecutor\nnode runner"]
+    X --> N["Node manifests\nstdout stderr sessionInfo"]
+    X --> O["Run outputs\nfigures tables objects"]
+    O --> SM["Figure/table source maps"]
+    SM --> R["Run evaluation and workflow truth"]
+```
+
+This is a strict expansion of the existing truth layer. A graph node can create
+artifacts, but the stage is still not complete unless the run manifest, source
+maps, required outputs, and workflow gates agree.
+
+### Planning And Execution Flow
+
+```text
+plan-analysis --from-code-library
+  -> MethodSelector reads module/data/environment registries
+  -> analysis_design.yaml records candidates, selected modules, risks, boundaries
+  -> analysis_graph.yaml records the executable DAG
+  -> method_selection_report.md explains why modules were selected
+
+run-analysis --approved --execute
+  -> AnalysisGraphExecutor resolves module scripts and environment runners
+  -> each node writes parameters, stdout/stderr, sessionInfo, node_manifest
+  -> run_manifest.yaml records module_registry_hash, command, outputs, errors
+  -> figure_source_map.yaml and table_source_map.yaml preserve claim boundaries
+```
+
+The official Seurat PBMC3K wrapper is the first executable single-cell method
+asset. It validates the path from strategy planning to local execution without
+turning tutorial output into project-specific biological evidence.
 
 ## 20-Stage Pipeline
 

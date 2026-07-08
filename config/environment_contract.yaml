@@ -1,0 +1,20 @@
+schema_version: "environment_contract.v1"
+purpose: "Environment-resolution requirements for executable method assets."
+
+required_before_execution:
+  - environment_registry_present
+  - module_environment_declared
+  - runner_resolves_to_local_command
+  - package_requirements_recorded
+  - session_info_written_per_node
+
+agent_phase_forbidden:
+  - install.packages
+  - BiocManager::install
+  - conda_install
+  - pip_install_unless_user_explicitly_approves_setup_phase
+  - download_reference_database_inside_execution
+
+registry:
+  canonical_file: code_library/environment_registry.yaml
+  fallback_policy: "Block real execution or mark environment_status=blocked when runner/package availability cannot be verified."

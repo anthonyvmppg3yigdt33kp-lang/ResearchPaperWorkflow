@@ -1,0 +1,43 @@
+schema_version: "environment_registry.v1"
+updated_at: "2026-07-08"
+purpose: "Execution environment truth source for method assets. This registry declares environments; it does not install packages during agent execution."
+
+environments:
+  r_seurat_v5:
+    env_id: r_seurat_v5
+    language: R
+    manager: system_or_renv
+    runner: Rscript
+    compatible_modules:
+      - single_cell.seurat_pbmc3k_basic.v1
+    packages:
+      - Seurat
+      - SeuratObject
+      - Matrix
+      - ggplot2
+    validation:
+      last_checked: "2026-07-08"
+      status: runner_detected_or_pending_package_check
+      smoke_tests:
+        - Rscript available
+        - requireNamespace('Seurat') before execution
+    reproducibility:
+      lock_file: ""
+      seed_policy: required
+      session_info_per_node: required
+
+  python_builtin:
+    env_id: python_builtin
+    language: Python
+    manager: stdlib
+    runner: python
+    compatible_modules:
+      - bulk_rnaseq.python_builtin_pilot.v1
+    packages: []
+    validation:
+      status: pass
+      smoke_tests:
+        - python available
+    reproducibility:
+      lock_file: pyproject.toml
+      seed_policy: recommended

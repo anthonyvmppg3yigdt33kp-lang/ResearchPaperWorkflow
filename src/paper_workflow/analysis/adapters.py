@@ -17,6 +17,8 @@ from typing import Any
 import yaml
 
 from paper_workflow.analysis.design import AnalysisDesign
+from paper_workflow.bioinformatics.analysis_graph import AnalysisGraph
+from paper_workflow.bioinformatics.analysis_graph_executor import AnalysisGraphExecutor
 from paper_workflow.outputs.result_run_manager import read_yaml, utc_now, write_yaml
 
 
@@ -796,6 +798,17 @@ def run_analysis_adapter(
     backend: str | None = None,
 ) -> AdapterRunResult:
     """Dispatch to the safest available adapter for an analysis design."""
+    if design.analysis_graph:
+        graph_result = run_analysis_graph(design, run_dir, execute=execute)
+        return AdapterRunResult(
+            status=graph_result.status,
+            adapter="analysis_graph_executor",
+            run_id=graph_result.run_id,
+            artifacts=graph_result.artifacts,
+            metrics=graph_result.metrics,
+            warnings=graph_result.warnings,
+            errors=graph_result.errors,
+        )
     modality = design.modality.lower().replace("-", "_")
     if modality in {"bulk_rnaseq", "bulk_rna_seq", "rnaseq", "rna_seq"}:
         selected_backend = backend or design.execution_backend
@@ -811,3 +824,18 @@ def run_analysis_adapter(
         warnings=[],
         errors=[f"Unsupported modality for bounded adapter: {design.modality}"],
     )
+
+
+def run_analysis_graph(design: AnalysisDesign, run_dir: Path, execute: bool = False):
+    """Execute or dry-run a method-asset analysis graph."""
+    graph = AnalysisGraph.from_dict(design.to_dict())
+    project_root = _find_project_root(run_dir)
+    return AnalysisGraphExecutor(project_root).run(graph, run_dir, execute=execute)
+
+
+def _find_project_root(path: Path) -> Path:
+    current = Path(path).resolve()
+    for candidate in [current, *current.parents]:
+        if (candidate / "AGENTS.md").exists() and (candidate / "src").exists():
+            return candidate
+    return current

@@ -1,0 +1,26 @@
+schema_version: "data_governance_contract.v1"
+purpose: "Minimum data-truth requirements before method-asset execution."
+
+required_before_execution:
+  - data_inventory_present
+  - raw_data_location_declared
+  - raw_data_mutation_forbidden
+  - statistical_unit_declared
+  - sample_or_patient_mapping_declared_when_group_inference_is_requested
+  - batch_variables_declared_or_absence_documented
+
+allowed_inputs:
+  - data/data_inventory.yaml
+  - data/data_inventory_input.yaml
+  - data/raw/
+  - results/current_run.yaml
+
+forbidden_actions:
+  - mutate_raw_data
+  - infer_patient_level_claims_from_cell_level_tests
+  - execute_unapproved_analysis_graph
+
+audit_outputs:
+  - data/data_audit_report.md
+  - data/data_inventory.yaml
+  - results/runs/<run_id>/inputs_manifest.yaml

@@ -1,0 +1,42 @@
+schema_version: "module_registry_schema.v1"
+purpose: "Required fields for code_library method assets."
+
+module_required_fields:
+  - id
+  - name
+  - modality
+  - step
+  - language
+  - source
+  - environment
+  - input_schema
+  - output_schema
+  - reviewer_value
+  - reviewer_risk
+  - claim_boundary
+  - validation_status
+  - method_maturity
+
+source_required_fields:
+  - type
+  - path
+  - origin
+
+execution_required_when_executable:
+  - type
+  - script
+  - args
+  - timeout_seconds
+
+quality_requirements:
+  source_maps:
+    - figure_source_map.yaml
+    - table_source_map.yaml
+  manifests:
+    - node_manifest.yaml
+    - parameters.yaml
+    - outputs_manifest.yaml
+  provenance:
+    - origin_url_or_internal_origin
+    - claim_boundary
+    - reviewer_risk

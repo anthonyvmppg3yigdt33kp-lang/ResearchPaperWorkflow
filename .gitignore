@@ -14,6 +14,7 @@ build/
 
 # Generated paper projects
 papers/
+strategy/
 
 # Data (large files)
 *.h5ad

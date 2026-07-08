@@ -1,4 +1,4 @@
-# ResearchPaperWorkflow User Guide v4.4+
+# ResearchPaperWorkflow User Guide v4.5+
 
 This guide describes how to use ResearchPaperWorkflow through Claude, Codex, or
 another tool-using AI model. It intentionally avoids asking ordinary
@@ -190,7 +190,46 @@ Human decision:
 - confirm which outputs are official;
 - approve or revise figure plan.
 
-### 5. Manuscript Writing From Verified Outputs
+### 5. Capability-Aware Single-Cell Execution
+
+Use this when the project needs real analysis execution from reusable code
+assets rather than ad hoc new scripts.
+
+Prompt pattern:
+
+```text
+Route this as analysis_design_mode first. Query the code library for available
+single-cell method assets, choose only modules whose environment and source
+maps are declared, write an analysis_graph.yaml, and do not execute until I
+approve the graph.
+```
+
+After approval:
+
+```text
+The graph is approved. Execute the run-scoped analysis graph only. Use the
+declared module registry and environment registry, write node manifests,
+sessionInfo, figure/table source maps, and then evaluate the run.
+```
+
+Expected behavior:
+
+- `list-capabilities` or `plan-analysis --from-code-library` reports candidate
+  modules, environment status, reviewer value, and reviewer risk;
+- `analysis_design.yaml` records selected modules and claim boundaries;
+- `analysis_graph.yaml` becomes the execution contract;
+- `run-analysis --approved --execute` calls the local module instead of
+  inventing new analysis code;
+- `evaluate-run` verifies manifests and source maps.
+
+Human decision:
+
+- approve the graph before execution;
+- confirm data path and statistical unit;
+- treat tutorial or exploratory outputs as workflow validation unless the data
+  are project-specific and the SAP supports inference.
+
+### 6. Manuscript Writing From Verified Outputs
 
 Prompt pattern:
 
@@ -214,7 +253,7 @@ Human decision:
 - reject unsupported biomarker or causal claims;
 - provide missing figure legends or statistics.
 
-### 6. Integrity, AIGC Hygiene, And Finalization
+### 7. Integrity, AIGC Hygiene, And Finalization
 
 Prompt pattern:
 

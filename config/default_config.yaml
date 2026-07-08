@@ -1,5 +1,5 @@
 # =============================================================================
-# Research Paper Workflow v4.4 -- Default Configuration
+# Research Paper Workflow v4.5 -- Default Configuration
 # =============================================================================
 # This file defines the complete pipeline, quality gates, writing standards,
 # research domains, skills dispatching, agent routing, supervision, code library,
@@ -7,14 +7,14 @@
 # academic paper writing workflow.
 # =============================================================================
 
-version: "4.4.0"
+version: "4.5.0"
 
 # =============================================================================
 # 1. PIPELINE STAGES (20 stages)
 # =============================================================================
 pipeline:
-  version: "4.4.0"
-  description: "End-to-end academic research paper writing pipeline -- 20 stages with 44 medical evidence/AIGC gates, truth layer, model-facing AI harness, collaboration modes, and run-scoped results (v4.4)"
+  version: "4.5.0"
+  description: "End-to-end academic research paper writing pipeline -- 20 stages with medical evidence/AIGC gates, truth layer, model-facing AI harness, collaboration modes, run-scoped results, and method-asset analysis graph orchestration (v4.5)"
   stages:
     # --- STAGE 1: select_topic ---
     - id: select_topic
@@ -2184,6 +2184,8 @@ code_library:
   plugin_registry:
     enabled: true
     registry_file: "code_library/plugin_registry.yaml"
+    status: "legacy_file_inventory"
+    superseded_for_planning_by: "code_library/module_registry.yaml"
     auto_register_new_scripts: true
     supported_languages:
       - name: "R"
@@ -2212,6 +2214,40 @@ code_library:
         runner: "jupyter nbconvert --to notebook --execute"
         version_command: "jupyter --version"
         min_version: "6.0.0"
+
+  module_registry:
+    enabled: true
+    registry_file: "code_library/module_registry.yaml"
+    schema_file: "config/module_registry_schema.yaml"
+    purpose: "Canonical method-asset registry for capability-aware planning and graph execution."
+    required_fields:
+      - modality
+      - step
+      - input_schema
+      - output_schema
+      - environment
+      - reviewer_risk
+      - claim_boundary
+      - validation_status
+      - method_maturity
+
+  environment_registry:
+    enabled: true
+    registry_file: "code_library/environment_registry.yaml"
+    contract_file: "config/environment_contract.yaml"
+    require_runner_resolution_before_execution: true
+    require_session_info_per_node: true
+
+  analysis_graph:
+    enabled: true
+    schema_file: "config/analysis_graph_schema.yaml"
+    executor: "paper_workflow.bioinformatics.analysis_graph_executor.AnalysisGraphExecutor"
+    require_user_approval_for_execute: true
+    write_scope: "results/runs/<run_id>/"
+    raw_data_mutation: "forbidden"
+    source_maps:
+      figure: "figure_source_map.yaml"
+      table: "table_source_map.yaml"
 
 # =============================================================================
 # 10. OUTPUT INTERFACES

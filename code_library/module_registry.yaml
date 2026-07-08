@@ -1,0 +1,163 @@
+schema_version: "module_registry.v1"
+updated_at: "2026-07-08"
+purpose: "Method assets that can be selected by strategy planning, executed by graph runner, audited by source maps, and improved from run feedback."
+
+modules:
+  single_cell.seurat_pbmc3k_basic.v1:
+    id: single_cell.seurat_pbmc3k_basic.v1
+    name: Seurat PBMC3K basic workflow
+    modality: single_cell
+    modality_aliases: [scrna, single_cell_rna, single-cell]
+    step: seurat_basic_workflow
+    language: r
+    capability_tags: [single-cell, seurat, pbmc3k, qc, pca, umap, clustering, feature-plot]
+    biological_question_types:
+      - single-cell preprocessing and QC
+      - cluster-level exploratory visualization
+      - marker gene display
+    source:
+      type: local_wrapper
+      path: code_library/modules/single_cell/seurat_pbmc3k_basic/main.R
+      origin: official_seurat_pbmc3k_tutorial_adapted_wrapper
+      origin_url: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html
+      data_url: https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
+      license: user_must_review_upstream_terms_before_redistribution
+    environment:
+      env_id: r_seurat_v5
+      required_packages: [Seurat, Matrix, ggplot2]
+    execution:
+      type: rscript
+      script: code_library/modules/single_cell/seurat_pbmc3k_basic/main.R
+      timeout_seconds: 1800
+      args:
+        - "--input"
+        - "{input_dir}"
+        - "--out"
+        - "{node_dir}"
+        - "--run-id"
+        - "{run_id}"
+        - "--markers"
+        - "{markers}"
+    default_parameters:
+      min_features: 200
+      max_features: 2500
+      max_mt: 5
+      npcs: 10
+      resolution: 0.5
+      markers: "MS4A1,GNLY,CD3E,CD14,FCER1A,FCGR3A,LYZ,PPBP,CD8A"
+    input_schema:
+      required:
+        - name: input_dir
+          type: directory
+          description: "10X PBMC3K matrix directory, either filtered_gene_bc_matrices/hg19 or a parent containing it."
+      optional:
+        - name: markers
+          type: comma_separated_gene_symbols
+    output_schema:
+      artifacts:
+        - qc/qc_metrics.csv
+        - qc/cell_retention.csv
+        - tables/cluster_counts.csv
+        - figures/qc_violin.png
+        - figures/umap_clusters.png
+        - figures/feature_plot_markers.png
+        - objects/pbmc3k_seurat_basic.rds
+        - logs/sessionInfo.txt
+      source_maps:
+        - figure_source_map.yaml
+        - table_source_map.yaml
+    reviewer_value:
+      - documents QC thresholds and cell retention
+      - produces transparent exploratory UMAP and marker feature plots
+      - records Seurat and R session information for Methods
+    reviewer_risk:
+      - visualization-only evidence cannot support disease inference
+      - PBMC3K is a tutorial fixture, not project-specific biological evidence
+      - filtering thresholds require project-specific justification before publication
+    claim_boundary: "Workflow validation and exploratory single-cell preprocessing only; not a disease mechanism or clinical claim."
+    figure_outputs: [qc_violin, umap_clusters, feature_plot_markers]
+    table_outputs: [qc_metrics, cell_retention, cluster_counts]
+    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    validation_status: tutorial_fixture_ready
+    method_maturity: validated_external_tutorial_wrapper
+    compatible_upstream_modules: []
+    compatible_downstream_modules:
+      - single_cell.marker_annotation.v1
+      - single_cell.pseudobulk_de.v1
+    compute_cost: low
+    token_cost: low
+
+  bulk_rnaseq.python_builtin_pilot.v1:
+    id: bulk_rnaseq.python_builtin_pilot.v1
+    name: Built-in bulk RNA-seq pilot adapter
+    modality: bulk_rnaseq
+    step: differential_expression_pilot
+    language: python
+    capability_tags: [bulk-rnaseq, pilot, qc, volcano, heatmap]
+    source:
+      type: internal_adapter
+      path: src/paper_workflow/analysis/adapters.py
+      origin: workflow_builtin
+      license: MIT
+    environment:
+      env_id: python_builtin
+      required_packages: []
+    input_schema:
+      required:
+        - count_matrix_csv
+        - sample_metadata_csv
+    output_schema:
+      artifacts:
+        - tables/differential_expression_pilot.csv
+        - qc/sample_qc.csv
+        - figures/volcano_plot.svg
+        - figures/deg_heatmap.svg
+    reviewer_value:
+      - proves scoped execution and source-map writing
+    reviewer_risk:
+      - approximate statistics are not publication-grade DE
+    claim_boundary: "Workflow execution pilot only; use DESeq2/edgeR/limma for publication-grade inference."
+    figure_outputs: [volcano_plot, deg_heatmap]
+    table_outputs: [differential_expression_pilot, sample_qc]
+    validation_status: tested_internal
+    method_maturity: pilot
+    compute_cost: low
+    token_cost: low
+
+  multi_omics.evidence_synthesis.v1:
+    id: multi_omics.evidence_synthesis.v1
+    name: Multi-omics evidence synthesis planner
+    modality: multi_omics
+    step: evidence_synthesis
+    language: yaml_contract
+    capability_tags: [multi-omics, evidence-synthesis, reviewer-risk, source-map]
+    source:
+      type: planning_contract
+      path: config/bioinformatics_method_contract.yaml
+      origin: workflow_builtin
+      license: MIT
+    environment:
+      env_id: python_builtin
+      required_packages: []
+    input_schema:
+      required:
+        - modality_specific_results
+        - sample_matching_table
+        - source_maps
+    output_schema:
+      artifacts:
+        - tables/evidence_matrix.tsv
+        - review/reviewer_risk_report.md
+    reviewer_value:
+      - prevents unsupported cross-modality claims
+      - separates discovery, association, and validation layers
+    reviewer_risk:
+      - unmatched samples can invalidate cross-omics inference
+      - integration can be overread as mechanism without validation
+    claim_boundary: "Evidence synthesis and claim-boundary audit; not an execution-only omics model."
+    figure_outputs: [integrated_evidence_matrix]
+    table_outputs: [evidence_matrix]
+    validation_status: planning_contract
+    method_maturity: design_ready
+    compute_cost: low
+    token_cost: medium

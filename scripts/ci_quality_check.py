@@ -144,6 +144,12 @@ def validate_analysis_contract(root: Path) -> list[str]:
     issues = []
     if not rules.get("require_design_before_execution", False):
         issues.append("execution_rules.require_design_before_execution must be true")
+    if not rules.get("require_module_registry", False):
+        issues.append("execution_rules.require_module_registry must be true")
+    if not rules.get("require_environment_registry", False):
+        issues.append("execution_rules.require_environment_registry must be true")
+    if not rules.get("require_analysis_graph_for_method_asset_execution", False):
+        issues.append("execution_rules.require_analysis_graph_for_method_asset_execution must be true")
     if not rules.get("forbid_agent_phase_package_install", False):
         issues.append("execution_rules.forbid_agent_phase_package_install must be true")
     return issues
@@ -183,6 +189,42 @@ def validate_code_library_registry(root: Path) -> list[str]:
     return issues
 
 
+def validate_method_asset_registries(root: Path) -> list[str]:
+    module_path = root / "code_library" / "module_registry.yaml"
+    env_path = root / "code_library" / "environment_registry.yaml"
+    issues: list[str] = []
+    if not module_path.exists():
+        issues.append("missing code_library/module_registry.yaml")
+        return issues
+    if not env_path.exists():
+        issues.append("missing code_library/environment_registry.yaml")
+    modules_data = load_yaml(module_path) or {}
+    modules = modules_data.get("modules") or {}
+    if not isinstance(modules, dict) or not modules:
+        issues.append("module_registry must contain a non-empty modules mapping")
+        return issues
+    required = {
+        "name", "modality", "step", "language", "source", "environment",
+        "input_schema", "output_schema", "reviewer_risk", "claim_boundary",
+        "validation_status", "method_maturity",
+    }
+    for module_id, module in modules.items():
+        if not isinstance(module, dict):
+            issues.append(f"module_registry entry {module_id} is not a mapping")
+            continue
+        missing = sorted(required - set(module.keys()))
+        if missing:
+            issues.append(f"module_registry entry {module_id} missing fields: {missing}")
+        source_path = ((module.get("source") or {}).get("path") or "")
+        if source_path and not (root / source_path).exists():
+            issues.append(f"module_registry entry {module_id} source path missing: {source_path}")
+    env_data = load_yaml(env_path) if env_path.exists() else {}
+    envs = (env_data or {}).get("environments") or {}
+    if env_path.exists() and not envs:
+        issues.append("environment_registry must contain at least one environment")
+    return issues
+
+
 def validate_large_files(root: Path, max_bytes: int) -> list[str]:
     issues: list[str] = []
     for path in root.rglob("*"):
@@ -202,6 +244,7 @@ def run_checks(root: Path, max_bytes: int) -> dict[str, Any]:
         "result_write_policy": validate_result_policy(root),
         "bioinformatics_method_contract": validate_analysis_contract(root),
         "code_library_registry": validate_code_library_registry(root),
+        "method_asset_registries": validate_method_asset_registries(root),
         "large_files": validate_large_files(root, max_bytes),
     }
     issue_count = sum(len(v) for v in checks.values())

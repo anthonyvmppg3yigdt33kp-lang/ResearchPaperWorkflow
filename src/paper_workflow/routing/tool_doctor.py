@@ -28,11 +28,14 @@ class ToolDoctor:
         tools = self.check_tools()
         skills = self.check_skills()
         agents = self.check_agents()
+        method_assets = self.check_method_assets()
         required_failures = []
         if skills["missing_bundled_sources"]:
             required_failures.append("missing bundled skill sources")
         if agents["missing_agent_files"]:
             required_failures.append("missing configured agent files")
+        if method_assets["missing_registries"]:
+            required_failures.append("missing method-asset registries")
 
         degraded = []
         if tools["fast_context"]["status"] != "available":
@@ -41,6 +44,8 @@ class ToolDoctor:
             degraded.append("rg unavailable; using Python file scan fallback")
         if skills["missing_local_installs"]:
             degraded.append("some bundled skills are installable but not present in local skill roots")
+        if method_assets["invalid_modules"]:
+            degraded.append("some method assets have registry validation issues")
 
         status = "fail" if required_failures else ("degraded" if degraded else "pass")
         return {
@@ -52,6 +57,7 @@ class ToolDoctor:
             "tools": tools,
             "skills": skills,
             "agents": agents,
+            "method_assets": method_assets,
             "fallback_policy": {
                 "semantic_code_search": [
                     "mcp__fast-context__fast_context_search when callable",
@@ -61,6 +67,30 @@ class ToolDoctor:
                 ],
                 "skill_repair": "Run paper-workflow install-skills for bundled skills; install external MCP/plugins separately.",
             },
+        }
+
+    def check_method_assets(self) -> dict[str, Any]:
+        from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
+        from paper_workflow.bioinformatics.module_registry import ModuleRegistry
+
+        module_registry = ModuleRegistry(self.project_root)
+        environment_registry = EnvironmentRegistry(self.project_root)
+        invalid = []
+        for module_id in sorted(module_registry.modules):
+            issues = module_registry.validate_module(module_id)
+            if issues:
+                invalid.append({"module_id": module_id, "issues": issues})
+        return {
+            "module_registry": str(module_registry.registry_path),
+            "environment_registry": str(environment_registry.registry_path),
+            "missing_registries": [
+                str(path)
+                for path in [module_registry.registry_path, environment_registry.registry_path]
+                if not path.exists()
+            ],
+            "summary": module_registry.capability_summary(),
+            "invalid_modules": invalid,
+            "environment_count": len(environment_registry.environments),
         }
 
     def check_tools(self) -> dict[str, Any]:
@@ -194,5 +224,14 @@ def format_doctor_report(report: dict[str, Any]) -> str:
         f"configured={agents.get('configured_count', 0)} "
         f"available={agents.get('available_count', 0)} "
         f"missing={len(agents.get('missing_agent_files', []))}"
+    )
+    method_assets = report.get("method_assets", {})
+    summary = method_assets.get("summary", {})
+    lines.append(
+        "  method assets: "
+        f"modules={summary.get('module_count', 0)} "
+        f"executable={summary.get('executable_module_count', 0)} "
+        f"envs={method_assets.get('environment_count', 0)} "
+        f"invalid={len(method_assets.get('invalid_modules', []))}"
     )
     return "\n".join(lines)

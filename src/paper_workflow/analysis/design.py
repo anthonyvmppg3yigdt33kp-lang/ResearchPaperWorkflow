@@ -60,6 +60,13 @@ class AnalysisDesign:
     execution_backend: str = "dry_run"
     group_column: str = "condition"
     sample_id_column: str = "sample_id"
+    data_requirements: list[dict[str, Any]] = field(default_factory=list)
+    environment_requirements: list[dict[str, Any]] = field(default_factory=list)
+    module_candidates: list[dict[str, Any]] = field(default_factory=list)
+    selected_modules: list[dict[str, Any]] = field(default_factory=list)
+    analysis_graph: dict[str, Any] = field(default_factory=dict)
+    figure_plan_bindings: list[dict[str, Any]] = field(default_factory=list)
+    reviewer_risk: list[dict[str, Any]] = field(default_factory=list)
     raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -86,6 +93,13 @@ class AnalysisDesign:
             execution_backend=str(data.get("execution_backend", "dry_run")),
             group_column=str(data.get("group_column", "condition")),
             sample_id_column=str(data.get("sample_id_column", "sample_id")),
+            data_requirements=list(data.get("data_requirements", []) or []),
+            environment_requirements=list(data.get("environment_requirements", []) or []),
+            module_candidates=list(data.get("module_candidates", []) or []),
+            selected_modules=list(data.get("selected_modules", []) or []),
+            analysis_graph=dict(data.get("analysis_graph", {}) or {}),
+            figure_plan_bindings=list(data.get("figure_plan_bindings", []) or []),
+            reviewer_risk=list(data.get("reviewer_risk", []) or []),
             raw=dict(data),
         )
 
@@ -154,5 +168,12 @@ class AnalysisDesign:
             "execution_backend": self.execution_backend,
             "group_column": self.group_column,
             "sample_id_column": self.sample_id_column,
+            "data_requirements": self.data_requirements,
+            "environment_requirements": self.environment_requirements,
+            "module_candidates": self.module_candidates,
+            "selected_modules": self.selected_modules,
+            "analysis_graph": self.analysis_graph,
+            "figure_plan_bindings": self.figure_plan_bindings,
+            "reviewer_risk": self.reviewer_risk,
         })
         return data

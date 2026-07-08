@@ -1,6 +1,6 @@
-# Agent Roles v4.3
+# Agent Roles v4.5
 
-This document describes the current V4.3 agent collaboration model. Agent
+This document describes the current V4.5 agent collaboration model. Agent
 routing is configured in `config/default_config.yaml`; stage completion is
 verified through `workflow_contract.yaml`, `StageResult`, and `PaperLoopEngine`.
 
@@ -39,8 +39,8 @@ flowchart TB
 | `aigc_humanizer_reviewer` | Responsible AIGC hygiene scan and conservative revision plan | `aigc_humanizer_review` |
 | `integrity_checker` | Quality gates, claim-evidence checks, final package checks | `integrity_check`, `finalize` |
 | `team_orchestrator` | Internal review, re-review, cross-agent coordination | `internal_review`, `re_review` |
-| `code_librarian` | Code provenance and reusable analysis inventory | supporting `run_analysis`, `verify_methods`, `finalize` |
-| `multi_omics_integrator` | Multi-omics analysis support | supporting `run_analysis`, `verify_methods` |
+| `code_librarian` | Method-asset registry, code provenance, module contracts, reusable analysis inventory | supporting `design_analysis_plan`, `run_analysis`, `verify_methods`, `finalize` |
+| `multi_omics_integrator` | Capability-aware multi-omics analysis graph design and evidence synthesis boundaries | supporting `design_analysis_plan`, `run_analysis`, `verify_methods` |
 
 ## Responsibility Boundaries
 
@@ -49,6 +49,13 @@ flowchart TB
   pending harness or needs-input state.
 - Data and analysis agents do not write manuscript claims before outputs are
   verified.
+- Code-library work must update `code_library/module_registry.yaml` and
+  environment contracts before a module is treated as selectable or executable.
+- Method planning must choose from declared data, environment, and module
+  registries; common bioinformatics knowledge alone is not enough to claim a
+  module is available.
+- Graph execution writes node manifests and source maps, but the truth layer
+  still decides whether `run_analysis` is complete.
 - Writing agents must write from verified artifacts and preserve claim-evidence
   boundaries.
 - Integrity agents report and route failures; they do not silently rewrite the

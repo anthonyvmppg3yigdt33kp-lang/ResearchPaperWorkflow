@@ -20,6 +20,13 @@ analysis_design_required_fields:
 execution_rules:
   require_design_before_execution: true
   require_user_approval_for_new_analysis: true
+  require_data_registry: true
+  require_environment_registry: true
+  require_module_registry: true
+  require_analysis_graph_for_method_asset_execution: true
+  require_module_tests_before_production_execution: true
+  require_source_map_per_figure_table: true
+  require_node_manifest_per_graph_node: true
   require_run_manifest: true
   require_session_info: true
   forbid_agent_phase_package_install: true

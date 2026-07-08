@@ -15,6 +15,9 @@ from typing import Any, Optional
 
 import yaml
 
+from paper_workflow.bioinformatics.analysis_graph import build_graph_from_selected_modules
+from paper_workflow.bioinformatics.module_selector import MethodSelector, render_selection_report
+
 
 RUN_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*_[0-9]{8}_v[0-9]+$")
 REQUIRES_HUMAN_INPUT = "requires_human_input"
@@ -200,11 +203,42 @@ class ResultRunManager:
         group_column: str = "condition",
         sample_id_column: str = "sample_id",
         execution_backend: str = "dry_run",
+        from_code_library: bool = False,
     ) -> dict[str, Any]:
         """Write a dry-run analysis design skeleton without executing analysis."""
         run_dir = self.run_path(run_id)
         if not run_dir.exists():
             self.create_run(run_id, mode="analysis_design_mode")
+
+        selected_modules: list[dict[str, Any]] = []
+        graph_payload: dict[str, Any] = {}
+        normalized_modality = modality.lower().replace("-", "_")
+        graph_requested = from_code_library or normalized_modality in {
+            "scrna",
+            "single_cell",
+            "single_cell_rna",
+            "multiomics",
+            "multi_omics",
+            "spatial",
+        }
+        if graph_requested:
+            project_root = self.paper_dir.parents[1]
+            selector = MethodSelector(project_root=project_root, paper_dir=self.paper_dir)
+            selected_modules = selector.select(goal=goal, modalities=[modality], max_modules=4)
+            if selected_modules:
+                graph = build_graph_from_selected_modules(
+                    run_id=run_id,
+                    goal=goal,
+                    selected_modules=selected_modules,
+                    input_dir=(inputs or [""])[0] if inputs else "",
+                    statistical_unit="sample",
+                )
+                graph_payload = graph.to_dict()
+                graph.write(run_dir / "analysis_graph.yaml")
+                (run_dir / "method_selection_report.md").write_text(
+                    render_selection_report(goal, selected_modules),
+                    encoding="utf-8",
+                )
 
         design = {
             "schema_version": "1.0.0",
@@ -229,6 +263,58 @@ class ResultRunManager:
             "execution_backend": execution_backend,
             "group_column": group_column,
             "sample_id_column": sample_id_column,
+            "data_requirements": [
+                {
+                    "role": "primary_input",
+                    "path": item,
+                    "status": "declared" if item else "not_declared",
+                }
+                for item in (inputs or [])
+            ],
+            "environment_requirements": [
+                {
+                    "env_id": str((module.get("environment") or {}).get("env_id", "")),
+                    "module_id": str(module.get("id") or module.get("module_id", "")),
+                    "status": (module.get("method_selection_score") or {}).get("environment_status", "unknown"),
+                }
+                for module in selected_modules
+            ],
+            "module_candidates": [
+                {
+                    "module_id": str(module.get("id") or module.get("module_id", "")),
+                    "score": (module.get("method_selection_score") or {}).get("total"),
+                    "environment": (module.get("method_selection_score") or {}).get("environment_status"),
+                    "claim_boundary": module.get("claim_boundary", ""),
+                }
+                for module in selected_modules
+            ],
+            "selected_modules": [
+                {
+                    "module_id": str(module.get("id") or module.get("module_id", "")),
+                    "step": module.get("step", ""),
+                    "language": module.get("language", ""),
+                    "source_path": (module.get("source") or {}).get("path", ""),
+                }
+                for module in selected_modules
+            ],
+            "analysis_graph": graph_payload.get("analysis_graph", {}),
+            "data_bindings": graph_payload.get("data_bindings", {}),
+            "execution_policy": graph_payload.get("execution_policy", {}),
+            "figure_plan_bindings": [
+                {
+                    "module_id": str(module.get("id") or module.get("module_id", "")),
+                    "figures": module.get("figure_outputs", []) or [],
+                }
+                for module in selected_modules
+            ],
+            "reviewer_risk": [
+                {
+                    "module_id": str(module.get("id") or module.get("module_id", "")),
+                    "risks": module.get("reviewer_risk", []) or [],
+                    "boundary": module.get("claim_boundary", ""),
+                }
+                for module in selected_modules
+            ],
             "forbidden_actions": forbidden_actions or [
                 "run analysis before approval",
                 "install packages during agent phase",
@@ -246,7 +332,7 @@ class ResultRunManager:
         if modality == "bulk_rnaseq":
             return ["count matrix validation", "sample metadata validation", "library-size normalization"]
         if modality == "scrna":
-            return ["cell QC", "normalization", "dimensionality reduction"]
+            return ["cell QC", "normalization", "variable feature selection", "PCA/UMAP", "feature visualization"]
         if modality == "spatial":
             return ["spatial QC", "coordinate validation"]
         return ["requires_modality_specific_preprocessing_plan"]
@@ -256,7 +342,7 @@ class ResultRunManager:
         if modality == "bulk_rnaseq":
             return ["DESeq2 negative-binomial GLM", "Benjamini-Hochberg FDR"]
         if modality == "scrna":
-            return ["Scanpy or Seurat workflow selected after data audit"]
+            return ["method asset selected from code_library/module_registry.yaml"]
         if modality == "spatial":
             return ["Squidpy or Seurat spatial workflow selected after data audit"]
         return ["requires_method_selection"]
@@ -269,6 +355,15 @@ class ResultRunManager:
                 "normalization/QC report",
                 "volcano plot",
                 "DEG heatmap",
+                "run manifest",
+            ]
+        if modality == "scrna":
+            return [
+                "qc metrics table",
+                "filtered Seurat object",
+                "PCA/UMAP plots",
+                "marker feature plots",
+                "session info",
                 "run manifest",
             ]
         return ["run manifest", "parameters", "outputs manifest", "quality report"]
