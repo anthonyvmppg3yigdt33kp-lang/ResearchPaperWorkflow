@@ -15,6 +15,7 @@ import yaml
 from paper_workflow.ai_harness import AIWorkflowHarness
 from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
+from paper_workflow.bioinformatics.code_source_importer import CodeSourceImporter
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.module_selector import MethodSelector
@@ -601,6 +602,66 @@ def cmd_list_capabilities(args):
         )
 
 
+def cmd_import_code_source(args):
+    importer = CodeSourceImporter(get_root())
+    try:
+        result = importer.import_source(
+            source_id=args.source_id,
+            github=args.github or "",
+            local=args.local or "",
+            paper_doi=args.paper_doi or "",
+            license_text=args.license or "requires_human_review",
+        ).to_dict()
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Source imported for review: {result['source_id']}")
+        print(f"     Manifest: {result['manifest_path']}")
+        print("     Registry update: not performed")
+
+
+def cmd_review_code_source(args):
+    importer = CodeSourceImporter(get_root())
+    try:
+        result = importer.review_source(args.source_id)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Source review packet updated: {args.source_id}")
+        print("     Registry update allowed: false")
+
+
+def cmd_register_figure_style(args):
+    importer = CodeSourceImporter(get_root())
+    try:
+        result = importer.register_figure_style(args.source_id, style_id=args.style_id or "")
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Figure style registered: {result['style_id']}")
+
+
+def cmd_list_figure_styles(args):
+    result = CodeSourceImporter(get_root()).list_figure_styles()
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        styles = result.get("styles", {}) or {}
+        if not styles:
+            print("No figure styles registered.")
+        for style_id, style in styles.items():
+            print(f"- {style_id}: source={style.get('source_id', '')}")
+
+
 def cmd_list_envs(args):
     registry = EnvironmentRegistry(get_root())
     payload = {
@@ -837,6 +898,27 @@ def main():
     p.add_argument("--limit", type=int, default=6)
     p.add_argument("--json", action="store_true")
 
+    p = sub.add_parser("import-code-source")
+    source = p.add_mutually_exclusive_group(required=True)
+    source.add_argument("--github")
+    source.add_argument("--local")
+    p.add_argument("--source-id", required=True)
+    p.add_argument("--paper-doi")
+    p.add_argument("--license")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("review-code-source")
+    p.add_argument("--source-id", required=True)
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("register-figure-style")
+    p.add_argument("--source-id", required=True)
+    p.add_argument("--style-id")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("list-figure-styles")
+    p.add_argument("--json", action="store_true")
+
     p = sub.add_parser("list-envs")
     p.add_argument("--json", action="store_true")
 
@@ -905,6 +987,10 @@ def main():
      "plan-analysis": cmd_plan_analysis, "run-analysis": cmd_run_analysis,
      "list-modules": cmd_list_modules, "inspect-module": cmd_inspect_module,
      "list-capabilities": cmd_list_capabilities,
+     "import-code-source": cmd_import_code_source,
+     "review-code-source": cmd_review_code_source,
+     "register-figure-style": cmd_register_figure_style,
+     "list-figure-styles": cmd_list_figure_styles,
      "list-envs": cmd_list_envs, "inspect-env": cmd_inspect_env,
      "doctor-env": cmd_doctor_env, "validate-env": cmd_validate_env,
      "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
