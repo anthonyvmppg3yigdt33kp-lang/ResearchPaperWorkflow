@@ -195,3 +195,39 @@ paper-workflow list-capabilities \
   --question "publication-oriented bulk RNA-seq DESeq2 limma WGCNA fgsea" \
   --modality bulk_rnaseq
 ```
+
+## Batch 9 Spatial and Communication Assets
+
+Spatial transcriptomics and cell-cell communication modules now join the same
+method-asset contract used by single-cell and bulk RNA-seq assets:
+
+- `spatial.seurat_spatial_qc.v1`
+- `spatial.spatial_feature_plot.v1`
+- `spatial.spatial_domain_detection.v1`
+- `spatial.deconvolution_cell2location_or_rctd.v1`
+- `spatial.spatial_ligand_receptor.v1`
+- `single_cell.cellchat_communication.v1`
+- `single_cell.nichenet_ligand_target.v1`
+
+The spatial source maps explicitly require coordinate-system and tissue-context
+provenance before claims can be promoted:
+
+- coordinate system
+- spot/cell/bin unit
+- tissue section
+- sample identifier
+- deconvolution reference
+- method version
+
+Use capability discovery before planning:
+
+```bash
+paper-workflow list-capabilities \
+  --question "spatial transcriptomics cell communication and colocalization" \
+  --modality spatial
+```
+
+These assets are intentionally conservative. Ligand-receptor inference,
+spatial colocalization, and ligand-target ranking are hypothesis-generating
+unless orthogonal validation, reference provenance, and sample-level evidence
+are supplied by the paper workspace.

@@ -1,0 +1,3 @@
+schema_version: toy_input_manifest.v1
+module_id: spatial.deconvolution_cell2location_or_rctd.v1
+dry_run_command: Rscript main.R --dry-run --out <tmp> --run-id toy_spatial_deconv

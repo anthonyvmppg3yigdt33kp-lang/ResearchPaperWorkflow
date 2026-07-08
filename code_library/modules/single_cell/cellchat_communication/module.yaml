@@ -1,0 +1,18 @@
+module_id: single_cell.cellchat_communication.v1
+modality: single_cell
+step: cellchat_communication
+language: r
+source: {type: adapter_contract, path: code_library/modules/single_cell/cellchat_communication/main.R, origin: cellchat_contract}
+environment: {env_id: r_cell_communication, required_packages: [Seurat, ggplot2]}
+execution: {type: rscript, script: code_library/modules/single_cell/cellchat_communication/main.R, timeout_seconds: 2400}
+input_schema: {required: [seurat_object, ligand_receptor_database, cell_group_column], optional: [dry-run]}
+output_schema: {artifacts: [tables/cellchat_interactions.csv, figures/cellchat_network.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [records ligand-receptor database, cell grouping, method version, communication network]
+reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+claim_boundary: "Cell-cell communication inference is hypothesis-generating and requires validation."
+figure_outputs: [cellchat_network]
+table_outputs: [cellchat_interactions]
+compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+compatible_downstream_modules: []
+validation_status: communication_dry_run_verified
+method_maturity: adapter_contract

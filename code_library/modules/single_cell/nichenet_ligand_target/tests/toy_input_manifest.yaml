@@ -1,0 +1,3 @@
+schema_version: toy_input_manifest.v1
+module_id: single_cell.nichenet_ligand_target.v1
+dry_run_command: Rscript main.R --dry-run --out <tmp> --run-id toy_nichenet

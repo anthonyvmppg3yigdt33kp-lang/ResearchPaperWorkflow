@@ -1,0 +1,18 @@
+module_id: single_cell.nichenet_ligand_target.v1
+modality: single_cell
+step: nichenet_ligand_target
+language: r
+source: {type: adapter_contract, path: code_library/modules/single_cell/nichenet_ligand_target/main.R, origin: nichenet_contract}
+environment: {env_id: r_cell_communication, required_packages: [Seurat, ggplot2]}
+execution: {type: rscript, script: code_library/modules/single_cell/nichenet_ligand_target/main.R, timeout_seconds: 2400}
+input_schema: {required: [seurat_object, ligand_target_prior, sender_receiver_definition], optional: [dry-run]}
+output_schema: {artifacts: [tables/nichenet_ligand_targets.csv, figures/nichenet_ligand_target.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [records ligand-target prior, sender/receiver definition, method version, target ranking]
+reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+claim_boundary: "Ligand-target ranking is hypothesis-generating and does not prove causal signaling."
+figure_outputs: [nichenet_ligand_target]
+table_outputs: [nichenet_ligand_targets]
+compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+compatible_downstream_modules: []
+validation_status: communication_dry_run_verified
+method_maturity: adapter_contract

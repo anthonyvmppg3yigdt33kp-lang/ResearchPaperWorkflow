@@ -1,0 +1,18 @@
+module_id: spatial.spatial_domain_detection.v1
+modality: spatial
+step: spatial_domain_detection
+language: r
+source: {type: adapter_contract, path: code_library/modules/spatial/spatial_domain_detection/main.R, origin: spatial_domain_contract}
+environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
+execution: {type: rscript, script: code_library/modules/spatial/spatial_domain_detection/main.R, timeout_seconds: 1800}
+input_schema: {required: [spatial_object, coordinates, sample_metadata], optional: [dry-run]}
+output_schema: {artifacts: [tables/spatial_domain_assignments.csv, figures/spatial_domains.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [records coordinate system, tissue section, sample_id, method version]
+reviewer_risk: [spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+claim_boundary: "Spatial domains are algorithmic groupings and require biological annotation and validation."
+figure_outputs: [spatial_domains]
+table_outputs: [spatial_domain_assignments]
+compatible_upstream_modules: [spatial.seurat_spatial_qc.v1]
+compatible_downstream_modules: [spatial.spatial_ligand_receptor.v1]
+validation_status: spatial_dry_run_verified
+method_maturity: adapter_contract

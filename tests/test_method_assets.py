@@ -36,6 +36,25 @@ BATCH8_BULK_MODULES = [
     "bulk_rnaseq.fgsea_enrichment.v1",
     "bulk_rnaseq.immune_deconvolution_adapter.v1",
 ]
+BATCH9_SPATIAL_MODULES = [
+    "spatial.seurat_spatial_qc.v1",
+    "spatial.spatial_feature_plot.v1",
+    "spatial.spatial_domain_detection.v1",
+    "spatial.deconvolution_cell2location_or_rctd.v1",
+    "spatial.spatial_ligand_receptor.v1",
+]
+BATCH9_COMMUNICATION_MODULES = [
+    "single_cell.cellchat_communication.v1",
+    "single_cell.nichenet_ligand_target.v1",
+]
+BATCH9_SOURCE_MAP_FIELDS = {
+    "coordinate_system",
+    "spot_cell_bin_unit",
+    "tissue_section",
+    "sample_id",
+    "deconvolution_reference",
+    "method_version",
+}
 
 
 def make_paper_dir():
@@ -332,3 +351,110 @@ def test_bulk_method_selection_includes_publication_oriented_assets():
 
     assert ids - {"bulk_rnaseq.python_builtin_pilot.v1"}
     assert any(module_id in ids for module_id in {"bulk_rnaseq.deseq2_de.v1", "bulk_rnaseq.limma_voom_de.v1"})
+
+
+def test_module_registry_includes_batch9_spatial_and_communication_assets():
+    registry = ModuleRegistry(REPO_ROOT)
+    spatial_modules = registry.list_modules(modality="spatial")
+    single_cell_modules = registry.list_modules(modality="scrna")
+    spatial_ids = {module["id"] for module in spatial_modules}
+    single_cell_ids = {module["id"] for module in single_cell_modules}
+
+    assert len(spatial_modules) >= 5
+    for module_id in BATCH9_SPATIAL_MODULES:
+        assert module_id in spatial_ids
+        assert registry.validate_module(module_id) == []
+    for module_id in BATCH9_COMMUNICATION_MODULES:
+        assert module_id in single_cell_ids
+        assert registry.validate_module(module_id) == []
+
+
+def test_batch9_spatial_and_communication_directories_have_contract_files():
+    required = [
+        "module.yaml",
+        "env_profile.yaml",
+        "main.R",
+        "README.md",
+        "tests/toy_input_manifest.yaml",
+        "tests/expected_outputs.yaml",
+    ]
+    registry = ModuleRegistry(REPO_ROOT)
+    for module_id in BATCH9_SPATIAL_MODULES + BATCH9_COMMUNICATION_MODULES:
+        module = registry.get(module_id)
+        module_dir = (REPO_ROOT / module["source"]["path"]).parent
+        for rel in required:
+            assert (module_dir / rel).exists(), f"{module_id} missing {rel}"
+
+
+def test_batch9_spatial_and_communication_wrappers_support_direct_dry_run():
+    rscript = shutil.which("Rscript") or EnvironmentRegistry(REPO_ROOT).resolve_runner("r_spatial_omics", language="r")
+    if not rscript or not Path(rscript).exists():
+        pytest.skip("Rscript is not available for direct spatial wrapper dry-run")
+
+    registry = ModuleRegistry(REPO_ROOT)
+    for module_id in BATCH9_SPATIAL_MODULES + BATCH9_COMMUNICATION_MODULES:
+        module = registry.get(module_id)
+        script = REPO_ROOT / module["source"]["path"]
+        expected_path = script.parent / "tests" / "expected_outputs.yaml"
+        expected = yaml.safe_load(expected_path.read_text(encoding="utf-8")) or {}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            completed = subprocess.run(
+                [
+                    rscript,
+                    str(script),
+                    "--dry-run",
+                    "--out",
+                    tmpdir,
+                    "--run-id",
+                    f"toy_{module_id.split('.')[-2]}",
+                ],
+                cwd=str(REPO_ROOT),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                timeout=60,
+            )
+            assert completed.returncode == 0, completed.stdout + completed.stderr
+            for rel in expected["required_outputs"]:
+                assert (Path(tmpdir) / rel).exists(), f"{module_id} did not write {rel}"
+            source_map = yaml.safe_load((Path(tmpdir) / "figure_source_map.yaml").read_text(encoding="utf-8"))
+            figure = source_map["figures"][0]
+            assert BATCH9_SOURCE_MAP_FIELDS.issubset(figure.keys())
+            assert "hypothesis-generating" in (Path(tmpdir) / "node_manifest.yaml").read_text(encoding="utf-8")
+
+
+def test_cli_list_capabilities_returns_spatial_assets_with_claim_boundaries():
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(REPO_ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "paper_workflow.cli.main",
+            "list-capabilities",
+            "--question",
+            "空间转录组细胞通讯和空间共定位",
+            "--modality",
+            "spatial",
+            "--json",
+        ],
+        cwd=str(REPO_ROOT),
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    payload = json.loads(completed.stdout)
+    ids = {module["id"] for module in payload["selected_modules"]}
+    risks = {
+        str(risk)
+        for module in payload["selected_modules"]
+        for risk in module.get("reviewer_risk", [])
+    }
+    assert ids & set(BATCH9_SPATIAL_MODULES)
+    assert "spatial overlap does not prove causality" in risks
+    assert "orthogonal validation required for mechanism claims" in risks

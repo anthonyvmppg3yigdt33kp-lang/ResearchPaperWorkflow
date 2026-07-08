@@ -517,6 +517,188 @@ modules:
     compute_cost: medium
     token_cost: low
 
+  spatial.seurat_spatial_qc.v1:
+    id: spatial.seurat_spatial_qc.v1
+    name: Seurat spatial QC adapter
+    modality: spatial
+    modality_aliases: [spatial_transcriptomics, visium, xenium]
+    step: seurat_spatial_qc
+    language: r
+    capability_tags: [spatial, qc, coordinates, tissue-section, dry-run]
+    biological_question_types: [spatial data audit, tissue section QC]
+    source: {type: adapter_contract, path: code_library/modules/spatial/seurat_spatial_qc/main.R, origin: spatial_qc_contract, license: MIT}
+    environment: {env_id: r_spatial_omics, required_packages: [Seurat, SeuratObject, ggplot2]}
+    execution: {type: rscript, script: code_library/modules/spatial/seurat_spatial_qc/main.R, timeout_seconds: 900, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
+    input_schema: {required: [spatial_object, coordinates, sample_metadata], optional: [dry-run]}
+    output_schema: {artifacts: [tables/spatial_qc_metrics.csv, figures/spatial_qc.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+    reviewer_value: [coordinate system, spot/cell/bin unit, tissue section, sample_id, method version]
+    reviewer_risk: [spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+    claim_boundary: "Spatial QC defines usable spots/cells and tissue section metadata; it is not biological evidence."
+    figure_outputs: [spatial_qc]
+    table_outputs: [spatial_qc_metrics]
+    validation_status: spatial_dry_run_verified
+    method_maturity: adapter_contract
+    compatible_upstream_modules: []
+    compatible_downstream_modules: [spatial.spatial_feature_plot.v1, spatial.spatial_domain_detection.v1]
+    compute_cost: low
+    token_cost: low
+
+  spatial.spatial_feature_plot.v1:
+    id: spatial.spatial_feature_plot.v1
+    name: Spatial feature plot adapter
+    modality: spatial
+    modality_aliases: [spatial_transcriptomics, visium, xenium]
+    step: spatial_feature_plot
+    language: r
+    capability_tags: [spatial, feature-plot, visualization, coordinates, dry-run]
+    biological_question_types: [spatial expression visualization]
+    source: {type: adapter_contract, path: code_library/modules/spatial/spatial_feature_plot/main.R, origin: spatial_feature_plot_contract, license: MIT}
+    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
+    execution: {type: rscript, script: code_library/modules/spatial/spatial_feature_plot/main.R, timeout_seconds: 900, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
+    input_schema: {required: [spatial_object, feature_list, coordinates], optional: [dry-run]}
+    output_schema: {artifacts: [tables/spatial_feature_source.csv, figures/spatial_feature_plot.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+    reviewer_value: [coordinate system, tissue section, sample_id, method version]
+    reviewer_risk: [spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+    claim_boundary: "Spatial expression visualization is descriptive and does not prove causality."
+    figure_outputs: [spatial_feature_plot]
+    table_outputs: [spatial_feature_source]
+    validation_status: spatial_dry_run_verified
+    method_maturity: adapter_contract
+    compatible_upstream_modules: [spatial.seurat_spatial_qc.v1]
+    compatible_downstream_modules: [spatial.spatial_ligand_receptor.v1]
+    compute_cost: low
+    token_cost: low
+
+  spatial.spatial_domain_detection.v1:
+    id: spatial.spatial_domain_detection.v1
+    name: Spatial domain detection adapter
+    modality: spatial
+    modality_aliases: [spatial_transcriptomics, visium, xenium]
+    step: spatial_domain_detection
+    language: r
+    capability_tags: [spatial, domain-detection, clustering, dry-run]
+    biological_question_types: [spatial domain discovery]
+    source: {type: adapter_contract, path: code_library/modules/spatial/spatial_domain_detection/main.R, origin: spatial_domain_contract, license: MIT}
+    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
+    execution: {type: rscript, script: code_library/modules/spatial/spatial_domain_detection/main.R, timeout_seconds: 1800, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
+    input_schema: {required: [spatial_object, coordinates, sample_metadata], optional: [dry-run]}
+    output_schema: {artifacts: [tables/spatial_domain_assignments.csv, figures/spatial_domains.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+    reviewer_value: [coordinate system, tissue section, sample_id, method version]
+    reviewer_risk: [spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+    claim_boundary: "Spatial domains are algorithmic groupings and require biological annotation and validation."
+    figure_outputs: [spatial_domains]
+    table_outputs: [spatial_domain_assignments]
+    validation_status: spatial_dry_run_verified
+    method_maturity: adapter_contract
+    compatible_upstream_modules: [spatial.seurat_spatial_qc.v1]
+    compatible_downstream_modules: [spatial.spatial_ligand_receptor.v1]
+    compute_cost: medium
+    token_cost: low
+
+  spatial.deconvolution_cell2location_or_rctd.v1:
+    id: spatial.deconvolution_cell2location_or_rctd.v1
+    name: Spatial deconvolution adapter for cell2location or RCTD
+    modality: spatial
+    modality_aliases: [spatial_transcriptomics, visium, xenium, deconvolution]
+    step: deconvolution_cell2location_or_rctd
+    language: r
+    capability_tags: [spatial, deconvolution, cell2location, rctd, reference, dry-run]
+    biological_question_types: [spatial cell-type composition estimation]
+    source: {type: adapter_contract, path: code_library/modules/spatial/deconvolution_cell2location_or_rctd/main.R, origin: spatial_deconvolution_contract, license: requires_reference_review}
+    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
+    execution: {type: rscript, script: code_library/modules/spatial/deconvolution_cell2location_or_rctd/main.R, timeout_seconds: 2400, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
+    input_schema: {required: [spatial_object, reviewed_reference, coordinates], optional: [dry-run]}
+    output_schema: {artifacts: [tables/spatial_deconvolution_fractions.csv, figures/spatial_deconvolution.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+    reviewer_value: [deconvolution reference, coordinate system, tissue section, sample_id, method version]
+    reviewer_risk: [colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+    claim_boundary: "Deconvolution estimates cell-type abundance and requires reference and orthogonal validation."
+    figure_outputs: [spatial_deconvolution]
+    table_outputs: [spatial_deconvolution_fractions]
+    validation_status: spatial_dry_run_verified
+    method_maturity: adapter_contract
+    compatible_upstream_modules: [spatial.seurat_spatial_qc.v1]
+    compatible_downstream_modules: [spatial.spatial_ligand_receptor.v1]
+    compute_cost: high
+    token_cost: medium
+
+  spatial.spatial_ligand_receptor.v1:
+    id: spatial.spatial_ligand_receptor.v1
+    name: Spatial ligand-receptor hypothesis adapter
+    modality: spatial
+    modality_aliases: [spatial_transcriptomics, visium, xenium, communication]
+    step: spatial_ligand_receptor
+    language: r
+    capability_tags: [spatial, ligand-receptor, communication, colocalization, hypothesis, dry-run]
+    biological_question_types: [spatial communication hypothesis generation]
+    source: {type: adapter_contract, path: code_library/modules/spatial/spatial_ligand_receptor/main.R, origin: spatial_ligand_receptor_contract, license: requires_database_review}
+    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
+    execution: {type: rscript, script: code_library/modules/spatial/spatial_ligand_receptor/main.R, timeout_seconds: 1800, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
+    input_schema: {required: [spatial_object, ligand_receptor_database, coordinates], optional: [dry-run]}
+    output_schema: {artifacts: [tables/spatial_ligand_receptor_pairs.csv, figures/spatial_ligand_receptor.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+    reviewer_value: [ligand-receptor database, coordinate system, tissue section, sample_id, method version]
+    reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+    claim_boundary: "Ligand-receptor and colocalization signals are hypothesis-generating only."
+    figure_outputs: [spatial_ligand_receptor]
+    table_outputs: [spatial_ligand_receptor_pairs]
+    validation_status: spatial_dry_run_verified
+    method_maturity: adapter_contract
+    compatible_upstream_modules: [spatial.spatial_feature_plot.v1, spatial.deconvolution_cell2location_or_rctd.v1]
+    compatible_downstream_modules: []
+    compute_cost: medium
+    token_cost: medium
+
+  single_cell.cellchat_communication.v1:
+    id: single_cell.cellchat_communication.v1
+    name: CellChat communication hypothesis adapter
+    modality: single_cell
+    modality_aliases: [scrna, single_cell_rna, single-cell, communication]
+    step: cellchat_communication
+    language: r
+    capability_tags: [single-cell, cellchat, ligand-receptor, communication, hypothesis, dry-run]
+    biological_question_types: [cell-cell communication hypothesis generation]
+    source: {type: adapter_contract, path: code_library/modules/single_cell/cellchat_communication/main.R, origin: cellchat_contract, license: requires_database_review}
+    environment: {env_id: r_cell_communication, required_packages: [Seurat, ggplot2]}
+    execution: {type: rscript, script: code_library/modules/single_cell/cellchat_communication/main.R, timeout_seconds: 2400, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
+    input_schema: {required: [seurat_object, ligand_receptor_database, cell_group_column], optional: [dry-run]}
+    output_schema: {artifacts: [tables/cellchat_interactions.csv, figures/cellchat_network.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+    reviewer_value: [ligand-receptor database, cell grouping, method version, communication network]
+    reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+    claim_boundary: "Cell-cell communication inference is hypothesis-generating and requires validation."
+    figure_outputs: [cellchat_network]
+    table_outputs: [cellchat_interactions]
+    validation_status: communication_dry_run_verified
+    method_maturity: adapter_contract
+    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+    compatible_downstream_modules: []
+    compute_cost: medium
+    token_cost: medium
+
+  single_cell.nichenet_ligand_target.v1:
+    id: single_cell.nichenet_ligand_target.v1
+    name: NicheNet ligand-target hypothesis adapter
+    modality: single_cell
+    modality_aliases: [scrna, single_cell_rna, single-cell, communication]
+    step: nichenet_ligand_target
+    language: r
+    capability_tags: [single-cell, nichenet, ligand-target, communication, hypothesis, dry-run]
+    biological_question_types: [ligand-target hypothesis prioritization]
+    source: {type: adapter_contract, path: code_library/modules/single_cell/nichenet_ligand_target/main.R, origin: nichenet_contract, license: requires_prior_review}
+    environment: {env_id: r_cell_communication, required_packages: [Seurat, ggplot2]}
+    execution: {type: rscript, script: code_library/modules/single_cell/nichenet_ligand_target/main.R, timeout_seconds: 2400, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
+    input_schema: {required: [seurat_object, ligand_target_prior, sender_receiver_definition], optional: [dry-run]}
+    output_schema: {artifacts: [tables/nichenet_ligand_targets.csv, figures/nichenet_ligand_target.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+    reviewer_value: [ligand-target prior, sender/receiver definition, method version, target ranking]
+    reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
+    claim_boundary: "Ligand-target ranking is hypothesis-generating and does not prove causal signaling."
+    figure_outputs: [nichenet_ligand_target]
+    table_outputs: [nichenet_ligand_targets]
+    validation_status: communication_dry_run_verified
+    method_maturity: adapter_contract
+    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+    compatible_downstream_modules: []
+    compute_cost: medium
+    token_cost: medium
+
   multi_omics.evidence_synthesis.v1:
     id: multi_omics.evidence_synthesis.v1
     name: Multi-omics evidence synthesis planner
