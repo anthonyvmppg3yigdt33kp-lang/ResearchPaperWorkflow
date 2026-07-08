@@ -8,7 +8,7 @@ on:
       - "codex/**"
 
 jobs:
-  tests:
+  python-tests:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
@@ -32,14 +32,131 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Compile sources
-        run: python -m compileall -q src
-
-      - name: Validate configs and repository guardrails
-        run: python scripts/ci_quality_check.py
-
-      - name: Run CLI smoke
-        run: python scripts/ci_cli_smoke.py
+        run: python -m compileall -q src scripts tests
 
       - name: Run tests
         run: python -m pytest -q
 
+  method-asset-schema:
+    name: Method Asset Schema
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Validate configs and repository guardrails
+        run: python scripts/ci_quality_check.py
+
+      - name: Validate workflow contract
+        run: python -m paper_workflow.cli.main validate-contract --strict
+
+      - name: Validate method assets
+        run: python -m pytest -q tests/test_method_assets.py tests/test_source_map_contracts.py
+
+  cli-smoke-bulk:
+    name: CLI Smoke Bulk
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run bulk pilot CLI smoke
+        run: python scripts/ci_cli_smoke.py --output-root .ci_artifacts/bulk_smoke --json
+
+      - name: Upload bulk smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulk-smoke-run
+          path: |
+            .ci_artifacts/bulk_smoke/papers/test_paper/results/runs/bulk_de_20260707_v1/run_manifest.yaml
+            .ci_artifacts/bulk_smoke/papers/test_paper/results/runs/bulk_de_20260707_v1/analysis_design.yaml
+            .ci_artifacts/bulk_smoke/papers/test_paper/results/runs/bulk_de_20260707_v1/evaluation_report.yaml
+            .ci_artifacts/bulk_smoke/papers/test_paper/results/runs/bulk_de_20260707_v1/figure_source_map.yaml
+            .ci_artifacts/bulk_smoke/papers/test_paper/results/runs/bulk_de_20260707_v1/table_source_map.yaml
+
+  cli-smoke-graph-dry-run:
+    name: CLI Smoke Graph Dry Run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run method-asset graph dry-run
+        run: python scripts/ci_graph_dry_run.py --output-root .ci_artifacts/graph_dry_run --json
+
+      - name: Upload graph dry-run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-dry-run
+          path: |
+            .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/run_manifest.yaml
+            .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/analysis_graph.yaml
+            .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/method_selection_report.md
+            .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/evaluation_report.yaml
+            .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/figure_source_map.yaml
+            .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/table_source_map.yaml
+
+  r-method-smoke-optional:
+    name: R Method Smoke Optional
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check Rscript and wrapper syntax when available
+        run: |
+          if command -v Rscript >/dev/null 2>&1; then
+            Rscript --version
+            Rscript -e "parse('code_library/modules/single_cell/seurat_pbmc3k_basic/main.R')"
+          else
+            echo "Rscript not available; optional R method smoke skipped."
+          fi
+
+  security-light:
+    name: Security Light
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check for oversized tracked artifacts
+        run: python scripts/ci_quality_check.py --max-bytes 25000000

@@ -37,3 +37,28 @@ def test_ci_cli_smoke_produces_bulk_pilot_package():
     assert payload["status"] == "pass"
     assert payload["missing"] == []
 
+
+def test_ci_graph_dry_run_produces_method_asset_package():
+    result = run_script("ci_graph_dry_run.py")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "pass"
+    assert payload["missing"] == []
+    assert payload["run_dir"].endswith("pbmc3k_demo_20260708_v1")
+    assert "Status: dry_run_completed" in payload["outputs"][2]["stdout"]
+    assert "\"status\": \"degraded_exploratory\"" in payload["outputs"][3]["stdout"]
+
+
+def test_ci_workflow_declares_production_preflight_jobs():
+    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    for job in [
+        "python-tests:",
+        "method-asset-schema:",
+        "cli-smoke-bulk:",
+        "cli-smoke-graph-dry-run:",
+        "r-method-smoke-optional:",
+        "security-light:",
+    ]:
+        assert job in workflow
+    assert "actions/upload-artifact@v4" in workflow
+
