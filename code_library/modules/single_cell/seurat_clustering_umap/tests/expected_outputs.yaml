@@ -1,0 +1,1 @@
+required_outputs: [node_manifest.yaml, parameters.yaml, outputs_manifest.yaml, figure_source_map.yaml, table_source_map.yaml, logs/sessionInfo.txt, tables/cluster_counts.csv, figures/umap_clusters.png]

@@ -1,0 +1,4 @@
+schema_version: toy_input_manifest.v1
+module_id: single_cell.pseudobulk_aggregate.v1
+dry_run_command: Rscript main.R --dry-run --out <tmp> --run-id toy_pseudobulk
+real_input_type: seurat_rds_with_sample_and_group_columns

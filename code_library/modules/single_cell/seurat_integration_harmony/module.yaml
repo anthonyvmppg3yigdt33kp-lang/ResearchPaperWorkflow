@@ -1,0 +1,18 @@
+module_id: single_cell.seurat_integration_harmony.v1
+modality: single_cell
+step: seurat_integration_harmony
+language: r
+source: {type: thin_wrapper, path: code_library/modules/single_cell/seurat_integration_harmony/main.R, origin: code_library/r/bioinformatics_analysis.R}
+environment: {env_id: r_seurat_harmony, required_packages: [Seurat, SeuratObject, harmony, Matrix, ggplot2]}
+execution: {type: rscript, script: code_library/modules/single_cell/seurat_integration_harmony/main.R, timeout_seconds: 1800}
+input_schema: {required: [{name: input, type: seurat_rds}, {name: batch-var, type: metadata_column}], optional: [{name: dry-run, type: flag}]}
+output_schema: {artifacts: [tables/integration_summary.csv, objects/seurat_harmony.rds, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [declares batch variable, records integration parameters, separates batch correction from biological interpretation]
+reviewer_risk: [overcorrection may remove biology, batch correction cannot rescue confounded study design]
+claim_boundary: "Batch-corrected embedding for exploratory integration; does not prove batch-free biology."
+figure_outputs: [harmony_embedding]
+table_outputs: [integration_summary]
+compatible_upstream_modules: [single_cell.seurat_qc.v1]
+compatible_downstream_modules: [single_cell.seurat_clustering_umap.v1]
+validation_status: dry_run_verified
+method_maturity: thin_wrapper

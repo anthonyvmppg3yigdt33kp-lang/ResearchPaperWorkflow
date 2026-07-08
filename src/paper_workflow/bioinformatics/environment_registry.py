@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import copy
 import shutil
 import subprocess
 import sys
@@ -35,6 +36,8 @@ def _write_yaml(path: Path, data: dict[str, Any]) -> None:
 
 class EnvironmentRegistry:
     """Resolve declared execution environments without installing packages."""
+
+    _VALIDATION_CACHE: dict[tuple[str, str, str, str, bool, bool], dict[str, Any]] = {}
 
     def __init__(self, project_root: Path, registry_path: Optional[Path] = None):
         self.project_root = Path(project_root)
@@ -203,6 +206,16 @@ class EnvironmentRegistry:
         require_lock: bool = False,
         require_packages: bool = True,
     ) -> dict[str, Any]:
+        cache_key = (
+            str(self.registry_path.resolve()),
+            self.content_hash(),
+            env_id,
+            language.lower(),
+            bool(require_lock),
+            bool(require_packages),
+        )
+        if cache_key in self._VALIDATION_CACHE:
+            return copy.deepcopy(self._VALIDATION_CACHE[cache_key])
         env = self.get(env_id)
         runner_status = self.validate_runner(env_id, language)
         lock_status = self.validate_lock_file(env_id, require_lock=require_lock)
@@ -218,7 +231,7 @@ class EnvironmentRegistry:
             issues.extend(item.get("issues", []) or [])
         status = "pass" if not issues else "blocked"
         reproducibility_grade = "locked" if lock_status["lock_file_present"] else "degraded"
-        return {
+        result = {
             "env_id": env_id,
             "status": status,
             "runner": runner_status.get("runner", ""),
@@ -235,6 +248,8 @@ class EnvironmentRegistry:
             "issues": issues,
             "validation": env.get("validation", {}) if env else {},
         }
+        self._VALIDATION_CACHE[cache_key] = copy.deepcopy(result)
+        return result
 
     def write_environment_report(self, env_id: str, path: Path, **kwargs: Any) -> dict[str, Any]:
         report = self.validate_environment(env_id, **kwargs)

@@ -20,8 +20,62 @@ environments:
     seed_policy: required
     compatible_modules:
       - single_cell.seurat_pbmc3k_basic.v1
+      - single_cell.seurat_qc.v1
+      - single_cell.seurat_clustering_umap.v1
+      - single_cell.marker_feature_plot.v1
+      - single_cell.pseudobulk_aggregate.v1
     validation:
       last_checked: "2026-07-08"
+      status: runner_detected_or_pending_package_check
+      checks:
+        runner_available: null
+        packages_available: null
+        lock_file_present: null
+
+  r_seurat_harmony:
+    env_id: r_seurat_harmony
+    language: R
+    manager: renv_or_system
+    runner: Rscript
+    lock_file: ""
+    required_packages:
+      - Seurat
+      - SeuratObject
+      - harmony
+      - Matrix
+      - ggplot2
+    required_package_check:
+      type: r_requireNamespace
+    session_info_required: true
+    seed_policy: required
+    compatible_modules:
+      - single_cell.seurat_integration_harmony.v1
+    validation:
+      last_checked: "2026-07-09"
+      status: runner_detected_or_pending_package_check
+      checks:
+        runner_available: null
+        packages_available: null
+        lock_file_present: null
+
+  r_pseudobulk_deseq2:
+    env_id: r_pseudobulk_deseq2
+    language: R
+    manager: renv_or_system
+    runner: Rscript
+    lock_file: ""
+    required_packages:
+      - DESeq2
+      - Matrix
+      - ggplot2
+    required_package_check:
+      type: r_requireNamespace
+    session_info_required: true
+    seed_policy: required
+    compatible_modules:
+      - single_cell.pseudobulk_deseq2.v1
+    validation:
+      last_checked: "2026-07-09"
       status: runner_detected_or_pending_package_check
       checks:
         runner_available: null

@@ -1,0 +1,18 @@
+module_id: single_cell.marker_feature_plot.v1
+modality: single_cell
+step: marker_feature_plot
+language: r
+source: {type: thin_wrapper, path: code_library/modules/single_cell/marker_feature_plot/main.R, origin: code_library/r/bioinformatics_analysis.R}
+environment: {env_id: r_seurat_v5, required_packages: [Seurat, SeuratObject, Matrix, ggplot2]}
+execution: {type: rscript, script: code_library/modules/single_cell/marker_feature_plot/main.R, timeout_seconds: 600}
+input_schema: {required: [{name: input, type: seurat_rds}, {name: markers, type: comma_separated_gene_symbols}], optional: [{name: dry-run, type: flag}]}
+output_schema: {artifacts: [tables/marker_presence.csv, figures/marker_feature_plot.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [documents requested marker list, records absent markers, links feature plots to object source]
+reviewer_risk: [marker display alone does not annotate cells, visual expression is not differential evidence]
+claim_boundary: "Marker display only; expression overlays do not establish cell identity or mechanism alone."
+figure_outputs: [marker_feature_plot]
+table_outputs: [marker_presence]
+compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+compatible_downstream_modules: []
+validation_status: dry_run_verified
+method_maturity: thin_wrapper

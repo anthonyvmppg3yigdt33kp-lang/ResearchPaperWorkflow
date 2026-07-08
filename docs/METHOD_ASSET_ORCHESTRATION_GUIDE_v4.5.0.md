@@ -145,3 +145,30 @@ For the Seurat PBMC3K module, a successful run writes:
 
 PBMC3K is a tutorial fixture. It validates workflow wiring and method-asset
 execution. It does not support disease, diagnostic, or mechanism claims.
+
+## Batch 7 Single-Cell Asset Split
+
+The local `code_library/r/bioinformatics_analysis.R` functions are now exposed
+as first-class method assets with independent module directories, metadata,
+environment profiles, dry-run fixtures, and thin `main.R` wrappers:
+
+- `single_cell.seurat_qc.v1`
+- `single_cell.seurat_integration_harmony.v1`
+- `single_cell.seurat_clustering_umap.v1`
+- `single_cell.marker_feature_plot.v1`
+- `single_cell.pseudobulk_aggregate.v1`
+- `single_cell.pseudobulk_deseq2.v1`
+
+Each wrapper supports:
+
+```bash
+Rscript code_library/modules/single_cell/<module>/main.R \
+  --dry-run \
+  --out <tmp_out> \
+  --run-id toy_<module>
+```
+
+Dry-run writes `node_manifest.yaml`, `parameters.yaml`,
+`outputs_manifest.yaml`, `logs/sessionInfo.txt`, and node-level figure/table
+source maps. Real execution still requires an approved graph, declared inputs,
+and an environment that satisfies the package and lock policy.

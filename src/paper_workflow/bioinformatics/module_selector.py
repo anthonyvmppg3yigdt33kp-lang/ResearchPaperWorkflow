@@ -22,6 +22,7 @@ class MethodSelector:
         self.modules = ModuleRegistry(self.project_root)
         self.environments = EnvironmentRegistry(self.project_root)
         self.data = DataRegistry(self.paper_dir) if self.paper_dir else None
+        self._environment_cache: dict[tuple[str, str], dict[str, Any]] = {}
 
     def select(
         self,
@@ -51,7 +52,11 @@ class MethodSelector:
         tags = {str(t).lower() for t in module.get("capability_tags", []) or []}
         modality = str(module.get("modality", "")).lower()
         env_id = str((module.get("environment") or {}).get("env_id", ""))
-        env_status = self.environments.validate_environment(env_id, language=str(module.get("language", "")))
+        language = str(module.get("language", ""))
+        cache_key = (env_id, language.lower())
+        if cache_key not in self._environment_cache:
+            self._environment_cache[cache_key] = self.environments.validate_environment(env_id, language=language)
+        env_status = self._environment_cache[cache_key]
         validation = str(module.get("validation_status", "")).lower()
         maturity = str(module.get("method_maturity", "")).lower()
         reviewer_value = module.get("reviewer_value", []) or []

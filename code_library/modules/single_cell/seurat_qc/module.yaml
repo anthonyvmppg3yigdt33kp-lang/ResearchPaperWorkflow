@@ -1,0 +1,18 @@
+module_id: single_cell.seurat_qc.v1
+modality: single_cell
+step: seurat_qc
+language: r
+source: {type: thin_wrapper, path: code_library/modules/single_cell/seurat_qc/main.R, origin: code_library/r/bioinformatics_analysis.R}
+environment: {env_id: r_seurat_v5, required_packages: [Seurat, SeuratObject, Matrix, ggplot2]}
+execution: {type: rscript, script: code_library/modules/single_cell/seurat_qc/main.R, timeout_seconds: 900}
+input_schema: {required: [{name: input, type: seurat_rds}], optional: [{name: dry-run, type: flag}]}
+output_schema: {artifacts: [qc/cell_retention.csv, objects/seurat_qc.rds, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
+reviewer_value: [documents cell retention, records QC thresholds, creates auditable preprocessing boundary]
+reviewer_risk: [filter thresholds can bias downstream composition, QC alone is not biological evidence]
+claim_boundary: "QC and filtering only; retained cells are analysis inputs, not biological evidence."
+figure_outputs: [qc_violin]
+table_outputs: [cell_retention]
+compatible_upstream_modules: []
+compatible_downstream_modules: [single_cell.seurat_clustering_umap.v1, single_cell.seurat_integration_harmony.v1]
+validation_status: dry_run_verified
+method_maturity: thin_wrapper

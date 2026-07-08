@@ -1,0 +1,5 @@
+env_id: r_pseudobulk_deseq2
+language: R
+required_packages: [DESeq2, Matrix, ggplot2]
+execution_policy: {package_install_in_agent_phase: forbidden, raw_data_mutation: forbidden}
+outputs: {session_info: logs/sessionInfo.txt, node_manifest: node_manifest.yaml}

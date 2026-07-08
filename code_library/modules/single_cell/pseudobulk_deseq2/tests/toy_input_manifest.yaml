@@ -1,0 +1,4 @@
+schema_version: toy_input_manifest.v1
+module_id: single_cell.pseudobulk_deseq2.v1
+dry_run_command: Rscript main.R --dry-run --out <tmp> --run-id toy_pseudobulk_deseq2
+real_input_type: pseudobulk_result_rds
