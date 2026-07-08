@@ -80,6 +80,11 @@ paper-workflow run-analysis \
   --set-current
 ```
 
+Real execution is fail-closed at three layers: CLI, adapter dispatch, and
+analysis graph execution. `--execute` without `--approved` exits before any
+analysis command is launched, and direct graph execution records
+`block_reason: user_approval_required` when approval is missing.
+
 6. Audit the run:
 
 ```bash

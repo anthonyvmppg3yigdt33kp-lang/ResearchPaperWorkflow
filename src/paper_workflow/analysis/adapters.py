@@ -798,6 +798,16 @@ def run_analysis_adapter(
     backend: str | None = None,
 ) -> AdapterRunResult:
     """Dispatch to the safest available adapter for an analysis design."""
+    if execute and not design.user_approval:
+        return AdapterRunResult(
+            status="blocked",
+            adapter="approval_gate",
+            run_id=design.run_id,
+            artifacts=[],
+            metrics={},
+            warnings=[],
+            errors=["user_approval is required for real execution"],
+        )
     if design.analysis_graph:
         graph_result = run_analysis_graph(design, run_dir, execute=execute)
         return AdapterRunResult(
@@ -830,7 +840,7 @@ def run_analysis_graph(design: AnalysisDesign, run_dir: Path, execute: bool = Fa
     """Execute or dry-run a method-asset analysis graph."""
     graph = AnalysisGraph.from_dict(design.to_dict())
     project_root = _find_project_root(run_dir)
-    return AnalysisGraphExecutor(project_root).run(graph, run_dir, execute=execute)
+    return AnalysisGraphExecutor(project_root).run(graph, run_dir, execute=execute, approval=design.user_approval)
 
 
 def _find_project_root(path: Path) -> Path:

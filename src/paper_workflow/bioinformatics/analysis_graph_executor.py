@@ -70,7 +70,13 @@ class AnalysisGraphExecutor:
         self.modules = ModuleRegistry(self.project_root)
         self.environments = EnvironmentRegistry(self.project_root)
 
-    def run(self, graph: AnalysisGraph, run_dir: Path, execute: bool = False) -> GraphRunResult:
+    def run(
+        self,
+        graph: AnalysisGraph,
+        run_dir: Path,
+        execute: bool = False,
+        approval: bool = False,
+    ) -> GraphRunResult:
         start = perf_counter()
         run_dir = Path(run_dir)
         paper_dir = run_dir.parents[2]
@@ -83,6 +89,12 @@ class AnalysisGraphExecutor:
         graph_issues = graph.validate()
         if graph_issues:
             errors.extend(graph_issues)
+
+        approval_required = bool(graph.execution_policy.get("require_user_approval", True))
+        block_reason = ""
+        if execute and approval_required and not approval:
+            block_reason = "user_approval_required"
+            errors.append("analysis graph execution requires explicit user approval")
 
         node_records = []
         if not errors:
@@ -111,6 +123,8 @@ class AnalysisGraphExecutor:
             "executed_at": utc_now(),
             "dry_run": not execute,
             "analysis_graph": "analysis_graph.yaml",
+            "approval_required": approval_required,
+            "approval_granted": bool(approval),
             "module_registry": str(self.modules.registry_path),
             "module_registry_hash": self.modules.content_hash(),
             "nodes": node_records,
@@ -118,6 +132,8 @@ class AnalysisGraphExecutor:
             "warnings": warnings,
             "errors": errors,
         })
+        if block_reason:
+            manifest["block_reason"] = block_reason
         write_yaml(run_dir / "run_manifest.yaml", manifest)
         artifacts.append(_artifact(run_dir / "run_manifest.yaml", paper_dir))
         write_yaml(

@@ -488,6 +488,10 @@ def cmd_plan_analysis(args):
 
 
 def cmd_run_analysis(args):
+    if args.execute and not args.approved:
+        print("[ERROR] --execute requires --approved for any real analysis execution.")
+        sys.exit(1)
+
     paper_dir = get_paper_dir(args)
     manager = ResultRunManager(paper_dir)
     try:
