@@ -96,7 +96,46 @@ def test_evaluate_run_reports_missing_source_maps_without_failing_baseline(paper
     assert data["source_map_valid"] is False
     assert data["source_map_issue_count"] >= 2
     assert "evidence_grade" in data
+    assert data["evidence_summary"]["claim_count"] == 0
     assert (manager.run_path("bulk_de_20260707_v1") / "evaluation_report.yaml").exists()
+
+
+def test_evaluate_run_writes_evidence_graph_outputs_from_source_maps(paper_dir):
+    manager = ResultRunManager(paper_dir)
+    manager.create_run("bulk_de_20260707_v1")
+    run_dir = manager.run_path("bulk_de_20260707_v1")
+    (run_dir / "figure_source_map.yaml").write_text(
+        "schema_version: test\n"
+        "figures:\n"
+        "  - figure_id: pilot_volcano\n"
+        "    path: figures/volcano_plot.svg\n"
+        "    source_data: tables/de.csv\n"
+        "    script: adapter.py\n"
+        "    method: pilot differential expression visualization\n"
+        "    statistical_unit: sample\n"
+        "    claim_boundary: workflow pilot only; not publication-grade DE\n",
+        encoding="utf-8",
+    )
+    (run_dir / "table_source_map.yaml").write_text(
+        "schema_version: test\n"
+        "tables:\n"
+        "  - table_id: pilot_de\n"
+        "    path: tables/de.csv\n"
+        "    source_inputs: [counts.csv, metadata.csv]\n"
+        "    method: pilot logCPM contrast\n"
+        "    statistical_unit: sample\n",
+        encoding="utf-8",
+    )
+
+    data = manager.evaluate_run("bulk_de_20260707_v1", write_report=True).to_dict()
+
+    assert data["source_map_valid"] is True
+    assert data["evidence_summary"]["claim_count"] == 2
+    assert "publication_candidate_claims" in data["evidence_summary"]
+    assert (run_dir / "tables" / "evidence_matrix.tsv").exists()
+    assert (run_dir / "review" / "reviewer_risk_report.md").exists()
+    assert (run_dir / "brief" / "FIGURE_STORYLINE.md").exists()
+    assert (run_dir / "claims" / "claim_ledger.jsonl").exists()
 
 
 def test_workflow_modes_config_is_parseable_and_defers_full_pipeline_by_default():

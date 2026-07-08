@@ -16,6 +16,7 @@ from typing import Any, Optional
 import yaml
 
 from paper_workflow.bioinformatics.analysis_graph import build_graph_from_selected_modules
+from paper_workflow.bioinformatics.evidence_synthesizer import EvidenceSynthesizer
 from paper_workflow.bioinformatics.module_selector import MethodSelector, render_selection_report
 from paper_workflow.outputs.source_map import SourceMapValidator
 
@@ -75,6 +76,7 @@ class RunEvaluation:
     reproducibility_grade: str = "not_evaluated"
     evidence_grade: str = "exploratory"
     reviewer_risk_count: int = 0
+    evidence_summary: dict[str, Any] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -104,6 +106,7 @@ class RunEvaluation:
             "reproducibility_grade": self.reproducibility_grade,
             "evidence_grade": self.evidence_grade,
             "reviewer_risk_count": self.reviewer_risk_count,
+            "evidence_summary": self.evidence_summary or {},
         }
 
 
@@ -423,6 +426,10 @@ class ResultRunManager:
         failed_nodes = [n for n in nodes if n.get("status") in {"failed", "error"}]
         node_manifest_count = len(list((run_dir / "nodes").glob("*/*node_manifest.yaml"))) if (run_dir / "nodes").exists() else 0
         source_status = SourceMapValidator().validate_run(run_dir)
+        evidence_packet = EvidenceSynthesizer(run_dir).synthesize(
+            source_map_valid=source_status["status"] == "pass",
+            write_outputs=write_report,
+        )
         stderr_warning_count = 0
         for stderr_path in run_dir.rglob("stderr.log"):
             text = stderr_path.read_text(encoding="utf-8", errors="replace").lower()
@@ -479,6 +486,7 @@ class ResultRunManager:
             reproducibility_grade=reproducibility_grade,
             evidence_grade=evidence_grade,
             reviewer_risk_count=reviewer_risk_count,
+            evidence_summary=evidence_packet["summary"],
         )
         if write_report:
             write_yaml(run_dir / "evaluation_report.yaml", evaluation.to_dict())

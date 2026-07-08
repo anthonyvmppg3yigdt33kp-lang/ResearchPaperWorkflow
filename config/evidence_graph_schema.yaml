@@ -1,0 +1,29 @@
+schema_version: evidence_graph_schema.v1
+claims:
+  required_fields:
+    - claim_id
+    - claim_text
+    - evidence_level
+    - supporting_nodes
+    - supporting_artifacts
+    - statistical_unit
+    - reviewer_risk
+    - claim_boundary
+    - contradiction
+    - next_validation_needed
+  evidence_levels:
+    - observation
+    - association
+    - validated
+    - hypothesis
+outputs:
+  evidence_matrix: tables/evidence_matrix.tsv
+  reviewer_risk_report: review/reviewer_risk_report.md
+  figure_storyline: brief/FIGURE_STORYLINE.md
+  claim_ledger: claims/claim_ledger.jsonl
+promotion_rules:
+  executable_is_not_publishable: true
+  figure_is_not_evidence_without_source_map: true
+  spatial_colocalization_and_communication: hypothesis
+  marker_visualization_alone: observation
+  bulk_de_plus_sc_pseudobulk: association
