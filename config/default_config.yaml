@@ -617,6 +617,24 @@ ai_harness:
     doctor:
       cli_command: "doctor"
       description: "Check local tools, fast-context fallback, bundled skills, and configured agents."
+    list_capabilities:
+      cli_command: "list-capabilities"
+      description: "Rank available code_library method assets for a natural-language analysis question."
+    list_modules:
+      cli_command: "list-modules"
+      description: "List registered method assets by modality, step, or language."
+    inspect_module:
+      cli_command: "inspect-module"
+      description: "Inspect one method asset, including source path, environment, claim boundary, and validation issues."
+    plan_analysis:
+      cli_command: "plan-analysis"
+      description: "Create an analysis design and method-selection report from code_library without executing analysis."
+    run_analysis:
+      cli_command: "run-analysis"
+      description: "Execute a prepared result run only after explicit approval and required gates."
+    evaluate_run:
+      cli_command: "evaluate-run"
+      description: "Evaluate result-run completeness, source maps, environment/data status, and reviewer-risk fields."
   scenario_routes:
     not_started:
       user_situation: "User has not started and only has a broad clinical or biological idea."

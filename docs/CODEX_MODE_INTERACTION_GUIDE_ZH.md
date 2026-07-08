@@ -134,3 +134,32 @@ Closeout: 说明新增能力、测试结果、剩余外部配置
 ```text
 请先用 route-task 判断模式；如果不是 execution_mode，不要运行代码。根目录是 [path]。只允许读取 [inputs]。禁止 [actions]。输出到 [path]。证据必须来自 [standard]。最后按 completed / blockers / next action closeout。
 ```
+
+## 9. v4.6 方法资产自然语言入口
+
+用途：让 Codex/Claude 先理解 `code_library` 中当前可用的方法资产，再生成可审查的分析设计；真实执行必须有 run_id、`analysis_design.yaml` 和明确用户批准。
+
+推荐请求：
+
+```text
+有哪些分析可用，尤其是 PBMC 单细胞 Seurat?
+根据我的 code library 给这个 paper 规划一个单细胞分析方案，不要执行。
+执行这个分析 run_id method_asset_20260709_v1，已批准。
+评估这个 run run_id method_asset_20260709_v1。
+```
+
+对应 CLI：
+
+```text
+python -m paper_workflow.cli list-capabilities --question "<question>" --modality scrna --paper <paper_id> --json
+python -m paper_workflow.cli plan-analysis --paper <paper_id> --run-id <run_id> --goal "<goal>" --modality scrna --from-code-library --set-current --json
+python -m paper_workflow.cli run-analysis --paper <paper_id> --run-id <run_id> --execute --approved --set-current --json
+python -m paper_workflow.cli evaluate-run --paper <paper_id> --run-id <run_id> --write-report --json
+```
+
+安全边界：
+
+- `plan-analysis` 只写 `results/runs/<run_id>/analysis_design.yaml`、`analysis_graph.yaml` 和方法选择报告，不执行代码。
+- `run-analysis --execute` 没有 `--approved` 必须失败；AI harness 中缺少明确批准词时返回 `needs_input`。
+- `evaluate-run` 是 closeout 审核入口，用于检查 run manifest、source maps、环境/数据状态和 reviewer-risk 字段。
+- 如果 `doctor` 报告 fast-context 不可用，允许降级到本地 grep/rg，但必须在 closeout 中说明。

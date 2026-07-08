@@ -19,7 +19,7 @@ def test_validate_contract_checks_ai_harness_routes():
 
     assert result["valid"], result
     assert result["counts"]["ai_harness_routes"] == 5
-    assert result["counts"]["ai_harness_commands"] == 14
+    assert result["counts"]["ai_harness_commands"] == 20
 
 
 def test_ai_harness_dry_run_routes_static_check_without_state_change():

@@ -17,7 +17,11 @@ from typing import Any, Optional
 
 import yaml
 
+from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
+from paper_workflow.bioinformatics.module_registry import ModuleRegistry
+from paper_workflow.bioinformatics.module_selector import MethodSelector
+from paper_workflow.outputs.result_run_manager import ResultRunManager
 from paper_workflow.routing.mode_resolver import ModeResolver
 from paper_workflow.routing.tool_doctor import ToolDoctor
 
@@ -42,6 +46,12 @@ class AIWorkflowHarness:
         "list_papers",
         "route_task",
         "doctor",
+        "list_capabilities",
+        "list_modules",
+        "inspect_module",
+        "plan_analysis",
+        "run_analysis",
+        "evaluate_run",
     }
 
     INTENT_COMMANDS = {
@@ -59,6 +69,12 @@ class AIWorkflowHarness:
         "list_papers": "list-papers",
         "route_task": "route-task",
         "doctor": "doctor",
+        "list_capabilities": "list-capabilities",
+        "list_modules": "list-modules",
+        "inspect_module": "inspect-module",
+        "plan_analysis": "plan-analysis",
+        "run_analysis": "run-analysis",
+        "evaluate_run": "evaluate-run",
     }
 
     STAGE_IDS = (
@@ -164,6 +180,7 @@ class AIWorkflowHarness:
         )
         intent = self.classify_request(request, paper_id=resolved_paper.get("paper_id"))
         intent = self._apply_route_guard(intent, request=request, route=route, resolved_paper=resolved_paper)
+        route = self._method_asset_route(intent, route)
         timeline_weeks = timeline_weeks or self._infer_timeline(request) or 8
         max_stages = (
             max_stages
@@ -204,12 +221,25 @@ class AIWorkflowHarness:
             "next_model_actions": [],
             "user_facing_reply": "",
         }
+        guard = self._method_asset_guard(intent, request, resolved_paper)
+        if guard:
+            payload.update(guard)
+            return payload
         if dry_run:
             payload["next_model_actions"] = self._next_actions_for_plan(intent, resolved_paper)
             payload["user_facing_reply"] = self._planned_reply(payload)
             return payload
 
-        paperless_intents = {"create_project", "list_papers", "validate_contract", "route_task", "doctor"}
+        paperless_intents = {
+            "create_project",
+            "list_papers",
+            "validate_contract",
+            "route_task",
+            "doctor",
+            "list_capabilities",
+            "list_modules",
+            "inspect_module",
+        }
         if intent not in paperless_intents and not resolved_paper.get("paper_id"):
             payload["status"] = "needs_input"
             payload["result"] = {
@@ -267,6 +297,100 @@ class AIWorkflowHarness:
             return "route_task"
         if self._has_any(text, compact, ("doctor", "tool check", "fast-context", "fast_context", "skill check", "agent check", "工具不可用", "工具检查")):
             return "doctor"
+        if self._has_any(
+            text,
+            compact,
+            (
+                "list capabilities",
+                "list-capabilities",
+                "available analysis",
+                "available capabilities",
+                "what analyses",
+                "有哪些分析可用",
+                "可用分析",
+                "能力清单",
+                "列出能力",
+            ),
+        ):
+            return "list_capabilities"
+        if self._has_any(
+            text,
+            compact,
+            (
+                "list modules",
+                "list-modules",
+                "method modules",
+                "module registry",
+                "方法模块",
+                "列出模块",
+                "模块清单",
+                "代码资产清单",
+            ),
+        ):
+            return "list_modules"
+        if self._has_any(
+            text,
+            compact,
+            (
+                "inspect module",
+                "inspect-module",
+                "module detail",
+                "查看模块",
+                "检查模块",
+                "模块详情",
+            ),
+        ):
+            return "inspect_module"
+        if self._has_any(
+            text,
+            compact,
+            (
+                "plan-analysis",
+                "plan analysis",
+                "from code library",
+                "code library",
+                "code_library",
+                "根据代码库规划",
+                "从codelibrary选择",
+                "从 code library 选择",
+                "规划单细胞分析",
+                "规划分析",
+                "分析方案",
+                "不要执行",
+            ),
+        ):
+            return "plan_analysis"
+        if self._has_any(
+            text,
+            compact,
+            (
+                "evaluate-run",
+                "evaluate run",
+                "run qa",
+                "run quality",
+                "评估这个 run",
+                "评估run",
+                "评估这个分析",
+                "审核run",
+            ),
+        ):
+            return "evaluate_run"
+        if self._has_any(
+            text,
+            compact,
+            (
+                "run-analysis",
+                "run analysis",
+                "execute analysis graph",
+                "execute this analysis",
+                "执行分析图",
+                "执行这个分析",
+                "运行这个分析",
+                "执行分析",
+                "运行分析",
+            ),
+        ):
+            return "run_analysis"
 
         if self._has_any(text, compact, ("列出项目", "有哪些项目", "list papers")):
             return "list_papers"
@@ -348,6 +472,47 @@ class AIWorkflowHarness:
             return route
         if intent == "doctor":
             return ToolDoctor(self.project_root).run()
+        if intent == "list_capabilities":
+            modality = self._infer_modality(request)
+            paper_dir = self.api.papers_dir / paper_id if paper_id else None
+            selected = MethodSelector(self.project_root, paper_dir=paper_dir).select(
+                goal=request,
+                modalities=[modality],
+                max_modules=6,
+            )
+            return {
+                "question": request,
+                "modalities": [modality],
+                "selected_modules": selected,
+            }
+        if intent == "list_modules":
+            modality = self._infer_modality(request)
+            registry = ModuleRegistry(self.project_root)
+            return {
+                "modality": modality,
+                "summary": registry.capability_summary(),
+                "modules": registry.list_modules(modality=modality),
+            }
+        if intent == "inspect_module":
+            module_id = self._extract_module_id(request, notes=notes)
+            if not module_id:
+                return {
+                    "status": "needs_input",
+                    "message": "A module_id is required to inspect a method asset.",
+                }
+            registry = ModuleRegistry(self.project_root)
+            module = registry.get(module_id)
+            if not module:
+                return {
+                    "status": "needs_input",
+                    "message": f"Module not found: {module_id}",
+                    "available_modules": [m.get("id") or m.get("module_id") for m in registry.list_modules()],
+                }
+            return {
+                "module_id": module_id,
+                "module": module,
+                "issues": registry.validate_module(module_id),
+            }
         if intent == "create_project":
             with contextlib.redirect_stdout(io.StringIO()):
                 return self.api.create_project(
@@ -404,6 +569,65 @@ class AIWorkflowHarness:
             return self.api.run_aigc_humanizer(paper_id or "")
         if intent == "list_papers":
             return {"papers": self._paper_candidates()}
+        if intent == "plan_analysis":
+            run_id = self._extract_run_id(request) or self._default_run_id("method_asset")
+            paper_dir = self.api.papers_dir / (paper_id or "")
+            manager = ResultRunManager(paper_dir)
+            if not manager.run_path(run_id).exists():
+                manager.create_run(
+                    run_id=run_id,
+                    mode="analysis_design_mode",
+                    status="prepared",
+                    notes=notes or "Prepared through AIWorkflowHarness method-asset planning.",
+                )
+            design = manager.write_analysis_design(
+                run_id=run_id,
+                goal=request,
+                modality=self._infer_modality(request),
+                inputs=self._extract_inputs(request),
+                primary_contrast="requires_human_input",
+                execution_backend="dry_run",
+                from_code_library=True,
+            )
+            manager.set_current_run(
+                run_id=run_id,
+                status="prepared",
+                user_approved=False,
+                notes="analysis design prepared through AIWorkflowHarness; execution not approved",
+            )
+            return {
+                "run_id": run_id,
+                "run_dir": str(manager.run_path(run_id)),
+                "analysis_design": design,
+                "analysis_design_path": str(manager.run_path(run_id) / "analysis_design.yaml"),
+                "analysis_graph_path": str(manager.run_path(run_id) / "analysis_graph.yaml"),
+                "method_selection_report": str(manager.run_path(run_id) / "method_selection_report.md"),
+            }
+        if intent == "run_analysis":
+            run_id = self._extract_run_id(request)
+            paper_dir = self.api.papers_dir / (paper_id or "")
+            manager = ResultRunManager(paper_dir)
+            run_dir = manager.run_path(run_id or "")
+            design = AnalysisDesign.from_file(run_dir / "analysis_design.yaml")
+            design.user_approval = True
+            result = run_analysis_adapter(design, run_dir, execute=True)
+            evaluation = manager.evaluate_run(run_id or "", write_report=True)
+            manager.set_current_run(
+                run_id=run_id or "",
+                status="exploratory",
+                user_approved=True,
+                notes=f"run-analysis adapter status: {result.status}",
+            )
+            return {"adapter_result": result.to_dict(), "evaluation": evaluation.to_dict()}
+        if intent == "evaluate_run":
+            run_id = self._extract_run_id(request)
+            if not run_id:
+                return {
+                    "status": "needs_input",
+                    "message": "A run_id is required to evaluate a result run.",
+                }
+            manager = ResultRunManager(self.api.papers_dir / (paper_id or ""))
+            return manager.evaluate_run(run_id, write_report=True).to_dict()
         raise ValueError(f"Unsupported AI harness intent: {intent}")
 
     def _build_plan(self, **kwargs: Any) -> dict[str, Any]:
@@ -441,6 +665,40 @@ class AIWorkflowHarness:
             args.extend(["--request", kwargs["request"], "--json"])
         elif intent == "doctor":
             args.append("--json")
+        elif intent == "list_capabilities":
+            args.extend(["--question", kwargs["request"], "--modality", self._infer_modality(kwargs["request"]), "--json"])
+            if kwargs["paper_id"]:
+                args.extend(["--paper", kwargs["paper_id"]])
+        elif intent == "list_modules":
+            args.extend(["--modality", self._infer_modality(kwargs["request"]), "--json"])
+        elif intent == "inspect_module":
+            args.extend([self._extract_module_id(kwargs["request"], notes=kwargs.get("notes", "")) or "<module_id>", "--json"])
+        elif intent == "plan_analysis":
+            args.extend([
+                "--paper", kwargs["paper_id"] or "<paper_id>",
+                "--run-id", self._extract_run_id(kwargs["request"]) or self._default_run_id("method_asset"),
+                "--goal", kwargs["request"],
+                "--modality", self._infer_modality(kwargs["request"]),
+                "--from-code-library",
+                "--set-current",
+                "--json",
+            ])
+        elif intent == "run_analysis":
+            args.extend([
+                "--paper", kwargs["paper_id"] or "<paper_id>",
+                "--run-id", self._extract_run_id(kwargs["request"]) or "<run_id>",
+                "--execute",
+            ])
+            if self._has_approval_phrase(kwargs["request"]):
+                args.append("--approved")
+            args.extend(["--set-current", "--json"])
+        elif intent == "evaluate_run":
+            args.extend([
+                "--paper", kwargs["paper_id"] or "<paper_id>",
+                "--run-id", self._extract_run_id(kwargs["request"]) or "<run_id>",
+                "--write-report",
+                "--json",
+            ])
         elif intent == "complete_harness_invocation":
             args.extend(["--paper", kwargs["paper_id"] or "<paper_id>"])
             args.extend(["--invocation", kwargs["invocation"] or kwargs["stage"] or "<invocation>"])
@@ -486,6 +744,14 @@ class AIWorkflowHarness:
                 return "failed"
             if intent == "doctor" and result.get("status") == "degraded":
                 return "ok"
+            if intent == "run_analysis":
+                adapter = result.get("adapter_result") or {}
+                if adapter.get("status") in {"blocked", "failed", "error"}:
+                    return "blocked"
+                evaluation = result.get("evaluation") or {}
+                return "ok" if evaluation.get("status") in {"pass", "degraded_exploratory"} else str(evaluation.get("status", "ok"))
+            if intent == "evaluate_run":
+                return "ok" if result.get("status") in {"pass", "degraded_exploratory"} else str(result.get("status", "ok"))
         return "ok"
 
     def _next_actions(self, intent: str, result: Any) -> list[str]:
@@ -512,15 +778,46 @@ class AIWorkflowHarness:
             return ["Use the returned mode/profile packet before selecting any workflow command."]
         if intent == "doctor":
             return ["Repair required failures first; use listed fallbacks for degraded optional tools."]
+        if intent == "plan_analysis":
+            return ["Review the analysis design and ask for explicit user approval before run-analysis --execute."]
+        if intent == "run_analysis":
+            return ["Evaluate the run report and inspect source maps before treating outputs as evidence."]
+        if intent == "evaluate_run":
+            return ["Fix blocked or missing run artifacts before promoting any manuscript claim."]
+        if intent in {"list_capabilities", "list_modules", "inspect_module"}:
+            return ["Select a compatible method asset, then create an analysis design before execution."]
         return ["Report the result to the user and ask for approval if a checkpoint is required."]
 
     def _next_actions_for_plan(self, intent: str, resolved_paper: dict[str, Any]) -> list[str]:
-        paperless_intents = {"create_project", "list_papers", "validate_contract", "route_task", "doctor"}
+        paperless_intents = {
+            "create_project",
+            "list_papers",
+            "validate_contract",
+            "route_task",
+            "doctor",
+            "list_capabilities",
+            "list_modules",
+            "inspect_module",
+        }
         if intent not in paperless_intents and not resolved_paper.get("paper_id"):
             return ["Ask the user for the paper_id or create a new project first."]
+        if intent == "run_analysis":
+            return ["Do not execute until the user gives explicit approval and a concrete run_id."]
+        if intent == "plan_analysis":
+            return ["Write an analysis design from code_library, then wait for human approval before execution."]
         return ["Execute the planned harness command if the user confirms the intent."]
 
     def _executed_reply(self, intent: str, result: Any) -> str:
+        if intent == "plan_analysis" and isinstance(result, dict):
+            return f"Analysis design prepared for run_id={result.get('run_id')}; execution remains blocked until explicit approval."
+        if intent == "run_analysis" and isinstance(result, dict):
+            adapter = result.get("adapter_result") or {}
+            evaluation = result.get("evaluation") or {}
+            return f"Analysis execution finished with adapter_status={adapter.get('status')} and evaluation_status={evaluation.get('status')}."
+        if intent == "evaluate_run" and isinstance(result, dict):
+            return f"Run evaluation completed with status={result.get('status')}."
+        if intent in {"list_capabilities", "list_modules", "inspect_module"}:
+            return "Method-asset capability information has been returned in structured output."
         if intent == "create_project" and isinstance(result, dict):
             return f"项目已创建：{result.get('paper_id')}。下一步我会检查状态并推进到第一个需要真实输入或人工确认的位置。"
         if intent == "run_pipeline" and isinstance(result, dict):
@@ -552,6 +849,67 @@ class AIWorkflowHarness:
         if intent == "create_project" and self._looks_like_orientation_request(request):
             return "status" if resolved_paper.get("paper_id") else "list_papers"
         return intent
+
+    @staticmethod
+    def _method_asset_route(intent: str, route: dict[str, Any]) -> dict[str, Any]:
+        overrides = {
+            "list_capabilities": "exploration_mode",
+            "list_modules": "exploration_mode",
+            "inspect_module": "exploration_mode",
+            "plan_analysis": "analysis_design_mode",
+            "run_analysis": "execution_mode",
+            "evaluate_run": "closeout_audit_mode",
+        }
+        mode = overrides.get(intent)
+        if not mode:
+            return route
+        updated = dict(route or {})
+        updated["mode"] = mode
+        updated.setdefault("profile", "method_asset_orchestration")
+        updated.setdefault("human_checkpoint", intent == "run_analysis")
+        return updated
+
+    def _method_asset_guard(
+        self,
+        intent: str,
+        request: str,
+        resolved_paper: dict[str, Any],
+    ) -> Optional[dict[str, Any]]:
+        if intent not in {"run_analysis", "evaluate_run"}:
+            return None
+        paper_id = resolved_paper.get("paper_id")
+        run_id = self._extract_run_id(request)
+        required = []
+        if not paper_id:
+            required.append("paper_id")
+        if not run_id:
+            required.append("run_id")
+        if intent == "run_analysis" and not self._has_approval_phrase(request):
+            required.append("explicit_user_approval")
+        if paper_id and run_id and intent == "run_analysis":
+            design_path = self.api.papers_dir / paper_id / "results" / "runs" / run_id / "analysis_design.yaml"
+            if not design_path.exists():
+                required.append("analysis_design.yaml")
+        if required:
+            message = (
+                f"{intent} requires " + ", ".join(required)
+                + ". Prepare a code_library analysis design and obtain explicit approval before execution."
+            )
+            return {
+                "status": "needs_input",
+                "result": {
+                    "message": message,
+                    "required": required,
+                    "paper_id": paper_id,
+                    "run_id": run_id,
+                },
+                "next_model_actions": [
+                    "Create or identify the result run with plan-analysis.",
+                    "Ask the user for explicit approval before --execute.",
+                ],
+                "user_facing_reply": message,
+            }
+        return None
 
     def _resolve_paper_id(self, paper_id: Optional[str]) -> dict[str, Any]:
         candidates = self._paper_candidates()
@@ -656,6 +1014,68 @@ class AIWorkflowHarness:
     def _extract_paper_id(self, request: str) -> Optional[str]:
         match = re.search(r"\b((?:strat|paper)[-_][A-Za-z0-9_.-]+)\b", request)
         return match.group(1) if match else None
+
+    def _extract_run_id(self, request: str) -> Optional[str]:
+        patterns = [
+            r"\brun[_-]?id[:=\s]+([A-Za-z][A-Za-z0-9_.-]*_\d{8}_v\d+)\b",
+            r"\b([A-Za-z][A-Za-z0-9_.-]*_\d{8}_v\d+)\b",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, request, flags=re.IGNORECASE)
+            if match:
+                return match.group(1)
+        return None
+
+    def _extract_module_id(self, request: str, *, notes: str = "") -> Optional[str]:
+        text = f"{request} {notes}".strip()
+        registry = ModuleRegistry(self.project_root)
+        for module_id in registry.modules:
+            if module_id.lower() in text.lower():
+                return module_id
+        match = re.search(r"\b([A-Za-z0-9_]+(?:\.[A-Za-z0-9_-]+){2,})\b", text)
+        return match.group(1) if match else None
+
+    @staticmethod
+    def _extract_inputs(request: str) -> list[str]:
+        inputs = []
+        for match in re.finditer(r"(?:input|data|path|输入|数据路径)[:=]\s*([^\s,;]+)", request, flags=re.IGNORECASE):
+            inputs.append(match.group(1).strip().strip('"'))
+        return inputs
+
+    @staticmethod
+    def _default_run_id(prefix: str) -> str:
+        return f"{prefix}_{datetime.now().strftime('%Y%m%d')}_v1"
+
+    @staticmethod
+    def _has_approval_phrase(request: str) -> bool:
+        text = request.lower()
+        compact = re.sub(r"\s+", "", text)
+        needles = (
+            "--approved",
+            "approved",
+            "explicit approval",
+            "user approved",
+            "已批准",
+            "批准执行",
+            "确认执行",
+            "我批准",
+            "可以执行",
+        )
+        return any(needle.lower() in text or needle.lower() in compact for needle in needles)
+
+    @staticmethod
+    def _infer_modality(request: str) -> str:
+        text = request.lower()
+        compact = re.sub(r"\s+", "", text)
+        if any(needle in text or needle in compact for needle in ("single-cell", "single cell", "scrna", "seurat", "pbmc", "单细胞")):
+            return "scrna"
+        if any(needle in text or needle in compact for needle in ("spatial", "visium", "xenium", "空间")):
+            return "spatial"
+        if any(needle in text or needle in compact for needle in ("bulk", "bulk-rnaseq", "bulk rnaseq", "deseq2", "rna-seq", "转录组")):
+            return "bulk_rnaseq"
+        if any(needle in text or needle in compact for needle in ("multiomics", "multi-omics", "multi omics", "多组学")):
+            return "multiomics"
+        return "general"
 
     def _looks_like_orientation_request(self, request: str) -> bool:
         text = request.lower()
