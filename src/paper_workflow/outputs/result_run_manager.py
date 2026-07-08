@@ -242,6 +242,7 @@ class ResultRunManager:
         sample_id_column: str = "sample_id",
         execution_backend: str = "dry_run",
         from_code_library: bool = False,
+        module_limit: int = 4,
     ) -> dict[str, Any]:
         """Write a dry-run analysis design skeleton without executing analysis."""
         run_dir = self.run_path(run_id)
@@ -262,7 +263,7 @@ class ResultRunManager:
         if graph_requested:
             project_root = self.paper_dir.parents[1]
             selector = MethodSelector(project_root=project_root, paper_dir=self.paper_dir)
-            selected_modules = selector.select(goal=goal, modalities=[modality], max_modules=4)
+            selected_modules = selector.select(goal=goal, modalities=[modality], max_modules=max(1, int(module_limit)))
             if selected_modules:
                 graph = build_graph_from_selected_modules(
                     run_id=run_id,
@@ -335,6 +336,11 @@ class ResultRunManager:
                 }
                 for module in selected_modules
             ],
+            "module_selection": {
+                "from_code_library": bool(from_code_library),
+                "module_limit": max(1, int(module_limit)),
+                "selected_count": len(selected_modules),
+            },
             "analysis_graph": graph_payload.get("analysis_graph", {}),
             "data_bindings": graph_payload.get("data_bindings", {}),
             "execution_policy": graph_payload.get("execution_policy", {}),

@@ -191,6 +191,28 @@ def test_write_analysis_design_creates_graph_and_selection_report():
         tmp.cleanup()
 
 
+def test_write_analysis_design_respects_module_limit():
+    tmp, _, paper = make_paper_dir()
+    try:
+        manager = ResultRunManager(paper)
+        design = manager.write_analysis_design(
+            run_id="pbmc3k_single_module_20260709_v1",
+            goal="Plan a Seurat PBMC3K single-cell tutorial workflow.",
+            modality="scrna",
+            inputs=["data/raw/pbmc3k/filtered_gene_bc_matrices/hg19"],
+            primary_contrast="tutorial fixture; no disease contrast",
+            from_code_library=True,
+            module_limit=1,
+        )
+
+        assert design["module_selection"]["module_limit"] == 1
+        assert len(design["selected_modules"]) == 1
+        assert len(design["analysis_graph"]["nodes"]) == 1
+        assert design["selected_modules"][0]["module_id"] == "single_cell.seurat_pbmc3k_basic.v1"
+    finally:
+        tmp.cleanup()
+
+
 def test_analysis_graph_adapter_dry_run_writes_node_manifest():
     tmp, _, paper = make_paper_dir()
     try:

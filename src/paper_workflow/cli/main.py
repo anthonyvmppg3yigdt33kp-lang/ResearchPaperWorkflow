@@ -467,6 +467,7 @@ def cmd_plan_analysis(args):
             sample_id_column=args.sample_id_column,
             execution_backend=args.execution_backend,
             from_code_library=args.from_code_library,
+            module_limit=args.module_limit,
         )
         if args.set_current:
             manager.set_current_run(
@@ -911,6 +912,7 @@ def main():
     p.add_argument("--execution-backend", default="dry_run",
                    choices=["dry_run", "python_builtin_pilot"])
     p.add_argument("--from-code-library", action="store_true")
+    p.add_argument("--module-limit", type=int, default=4)
     p.add_argument("--notes")
     p.add_argument("--set-current", action="store_true")
     p.add_argument("--json", action="store_true")

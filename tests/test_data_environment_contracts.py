@@ -91,7 +91,8 @@ def test_environment_cli_validate_env_reports_module_environment():
     assert completed.returncode == 0
     payload = yaml.safe_load(completed.stdout)
     assert payload["env_id"] == "r_seurat_v5"
-    assert payload["environment"]["status"] == "blocked"
+    assert payload["environment"]["status"] == "pass"
+    assert payload["environment"]["lock_file_present"] is True
 
 
 def test_data_registry_validates_tutorial_fixture_and_file_hashes():

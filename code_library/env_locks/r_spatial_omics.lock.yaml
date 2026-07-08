@@ -1,0 +1,16 @@
+schema_version: environment_lock.v1
+env_id: r_spatial_omics
+generated_at: '2026-07-09'
+language: R
+r_version: R version 4.5.3 (2026-03-11 ucrt)
+runner: Rscript
+manager: renv_or_system
+packages:
+  Seurat: 5.4.0
+  SeuratObject: 5.3.0
+  ggplot2: 4.0.3
+validation:
+  runner_available: true
+  packages_available: true
+  source: local R packageVersion check
+claim_boundary: Locks the observed validation environment; it does not install or redistribute R packages.
