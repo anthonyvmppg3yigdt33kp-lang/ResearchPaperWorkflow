@@ -42,6 +42,11 @@ completed = real execution + verified outputs + concrete gate results + checkpoi
 - Analysis graph execution through `analysis_graph_executor`, with per-node
   manifests, stdout/stderr logs, session information, source maps, and run
   evaluation.
+- Real method-asset execution is approval-gated and contract-gated: graph runs
+  check `DataRegistry`, `EnvironmentRegistry`, lock/package policy, and
+  node-level source maps before treating artifacts as analysis evidence. Use
+  `list-envs`, `inspect-env`, `doctor-env`, and `validate-env --module
+  <module_id>` to audit execution environments.
 - Official Seurat PBMC3K tutorial wrapper under
   `code_library/modules/single_cell/seurat_pbmc3k_basic/`, validated locally
   as a single-cell method-asset smoke path.

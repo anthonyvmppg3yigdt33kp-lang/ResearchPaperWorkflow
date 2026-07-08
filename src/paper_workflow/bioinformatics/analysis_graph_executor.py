@@ -11,8 +11,10 @@ from typing import Any
 import yaml
 
 from paper_workflow.bioinformatics.analysis_graph import AnalysisGraph
+from paper_workflow.bioinformatics.data_registry import DataRegistry
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
+from paper_workflow.outputs.source_map import SourceMapValidator, read_source_map
 from paper_workflow.outputs.result_run_manager import read_yaml, utc_now, write_yaml
 
 
@@ -90,11 +92,20 @@ class AnalysisGraphExecutor:
         if graph_issues:
             errors.extend(graph_issues)
 
+        data_registry = DataRegistry(paper_dir)
+        data_status = data_registry.validate_for_execution(graph)
+        require_data_registry = bool(graph.execution_policy.get("require_data_registry", True))
+        if execute and require_data_registry and data_status["status"] != "pass":
+            errors.extend(data_status.get("issues", []) or ["data registry validation failed"])
+        warnings.extend(data_status.get("warnings", []) or [])
+
         approval_required = bool(graph.execution_policy.get("require_user_approval", True))
-        block_reason = ""
+        block_reasons = []
         if execute and approval_required and not approval:
-            block_reason = "user_approval_required"
+            block_reasons.append("user_approval_required")
             errors.append("analysis graph execution requires explicit user approval")
+        if execute and require_data_registry and data_status["status"] != "pass":
+            block_reasons.append("data_registry_invalid")
 
         node_records = []
         if not errors:
@@ -106,11 +117,19 @@ class AnalysisGraphExecutor:
                 for rel in record.get("artifacts", []) or []:
                     artifacts.append(_artifact(paper_dir / rel, paper_dir))
 
-        self._write_aggregate_source_maps(run_dir, paper_dir, node_records, artifacts)
+        source_map_status = self._write_aggregate_source_maps(graph, run_dir, paper_dir, node_records, artifacts)
         artifacts.append(_artifact(run_dir / "figure_source_map.yaml", paper_dir))
         artifacts.append(_artifact(run_dir / "table_source_map.yaml", paper_dir))
 
         status = "blocked" if errors else ("completed" if execute else "dry_run_completed")
+        env_grades = [
+            str((record.get("environment") or {}).get("reproducibility_grade", "unknown"))
+            for record in node_records
+            if record.get("environment")
+        ]
+        reproducibility_grade = "locked" if env_grades and all(grade == "locked" for grade in env_grades) else (
+            "degraded" if env_grades else "not_evaluated"
+        )
         manifest = read_yaml(run_dir / "run_manifest.yaml")
         output_paths = [a["path"] for a in artifacts]
         manifest.update({
@@ -127,13 +146,22 @@ class AnalysisGraphExecutor:
             "approval_granted": bool(approval),
             "module_registry": str(self.modules.registry_path),
             "module_registry_hash": self.modules.content_hash(),
+            "environment_registry": str(self.environments.registry_path),
+            "environment_registry_hash": self.environments.content_hash(),
+            "environment_reproducibility_grade": reproducibility_grade,
+            "data_registry": data_status.get("data_registry", ""),
+            "data_registry_hash": data_status.get("data_registry_hash", ""),
+            "input_manifest": data_status.get("input_manifest", {}),
+            "data_status": data_status,
+            "source_map_status": source_map_status,
             "nodes": node_records,
+            "node_environment": [record.get("environment", {}) for record in node_records if record.get("environment")],
             "outputs_generated": output_paths,
             "warnings": warnings,
             "errors": errors,
         })
-        if block_reason:
-            manifest["block_reason"] = block_reason
+        if block_reasons:
+            manifest["block_reason"] = ";".join(block_reasons)
         write_yaml(run_dir / "run_manifest.yaml", manifest)
         artifacts.append(_artifact(run_dir / "run_manifest.yaml", paper_dir))
         write_yaml(
@@ -189,9 +217,20 @@ class AnalysisGraphExecutor:
             return record
 
         env_id = str((module.get("environment") or {}).get("env_id", ""))
-        env_status = self.environments.validate_environment(env_id, language=str(module.get("language", "")))
+        require_env_lock = bool(graph.execution_policy.get("require_env_lock", False))
+        env_status = self.environments.validate_environment(
+            env_id,
+            language=str(module.get("language", "")),
+            require_lock=require_env_lock,
+            require_packages=execute,
+        )
         record["environment"] = env_status
         if env_status["status"] != "pass":
+            if execute:
+                record["status"] = "blocked"
+                record["errors"].extend(env_status["issues"])
+                self._write_node_manifest(node_dir, paper_dir, record)
+                return record
             record["warnings"].extend(env_status["issues"])
 
         if not execute:
@@ -279,35 +318,103 @@ class AnalysisGraphExecutor:
         if rel not in record["artifacts"]:
             record["artifacts"].append(rel)
 
-    @staticmethod
     def _write_aggregate_source_maps(
+        self,
+        graph: AnalysisGraph,
         run_dir: Path,
         paper_dir: Path,
         node_records: list[dict[str, Any]],
         artifacts: list[dict[str, str]],
-    ) -> None:
+    ) -> dict[str, Any]:
         figures = []
         tables = []
         for record in node_records:
+            module = self.modules.get(str(record.get("module_id", ""))) or {}
+            context = {
+                "node_id": record.get("node_id", ""),
+                "module_id": record.get("module_id", ""),
+                "module_claim_boundary": module.get("claim_boundary", ""),
+                "module_reviewer_risk": module.get("reviewer_risk", []) or [],
+            }
+            node_map_found = False
+            for rel in record.get("artifacts", []) or []:
+                path = paper_dir / rel
+                if path.name == "figure_source_map.yaml":
+                    node_map_found = True
+                    data = read_source_map(path)
+                    figures.extend(self._with_node_context(data.get("figures", []) or [], context, run_dir, path.parent, "figure"))
+                elif path.name == "table_source_map.yaml":
+                    node_map_found = True
+                    data = read_source_map(path)
+                    tables.extend(self._with_node_context(data.get("tables", []) or [], context, run_dir, path.parent, "table"))
+            if node_map_found:
+                continue
             for rel in record.get("artifacts", []) or []:
                 suffix = Path(rel).suffix.lower()
+                run_rel = self._run_relative_path(rel, run_dir)
                 if suffix in {".png", ".pdf", ".svg", ".jpg", ".jpeg"}:
                     figures.append({
+                        **context,
                         "figure_id": Path(rel).stem,
-                        "path": str(Path(rel).relative_to(Path("results") / "runs" / run_dir.name)).replace("\\", "/") if rel.startswith(f"results/runs/{run_dir.name}/") else rel,
+                        "path": run_rel,
                         "source_data": "node input and parameters",
                         "script": record.get("module_id", ""),
                         "method": "module-declared analysis graph node",
-                        "statistical_unit": "sample",
-                        "claim_boundary": "workflow-generated analysis artifact; interpret with module risk notes",
+                        "statistical_unit": graph.statistical_unit,
+                        "claim_boundary": module.get("claim_boundary", "workflow-generated analysis artifact; interpret with module risk notes"),
+                        "source_map_quality": "incomplete_fallback",
                     })
                 elif suffix in {".csv", ".tsv"}:
                     tables.append({
+                        **context,
                         "table_id": Path(rel).stem,
-                        "path": str(Path(rel).relative_to(Path("results") / "runs" / run_dir.name)).replace("\\", "/") if rel.startswith(f"results/runs/{run_dir.name}/") else rel,
+                        "path": run_rel,
                         "source_inputs": "node input and parameters",
                         "method": record.get("module_id", ""),
-                        "statistical_unit": "sample",
+                        "statistical_unit": graph.statistical_unit,
+                        "source_map_quality": "incomplete_fallback",
                     })
         write_yaml(run_dir / "figure_source_map.yaml", {"schema_version": "analysis_graph_source_map.v1", "figures": figures})
         write_yaml(run_dir / "table_source_map.yaml", {"schema_version": "analysis_graph_source_map.v1", "tables": tables})
+        status = SourceMapValidator().validate_run(run_dir)
+        return status
+
+    @staticmethod
+    def _run_relative_path(rel: str, run_dir: Path) -> str:
+        prefix = f"results/runs/{run_dir.name}/"
+        if rel.startswith(prefix):
+            return rel[len(prefix):]
+        return rel
+
+    def _with_node_context(
+        self,
+        items: list[Any],
+        context: dict[str, Any],
+        run_dir: Path,
+        node_dir: Path,
+        kind: str,
+    ) -> list[dict[str, Any]]:
+        enriched = []
+        node_rel = str(node_dir.relative_to(run_dir)).replace("\\", "/")
+        path_fields = ["path", "source_data"] if kind == "figure" else ["path", "source_inputs"]
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            entry = {**item, **context, "source_map_quality": "node_declared"}
+            for field in path_fields:
+                value = entry.get(field)
+                if isinstance(value, str):
+                    entry[field] = self._prefix_node_path(value, node_rel)
+                elif isinstance(value, list):
+                    entry[field] = [
+                        self._prefix_node_path(v, node_rel) if isinstance(v, str) else v
+                        for v in value
+                    ]
+            enriched.append(entry)
+        return enriched
+
+    @staticmethod
+    def _prefix_node_path(value: str, node_rel: str) -> str:
+        if not value or value.startswith(("results/", "nodes/", "/", "\\")) or ":" in value[:3]:
+            return value.replace("\\", "/")
+        return f"{node_rel}/{value}".replace("\\", "/")

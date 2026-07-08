@@ -17,6 +17,7 @@ import yaml
 
 from paper_workflow.bioinformatics.analysis_graph import build_graph_from_selected_modules
 from paper_workflow.bioinformatics.module_selector import MethodSelector, render_selection_report
+from paper_workflow.outputs.source_map import SourceMapValidator
 
 
 RUN_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*_[0-9]{8}_v[0-9]+$")
@@ -57,6 +58,23 @@ class RunEvaluation:
     has_figure_source_map: bool
     has_table_source_map: bool
     manifest_status: str
+    node_count: int = 0
+    completed_node_count: int = 0
+    blocked_node_count: int = 0
+    failed_node_count: int = 0
+    has_analysis_graph: bool = False
+    has_method_selection_report: bool = False
+    has_node_manifests: bool = False
+    has_environment_report: bool = False
+    has_data_registry_hash: bool = False
+    source_map_valid: bool = False
+    source_map_issue_count: int = 0
+    source_map_issues: list[str] = None
+    stderr_warning_count: int = 0
+    claim_boundary_complete: bool = False
+    reproducibility_grade: str = "not_evaluated"
+    evidence_grade: str = "exploratory"
+    reviewer_risk_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -69,6 +87,23 @@ class RunEvaluation:
             "has_figure_source_map": self.has_figure_source_map,
             "has_table_source_map": self.has_table_source_map,
             "manifest_status": self.manifest_status,
+            "node_count": self.node_count,
+            "completed_node_count": self.completed_node_count,
+            "blocked_node_count": self.blocked_node_count,
+            "failed_node_count": self.failed_node_count,
+            "has_analysis_graph": self.has_analysis_graph,
+            "has_method_selection_report": self.has_method_selection_report,
+            "has_node_manifests": self.has_node_manifests,
+            "has_environment_report": self.has_environment_report,
+            "has_data_registry_hash": self.has_data_registry_hash,
+            "source_map_valid": self.source_map_valid,
+            "source_map_issue_count": self.source_map_issue_count,
+            "source_map_issues": self.source_map_issues or [],
+            "stderr_warning_count": self.stderr_warning_count,
+            "claim_boundary_complete": self.claim_boundary_complete,
+            "reproducibility_grade": self.reproducibility_grade,
+            "evidence_grade": self.evidence_grade,
+            "reviewer_risk_count": self.reviewer_risk_count,
         }
 
 
@@ -382,7 +417,40 @@ class ResultRunManager:
         total_size = sum(p.stat().st_size for p in files)
         manifest = read_yaml(run_dir / "run_manifest.yaml")
         manifest_status = str(manifest.get("status", "missing"))
-        status = "pass" if not missing else "needs_fix"
+        nodes = list(manifest.get("nodes", []) or [])
+        completed_nodes = [n for n in nodes if n.get("status") == "completed"]
+        blocked_nodes = [n for n in nodes if n.get("status") == "blocked"]
+        failed_nodes = [n for n in nodes if n.get("status") in {"failed", "error"}]
+        node_manifest_count = len(list((run_dir / "nodes").glob("*/*node_manifest.yaml"))) if (run_dir / "nodes").exists() else 0
+        source_status = SourceMapValidator().validate_run(run_dir)
+        stderr_warning_count = 0
+        for stderr_path in run_dir.rglob("stderr.log"):
+            text = stderr_path.read_text(encoding="utf-8", errors="replace").lower()
+            stderr_warning_count += text.count("warning")
+        has_analysis_graph = (run_dir / "analysis_graph.yaml").exists() or bool(manifest.get("analysis_graph"))
+        reproducibility_grade = str(manifest.get("environment_reproducibility_grade", "not_evaluated"))
+        data_status = manifest.get("data_status") if isinstance(manifest.get("data_status"), dict) else {}
+        evidence_grade = str(data_status.get("evidence_grade", manifest.get("evidence_grade", "exploratory")))
+        reviewer_risk_count = 0
+        for record in nodes:
+            module_risk = record.get("module_reviewer_risk", [])
+            if isinstance(module_risk, list):
+                reviewer_risk_count += len(module_risk)
+        for source_map_name in ["figure_source_map.yaml", "table_source_map.yaml"]:
+            source_map = read_yaml(run_dir / source_map_name)
+            for key in ["figures", "tables"]:
+                for item in source_map.get(key, []) or []:
+                    risk = item.get("module_reviewer_risk") or item.get("reviewer_risk") or []
+                    reviewer_risk_count += len(risk) if isinstance(risk, list) else int(bool(risk))
+
+        if manifest_status == "blocked" or manifest.get("execution_status") == "blocked" or blocked_nodes or failed_nodes:
+            status = "blocked"
+        elif missing or source_status["status"] != "pass":
+            status = "needs_fix"
+        elif has_analysis_graph and reproducibility_grade == "degraded":
+            status = "degraded_exploratory"
+        else:
+            status = "pass"
 
         evaluation = RunEvaluation(
             run_id=run_id,
@@ -394,6 +462,23 @@ class ResultRunManager:
             has_figure_source_map=(run_dir / "figure_source_map.yaml").exists(),
             has_table_source_map=(run_dir / "table_source_map.yaml").exists(),
             manifest_status=manifest_status,
+            node_count=len(nodes),
+            completed_node_count=len(completed_nodes),
+            blocked_node_count=len(blocked_nodes),
+            failed_node_count=len(failed_nodes),
+            has_analysis_graph=has_analysis_graph,
+            has_method_selection_report=(run_dir / "method_selection_report.md").exists(),
+            has_node_manifests=bool(nodes) and node_manifest_count >= len(nodes),
+            has_environment_report=bool(manifest.get("environment_registry") or manifest.get("node_environment")),
+            has_data_registry_hash=bool(manifest.get("data_registry_hash")),
+            source_map_valid=source_status["status"] == "pass",
+            source_map_issue_count=int(source_status["issue_count"]),
+            source_map_issues=list(source_status["issues"]),
+            stderr_warning_count=stderr_warning_count,
+            claim_boundary_complete=not any("claim_boundary" in issue for issue in source_status["issues"]),
+            reproducibility_grade=reproducibility_grade,
+            evidence_grade=evidence_grade,
+            reviewer_risk_count=reviewer_risk_count,
         )
         if write_report:
             write_yaml(run_dir / "evaluation_report.yaml", evaluation.to_dict())

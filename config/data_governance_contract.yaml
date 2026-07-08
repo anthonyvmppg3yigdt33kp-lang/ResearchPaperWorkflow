@@ -12,6 +12,9 @@ required_before_execution:
 allowed_inputs:
   - data/data_inventory.yaml
   - data/data_inventory_input.yaml
+  - data/data_registry/datasets.yaml
+  - data/data_registry/file_manifest.jsonl
+  - data/data_registry/sample_map.tsv
   - data/raw/
   - results/current_run.yaml
 
@@ -23,4 +26,14 @@ forbidden_actions:
 audit_outputs:
   - data/data_audit_report.md
   - data/data_inventory.yaml
+  - data/data_registry/datasets.yaml
+  - data/data_registry/file_manifest.jsonl
   - results/runs/<run_id>/inputs_manifest.yaml
+
+execution_manifest_required:
+  - data_registry
+  - data_registry_hash
+  - input_manifest.files[].path
+  - input_manifest.files[].sha256
+  - input_manifest.files[].size_bytes
+  - input_manifest.files[].modality

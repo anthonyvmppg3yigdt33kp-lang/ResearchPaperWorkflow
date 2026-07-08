@@ -89,10 +89,13 @@ def test_evaluate_run_reports_missing_source_maps_without_failing_baseline(paper
     evaluation = manager.evaluate_run("bulk_de_20260707_v1", write_report=True)
     data = evaluation.to_dict()
 
-    assert data["status"] == "pass"
+    assert data["status"] == "needs_fix"
     assert data["missing_required_files"] == []
     assert data["has_figure_source_map"] is False
     assert data["has_table_source_map"] is False
+    assert data["source_map_valid"] is False
+    assert data["source_map_issue_count"] >= 2
+    assert "evidence_grade" in data
     assert (manager.run_path("bulk_de_20260707_v1") / "evaluation_report.yaml").exists()
 
 

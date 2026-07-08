@@ -85,6 +85,37 @@ analysis graph execution. `--execute` without `--approved` exits before any
 analysis command is launched, and direct graph execution records
 `block_reason: user_approval_required` when approval is missing.
 
+## Production Gates
+
+Before real method-asset execution, the graph executor now evaluates three
+contracts:
+
+- `DataRegistry`: `data/data_registry/datasets.yaml` must declare datasets,
+  immutable raw paths, sample mapping status, file hashes, and statistical
+  units. Group inference without sample/patient mapping is blocked.
+- `EnvironmentRegistry`: runner, required package availability, and lock-file
+  policy are checked without installing packages. If `require_env_lock: true`
+  and the lock file is absent, execution is blocked; if the graph explicitly
+  sets `require_env_lock: false`, the run may proceed as exploratory and is
+  marked with `environment_reproducibility_grade: degraded`.
+- `SourceMapValidator`: run-level source maps are aggregated from node-level
+  `figure_source_map.yaml` and `table_source_map.yaml`, preserving each node's
+  `statistical_unit`, `source_data`, `method`, and `claim_boundary`.
+
+Environment inspection commands:
+
+```bash
+paper-workflow list-envs
+paper-workflow inspect-env r_seurat_v5
+paper-workflow doctor-env r_seurat_v5 --require-lock
+paper-workflow validate-env --module single_cell.seurat_pbmc3k_basic.v1
+```
+
+`evaluate-run --json` reports node counts, source-map validity,
+environment/data reproducibility fields, evidence grade, and reviewer-risk
+counts. A run can execute successfully and still be `degraded_exploratory` or
+`needs_fix` if provenance is insufficient for manuscript evidence.
+
 6. Audit the run:
 
 ```bash

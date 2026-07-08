@@ -15,6 +15,7 @@ import yaml
 from paper_workflow.ai_harness import AIWorkflowHarness
 from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
+from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.module_selector import MethodSelector
 from paper_workflow.outputs.result_run_manager import ResultRunManager
@@ -600,6 +601,96 @@ def cmd_list_capabilities(args):
         )
 
 
+def cmd_list_envs(args):
+    registry = EnvironmentRegistry(get_root())
+    payload = {
+        "environment_registry": str(registry.registry_path),
+        "environment_registry_hash": registry.content_hash(),
+        "environments": registry.list_envs(),
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    print(f"Registry: {registry.registry_path}")
+    for env in payload["environments"]:
+        print(f"  - {env.get('env_id')} | {env.get('language')} | runner={env.get('runner')}")
+
+
+def cmd_inspect_env(args):
+    registry = EnvironmentRegistry(get_root())
+    env = registry.get(args.env_id)
+    if not env:
+        print(f"[ERROR] Environment not found: {args.env_id}")
+        sys.exit(1)
+    payload = {"env_id": args.env_id, "environment": env}
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    print(f"Environment: {args.env_id}")
+    print(f"Language: {env.get('language', '')}")
+    print(f"Runner: {env.get('runner', '')}")
+    print(f"Packages: {', '.join(env.get('required_packages', env.get('packages', [])) or []) or 'none'}")
+
+
+def cmd_doctor_env(args):
+    registry = EnvironmentRegistry(get_root())
+    kwargs = {
+        "require_lock": args.require_lock,
+        "require_packages": not args.skip_packages,
+    }
+    if args.write_report:
+        report = registry.write_environment_report(
+            args.env_id,
+            get_root() / "code_library" / "environment_reports" / f"{args.env_id}.yaml",
+            **kwargs,
+        )
+    else:
+        report = registry.validate_environment(
+            args.env_id,
+            **kwargs,
+        )
+        report["environment_registry"] = str(registry.registry_path)
+        report["environment_registry_hash"] = registry.content_hash()
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(f"Environment: {args.env_id}")
+        print(f"Status: {report['status']}")
+        print(f"Runner: {report.get('runner', '')}")
+        print(f"Reproducibility: {report.get('reproducibility_grade', '')}")
+        for issue in report.get("issues", []):
+            print(f"  - {issue}")
+    if args.strict and report["status"] != "pass":
+        sys.exit(1)
+
+
+def cmd_validate_env(args):
+    modules = ModuleRegistry(get_root())
+    module = modules.get(args.module)
+    if not module:
+        print(f"[ERROR] Module not found: {args.module}")
+        sys.exit(1)
+    env_id = str((module.get("environment") or {}).get("env_id", ""))
+    registry = EnvironmentRegistry(get_root())
+    report = registry.validate_environment(
+        env_id,
+        language=str(module.get("language", "")),
+        require_lock=args.require_lock,
+        require_packages=not args.skip_packages,
+    )
+    payload = {"module_id": args.module, "env_id": env_id, "environment": report}
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        print(f"Module: {args.module}")
+        print(f"Environment: {env_id}")
+        print(f"Status: {report['status']}")
+        for issue in report.get("issues", []):
+            print(f"  - {issue}")
+    if args.strict and report["status"] != "pass":
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Paper Workflow CLI")
     sub = parser.add_subparsers(dest="command")
@@ -746,6 +837,28 @@ def main():
     p.add_argument("--limit", type=int, default=6)
     p.add_argument("--json", action="store_true")
 
+    p = sub.add_parser("list-envs")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("inspect-env")
+    p.add_argument("env_id")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("doctor-env")
+    p.add_argument("env_id")
+    p.add_argument("--require-lock", action="store_true")
+    p.add_argument("--skip-packages", action="store_true")
+    p.add_argument("--write-report", action="store_true")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--strict", action="store_true")
+
+    p = sub.add_parser("validate-env")
+    p.add_argument("--module", required=True)
+    p.add_argument("--require-lock", action="store_true")
+    p.add_argument("--skip-packages", action="store_true")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--strict", action="store_true")
+
     p = sub.add_parser(
         "ai",
         aliases=["ai-harness"],
@@ -792,6 +905,8 @@ def main():
      "plan-analysis": cmd_plan_analysis, "run-analysis": cmd_run_analysis,
      "list-modules": cmd_list_modules, "inspect-module": cmd_inspect_module,
      "list-capabilities": cmd_list_capabilities,
+     "list-envs": cmd_list_envs, "inspect-env": cmd_inspect_env,
+     "doctor-env": cmd_doctor_env, "validate-env": cmd_validate_env,
      "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
 
 

@@ -6,6 +6,9 @@ required_before_execution:
   - module_environment_declared
   - runner_resolves_to_local_command
   - package_requirements_recorded
+  - package_requirements_checked_before_real_execution
+  - lock_file_present_when_analysis_graph_requires_env_lock
+  - environment_reproducibility_grade_recorded
   - session_info_written_per_node
 
 agent_phase_forbidden:
@@ -18,3 +21,8 @@ agent_phase_forbidden:
 registry:
   canonical_file: code_library/environment_registry.yaml
   fallback_policy: "Block real execution or mark environment_status=blocked when runner/package availability cannot be verified."
+  cli:
+    - list-envs
+    - inspect-env
+    - doctor-env
+    - validate-env

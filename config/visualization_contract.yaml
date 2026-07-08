@@ -9,6 +9,9 @@ global_rules:
   require_script_path: true
   require_method_summary: true
   require_scientific_interpretation: true
+  require_claim_boundary: true
+  aggregate_from_node_source_maps: true
+  forbid_statistical_unit_overwrite: true
   forbid_unmapped_final_figures: true
   forbid_claim_strength_above_evidence: true
 

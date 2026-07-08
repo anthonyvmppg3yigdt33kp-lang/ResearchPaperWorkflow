@@ -169,6 +169,7 @@ def build_graph_from_selected_modules(
         data_bindings={"single_cell": input_dir} if input_dir else {},
         execution_policy={
             "require_user_approval": True,
+            "require_data_registry": True,
             "require_env_lock": True,
             "write_scope": f"results/runs/{run_id}/",
             "raw_data_mutation": "forbidden",

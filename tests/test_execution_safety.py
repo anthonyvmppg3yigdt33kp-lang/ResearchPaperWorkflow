@@ -128,7 +128,7 @@ def test_graph_executor_records_blocked_manifest_without_approval():
         assert result.status == "blocked"
         assert result.metrics["node_count"] == 0
         assert manifest["execution_status"] == "blocked"
-        assert manifest["block_reason"] == "user_approval_required"
+        assert "user_approval_required" in manifest["block_reason"]
         assert manifest["approval_required"] is True
         assert manifest["approval_granted"] is False
         assert "analysis graph execution requires explicit user approval" in manifest["errors"]

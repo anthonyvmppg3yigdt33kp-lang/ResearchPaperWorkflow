@@ -20,6 +20,7 @@ node_required_fields:
 
 execution_policy:
   require_user_approval: true
+  require_data_registry: true
   require_env_lock: true
   raw_data_mutation: forbidden
   write_scope: results/runs/<run_id>/
