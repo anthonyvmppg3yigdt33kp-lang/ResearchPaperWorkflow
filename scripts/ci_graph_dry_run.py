@@ -115,6 +115,7 @@ def main() -> int:
             run_dir / "evaluation_report.yaml",
             run_dir / "figure_source_map.yaml",
             run_dir / "table_source_map.yaml",
+            root / "code_library" / "module_usage_ledger.jsonl",
         ]
         missing = [str(path) for path in required if not path.exists()]
         result = {

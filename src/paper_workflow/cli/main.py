@@ -17,6 +17,7 @@ from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
 from paper_workflow.bioinformatics.code_source_importer import CodeSourceImporter
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
+from paper_workflow.bioinformatics.module_feedback import ModuleFeedbackManager
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.module_selector import MethodSelector
 from paper_workflow.outputs.result_run_manager import ResultRunManager
@@ -514,6 +515,13 @@ def cmd_run_analysis(args):
             design.user_approval = True
         result = run_analysis_adapter(design, run_dir, execute=args.execute, backend=args.backend)
         evaluation = manager.evaluate_run(args.run_id, write_report=True)
+        usage_records = ModuleFeedbackManager(get_root()).record_run(
+            paper_id=args.paper,
+            run_id=args.run_id,
+            run_dir=run_dir,
+            adapter_result=result.to_dict(),
+            evaluation=evaluation.to_dict(),
+        )
         if args.set_current:
             manager.set_current_run(
                 run_id=args.run_id,
@@ -525,7 +533,7 @@ def cmd_run_analysis(args):
         print(f"[ERROR] {exc}")
         sys.exit(1)
 
-    payload = {"adapter_result": result.to_dict(), "evaluation": evaluation.to_dict()}
+    payload = {"adapter_result": result.to_dict(), "evaluation": evaluation.to_dict(), "module_usage": usage_records}
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
     else:
@@ -660,6 +668,42 @@ def cmd_list_figure_styles(args):
             print("No figure styles registered.")
         for style_id, style in styles.items():
             print(f"- {style_id}: source={style.get('source_id', '')}")
+
+
+def cmd_summarize_module_usage(args):
+    result = ModuleFeedbackManager(get_root()).summarize_module_usage(args.module)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"Module: {args.module}")
+        print(f"Usage count: {result['usage_count']}")
+        print(f"Status counts: {result['status_counts']}")
+
+
+def cmd_propose_module_improvement(args):
+    try:
+        result = ModuleFeedbackManager(get_root()).propose_module_improvement(args.run_id, paper_id=args.paper or "")
+    except FileNotFoundError as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Proposal written: {result['path']}")
+        print("     Registry update: not performed")
+
+
+def cmd_apply_module_improvement(args):
+    try:
+        result = ModuleFeedbackManager(get_root()).apply_module_improvement(args.proposal, approved=args.approved)
+    except (FileNotFoundError, PermissionError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Proposal approved for manual implementation: {result['proposal_id']}")
+        print("     Registry update: not performed")
 
 
 def cmd_list_envs(args):
@@ -919,6 +963,20 @@ def main():
     p = sub.add_parser("list-figure-styles")
     p.add_argument("--json", action="store_true")
 
+    p = sub.add_parser("summarize-module-usage")
+    p.add_argument("--module", required=True)
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("propose-module-improvement")
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--paper")
+    p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("apply-module-improvement")
+    p.add_argument("--proposal", required=True)
+    p.add_argument("--approved", action="store_true")
+    p.add_argument("--json", action="store_true")
+
     p = sub.add_parser("list-envs")
     p.add_argument("--json", action="store_true")
 
@@ -991,6 +1049,9 @@ def main():
      "review-code-source": cmd_review_code_source,
      "register-figure-style": cmd_register_figure_style,
      "list-figure-styles": cmd_list_figure_styles,
+     "summarize-module-usage": cmd_summarize_module_usage,
+     "propose-module-improvement": cmd_propose_module_improvement,
+     "apply-module-improvement": cmd_apply_module_improvement,
      "list-envs": cmd_list_envs, "inspect-env": cmd_inspect_env,
      "doctor-env": cmd_doctor_env, "validate-env": cmd_validate_env,
      "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
