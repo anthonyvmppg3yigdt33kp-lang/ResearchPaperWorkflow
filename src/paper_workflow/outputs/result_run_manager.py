@@ -25,6 +25,13 @@ from paper_workflow.outputs.source_map import SourceMapValidator
 RUN_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*_[0-9]{8}_v[0-9]+$")
 REQUIRES_HUMAN_INPUT = "requires_human_input"
 
+FINAL_STATUS_RANK = {
+    "pass": 0,
+    "degraded_exploratory": 1,
+    "needs_fix": 2,
+    "blocked": 3,
+}
+
 
 def utc_now() -> str:
     """Return an ISO-8601 UTC timestamp."""
@@ -78,6 +85,9 @@ class RunEvaluation:
     evidence_grade: str = "exploratory"
     reviewer_risk_count: int = 0
     evidence_summary: dict[str, Any] = None
+    evaluation_status: dict[str, Any] = None
+    fail_closed_reasons: list[dict[str, Any]] = None
+    bioinformatics_quality_status: str = "not_evaluated"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -108,6 +118,9 @@ class RunEvaluation:
             "evidence_grade": self.evidence_grade,
             "reviewer_risk_count": self.reviewer_risk_count,
             "evidence_summary": self.evidence_summary or {},
+            "evaluation_status": self.evaluation_status or {},
+            "fail_closed_reasons": self.fail_closed_reasons or [],
+            "bioinformatics_quality_status": self.bioinformatics_quality_status,
         }
 
 
@@ -466,19 +479,43 @@ class ResultRunManager:
                     risk = item.get("module_reviewer_risk") or item.get("reviewer_risk") or []
                     reviewer_risk_count += len(risk) if isinstance(risk, list) else int(bool(risk))
 
-        if manifest_status == "blocked" or manifest.get("execution_status") == "blocked" or blocked_nodes or failed_nodes:
-            status = "blocked"
-        elif missing or source_status["status"] != "pass":
-            status = "needs_fix"
-        elif has_analysis_graph and reproducibility_grade == "degraded":
-            status = "degraded_exploratory"
-        else:
-            status = "pass"
+        workflow_completeness_status = self._workflow_completeness_status(
+            manifest_status=manifest_status,
+            execution_status=str(manifest.get("execution_status", "")),
+            missing=missing,
+            source_map_status=str(source_status["status"]),
+            node_count=len(nodes),
+            completed_node_count=len(completed_nodes),
+            blocked_nodes=blocked_nodes,
+            failed_nodes=failed_nodes,
+        )
+        scientific_quality_status = self._scientific_quality_status(bioinformatics_quality["report"])
+        environment_status = self._environment_status(manifest, reproducibility_grade, nodes)
+        final_status = self._final_status(
+            workflow_completeness_status,
+            scientific_quality_status,
+            environment_status,
+        )
+        fail_closed_reasons = self._fail_closed_reasons(
+            workflow_completeness_status=workflow_completeness_status,
+            scientific_quality_status=scientific_quality_status,
+            environment_status=environment_status,
+            source_status=source_status,
+            bioinformatics_quality=bioinformatics_quality["report"],
+        )
+        evaluation_status = {
+            "workflow_completeness_status": workflow_completeness_status,
+            "scientific_quality_status": scientific_quality_status,
+            "environment_status": environment_status,
+            "final_status": final_status,
+            "status_order": "blocked > needs_fix > degraded_exploratory > pass",
+            "fail_closed": final_status != "pass",
+        }
 
         evaluation = RunEvaluation(
             run_id=run_id,
             run_path=self._display_path(run_dir),
-            status=status,
+            status=final_status,
             missing_required_files=missing,
             output_file_count=len(files),
             output_size_bytes=total_size,
@@ -503,13 +540,113 @@ class ResultRunManager:
             evidence_grade=evidence_grade,
             reviewer_risk_count=reviewer_risk_count,
             evidence_summary=evidence_packet["summary"],
+            evaluation_status=evaluation_status,
+            fail_closed_reasons=fail_closed_reasons,
+            bioinformatics_quality_status=str(bioinformatics_quality["report"].get("status", "not_evaluated")),
         )
         if write_report:
             payload = evaluation.to_dict()
             payload["bioinformatics_quality"] = bioinformatics_quality["report"]
             payload["next_analysis_plan"] = bioinformatics_quality["next_analysis_plan"]
             write_yaml(run_dir / "evaluation_report.yaml", payload)
+            write_yaml(
+                run_dir / "qc" / "fail_closed_decision.yaml",
+                {
+                    "schema_version": "fail_closed_decision.v1",
+                    "run_id": run_id,
+                    **evaluation_status,
+                    "reasons": fail_closed_reasons,
+                },
+            )
         return evaluation
+
+    @staticmethod
+    def _workflow_completeness_status(
+        *,
+        manifest_status: str,
+        execution_status: str,
+        missing: list[str],
+        source_map_status: str,
+        node_count: int,
+        completed_node_count: int,
+        blocked_nodes: list[dict[str, Any]],
+        failed_nodes: list[dict[str, Any]],
+    ) -> str:
+        if manifest_status == "blocked" or execution_status == "blocked" or blocked_nodes or failed_nodes:
+            return "blocked"
+        if missing or source_map_status != "pass":
+            return "needs_fix"
+        if node_count and completed_node_count == 0 and manifest_status in {"dry_run_completed", "prepared"}:
+            return "degraded_exploratory"
+        return "pass"
+
+    @staticmethod
+    def _scientific_quality_status(report: dict[str, Any]) -> str:
+        status = str(report.get("status", "not_evaluated"))
+        if status == "pass":
+            return "pass"
+        if status == "blocked":
+            return "blocked"
+        return "needs_review"
+
+    @staticmethod
+    def _environment_status(manifest: dict[str, Any], reproducibility_grade: str, nodes: list[dict[str, Any]]) -> str:
+        env_records = []
+        for record in manifest.get("node_environment", []) or []:
+            if isinstance(record, dict):
+                env_records.append(record)
+        for node in nodes:
+            env = node.get("environment") if isinstance(node, dict) else None
+            if isinstance(env, dict):
+                env_records.append(env)
+        if any(str(item.get("status", "")) == "blocked" for item in env_records):
+            return "blocked"
+        if reproducibility_grade == "degraded":
+            return "degraded"
+        return "pass"
+
+    @staticmethod
+    def _final_status(workflow_status: str, scientific_status: str, environment_status: str) -> str:
+        candidates = []
+        if workflow_status == "blocked" or scientific_status == "blocked" or environment_status == "blocked":
+            candidates.append("blocked")
+        if workflow_status == "needs_fix" or scientific_status == "needs_review":
+            candidates.append("needs_fix")
+        if workflow_status == "degraded_exploratory" or environment_status == "degraded":
+            candidates.append("degraded_exploratory")
+        if not candidates:
+            candidates.append("pass")
+        return max(candidates, key=lambda item: FINAL_STATUS_RANK[item])
+
+    @staticmethod
+    def _fail_closed_reasons(
+        *,
+        workflow_completeness_status: str,
+        scientific_quality_status: str,
+        environment_status: str,
+        source_status: dict[str, Any],
+        bioinformatics_quality: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        reasons: list[dict[str, Any]] = []
+        if workflow_completeness_status != "pass":
+            reasons.append({
+                "gate": "workflow_completeness",
+                "status": workflow_completeness_status,
+                "issues": list(source_status.get("issues", []) or []),
+            })
+        if scientific_quality_status != "pass":
+            reasons.append({
+                "gate": "bioinformatics_quality",
+                "status": scientific_quality_status,
+                "issues": list(bioinformatics_quality.get("fail_closed_reasons", []) or []),
+            })
+        if environment_status != "pass":
+            reasons.append({
+                "gate": "environment",
+                "status": environment_status,
+                "issues": ["environment is blocked or reproducibility is degraded"],
+            })
+        return reasons
 
     def brief_status(self) -> dict[str, Any]:
         """Return a compact status packet for progress reporting."""

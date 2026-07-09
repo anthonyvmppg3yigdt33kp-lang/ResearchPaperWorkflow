@@ -1,0 +1,9 @@
+schema_version: local_experience_registry.v1
+updated_at: "2026-07-09"
+entries:
+  - id: lung_master_de_table_standardizer
+    source_route: local_external_code_review
+    experience_grade: real_tested_module
+    module_id: external.lung_master.de_table_standardizer.v1
+    reusable_scope: imported differential-expression table post-processing
+    claim_boundary: upstream DE model, replicate unit, contrast design, and FDR provenance must be reviewed before biological claims

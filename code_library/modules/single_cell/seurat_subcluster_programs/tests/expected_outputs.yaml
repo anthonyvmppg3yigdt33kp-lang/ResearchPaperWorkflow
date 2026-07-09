@@ -1,0 +1,18 @@
+required_outputs:
+  - node_manifest.yaml
+  - outputs_manifest.yaml
+  - figure_source_map.yaml
+  - table_source_map.yaml
+  - objects/subcluster_seurat.rds
+  - tables/subcluster_cell_counts.csv
+  - tables/resolution_summary.csv
+  - tables/subcluster_markers.csv
+  - tables/program_score_summary.csv
+  - tables/marker_program_mapping.csv
+  - figures/tcell_subset_umap.png
+  - figures/resolution_grid_umap.png
+  - figures/subcluster_marker_heatmap.png
+  - figures/program_score_violin.png
+  - figures/program_score_dotplot.png
+  - qc/subcluster_quality_report.yaml
+  - logs/sessionInfo.txt

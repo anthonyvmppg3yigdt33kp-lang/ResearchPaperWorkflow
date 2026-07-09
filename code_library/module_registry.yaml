@@ -1,20 +1,31 @@
-schema_version: "module_registry.v1"
-updated_at: "2026-07-08"
-purpose: "Method assets that can be selected by strategy planning, executed by graph runner, audited by source maps, and improved from run feedback."
-
+schema_version: module_registry.v5
+updated_at: '2026-07-09'
+purpose: v5 production-kernel method assets with explicit production grade, execution
+  evidence, strategy visibility, claim permission, and environment status.
 modules:
   single_cell.seurat_pbmc3k_basic.v1:
     id: single_cell.seurat_pbmc3k_basic.v1
     name: Seurat PBMC3K basic workflow
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: seurat_basic_workflow
     language: r
-    capability_tags: [single-cell, seurat, pbmc3k, qc, pca, umap, clustering, feature-plot]
+    capability_tags:
+    - single-cell
+    - seurat
+    - pbmc3k
+    - qc
+    - pca
+    - umap
+    - clustering
+    - feature-plot
     biological_question_types:
-      - single-cell preprocessing and QC
-      - cluster-level exploratory visualization
-      - marker gene display
+    - single-cell preprocessing and QC
+    - cluster-level exploratory visualization
+    - marker gene display
     source:
       type: local_wrapper
       path: code_library/modules/single_cell/seurat_pbmc3k_basic/main.R
@@ -24,318 +35,721 @@ modules:
       license: user_must_review_upstream_terms_before_redistribution
     environment:
       env_id: r_seurat_v5
-      required_packages: [Seurat, Matrix, ggplot2]
+      required_packages:
+      - Seurat
+      - Matrix
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/single_cell/seurat_pbmc3k_basic/main.R
       timeout_seconds: 1800
       args:
-        - "--input"
-        - "{input_dir}"
-        - "--out"
-        - "{node_dir}"
-        - "--run-id"
-        - "{run_id}"
-        - "--markers"
-        - "{markers}"
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --markers
+      - '{markers}'
     default_parameters:
       min_features: 200
       max_features: 2500
       max_mt: 5
       npcs: 10
       resolution: 0.5
-      markers: "MS4A1,GNLY,CD3E,CD14,FCER1A,FCGR3A,LYZ,PPBP,CD8A"
+      markers: MS4A1,GNLY,CD3E,CD14,FCER1A,FCGR3A,LYZ,PPBP,CD8A
     input_schema:
       required:
-        - name: input_dir
-          type: directory
-          description: "10X PBMC3K matrix directory, either filtered_gene_bc_matrices/hg19 or a parent containing it."
+      - name: input_dir
+        type: directory
+        description: 10X PBMC3K matrix directory, either filtered_gene_bc_matrices/hg19
+          or a parent containing it.
       optional:
-        - name: markers
-          type: comma_separated_gene_symbols
+      - name: markers
+        type: comma_separated_gene_symbols
     output_schema:
       artifacts:
-        - qc/qc_metrics.csv
-        - qc/cell_retention.csv
-        - tables/cluster_counts.csv
-        - figures/qc_violin.png
-        - figures/umap_clusters.png
-        - figures/feature_plot_markers.png
-        - objects/pbmc3k_seurat_basic.rds
-        - logs/sessionInfo.txt
+      - qc/qc_metrics.csv
+      - qc/cell_retention.csv
+      - tables/cluster_counts.csv
+      - figures/qc_violin.png
+      - figures/umap_clusters.png
+      - figures/feature_plot_markers.png
+      - objects/pbmc3k_seurat_basic.rds
+      - logs/sessionInfo.txt
       source_maps:
-        - figure_source_map.yaml
-        - table_source_map.yaml
+      - figure_source_map.yaml
+      - table_source_map.yaml
     reviewer_value:
-      - documents QC thresholds and cell retention
-      - produces transparent exploratory UMAP and marker feature plots
-      - records Seurat and R session information for Methods
+    - documents QC thresholds and cell retention
+    - produces transparent exploratory UMAP and marker feature plots
+    - records Seurat and R session information for Methods
     reviewer_risk:
-      - visualization-only evidence cannot support disease inference
-      - PBMC3K is a tutorial fixture, not project-specific biological evidence
-      - filtering thresholds require project-specific justification before publication
-    claim_boundary: "Workflow validation and exploratory single-cell preprocessing only; not a disease mechanism or clinical claim."
-    figure_outputs: [qc_violin, umap_clusters, feature_plot_markers]
-    table_outputs: [qc_metrics, cell_retention, cluster_counts]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    - visualization-only evidence cannot support disease inference
+    - PBMC3K is a tutorial fixture, not project-specific biological evidence
+    - filtering thresholds require project-specific justification before publication
+    claim_boundary: Workflow validation and exploratory single-cell preprocessing
+      only; not a disease mechanism or clinical claim.
+    figure_outputs:
+    - qc_violin
+    - umap_clusters
+    - feature_plot_markers
+    table_outputs:
+    - qc_metrics
+    - cell_retention
+    - cluster_counts
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: tutorial_fixture_ready
     method_maturity: validated_external_tutorial_wrapper
     compatible_upstream_modules: []
     compatible_downstream_modules:
-      - single_cell.marker_annotation.v1
-      - single_cell.pseudobulk_de.v1
+    - single_cell.seurat_subcluster_programs.v1
+    - single_cell.marker_annotation.v1
+    - single_cell.pseudobulk_de.v1
     compute_cost: low
     token_cost: low
-
+    output_bindings:
+      seurat_rds: objects/pbmc3k_seurat_basic.rds
+    module_id: single_cell.seurat_pbmc3k_basic.v1
+    production_capability_grade: validated_workflow_pilot
+    execution_evidence_level: official_tutorial_validated
+    strategy_visibility: exploratory_candidate
+    claim_permission: workflow_test_only
+    current_environment_status: pass
   single_cell.seurat_qc.v1:
     id: single_cell.seurat_qc.v1
     name: Seurat QC filtering module
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: seurat_qc
     language: r
-    capability_tags: [single-cell, seurat, qc, filtering, dry-run]
-    biological_question_types: [single-cell preprocessing, QC threshold documentation]
+    capability_tags:
+    - single-cell
+    - seurat
+    - qc
+    - filtering
+    - dry-run
+    biological_question_types:
+    - single-cell preprocessing
+    - QC threshold documentation
     source:
       type: thin_wrapper
       path: code_library/modules/single_cell/seurat_qc/main.R
       origin: code_library/r/bioinformatics_analysis.R::seurat_qc
       license: MIT
-    environment: {env_id: r_seurat_v5, required_packages: [Seurat, SeuratObject, Matrix, ggplot2]}
+    environment:
+      env_id: r_seurat_v5
+      required_packages:
+      - Seurat
+      - SeuratObject
+      - Matrix
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/single_cell/seurat_qc/main.R
       timeout_seconds: 900
-      args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]
-    default_parameters: {min_features: 200, max_mt: 25}
-    input_schema: {required: [{name: input, type: seurat_rds}], optional: [{name: dry-run, type: flag}]}
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    default_parameters:
+      min_features: 200
+      max_mt: 25
+    input_schema:
+      required:
+      - name: input
+        type: seurat_rds
+      optional:
+      - name: dry-run
+        type: flag
     output_schema:
-      artifacts: [qc/cell_retention.csv, objects/seurat_qc.rds, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      artifacts:
+      - qc/cell_retention.csv
+      - objects/seurat_qc.rds
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       seurat_rds: objects/seurat_qc.rds
-    reviewer_value: [documents cell retention, records QC thresholds]
-    reviewer_risk: [filter thresholds can bias downstream composition, QC alone is not biological evidence]
-    claim_boundary: "QC and filtering only; retained cells are analysis inputs, not biological evidence."
-    figure_outputs: [qc_violin]
-    table_outputs: [cell_retention]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    reviewer_value:
+    - documents cell retention
+    - records QC thresholds
+    reviewer_risk:
+    - filter thresholds can bias downstream composition
+    - QC alone is not biological evidence
+    claim_boundary: QC and filtering only; retained cells are analysis inputs, not
+      biological evidence.
+    figure_outputs:
+    - qc_violin
+    table_outputs:
+    - cell_retention
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
     compatible_upstream_modules: []
-    compatible_downstream_modules: [single_cell.seurat_integration_harmony.v1, single_cell.seurat_clustering_umap.v1]
+    compatible_downstream_modules:
+    - single_cell.seurat_integration_harmony.v1
+    - single_cell.seurat_clustering_umap.v1
     compute_cost: low
     token_cost: low
-
+    module_id: single_cell.seurat_qc.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   single_cell.seurat_integration_harmony.v1:
     id: single_cell.seurat_integration_harmony.v1
     name: Seurat Harmony integration module
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: seurat_integration_harmony
     language: r
-    capability_tags: [single-cell, seurat, harmony, integration, batch-correction, dry-run]
-    biological_question_types: [multi-sample single-cell integration, batch-effect assessment]
+    capability_tags:
+    - single-cell
+    - seurat
+    - harmony
+    - integration
+    - batch-correction
+    - dry-run
+    biological_question_types:
+    - multi-sample single-cell integration
+    - batch-effect assessment
     source:
       type: thin_wrapper
       path: code_library/modules/single_cell/seurat_integration_harmony/main.R
       origin: code_library/r/bioinformatics_analysis.R::seurat_harmony
       license: MIT
-    environment: {env_id: r_seurat_harmony, required_packages: [Seurat, SeuratObject, harmony, Matrix, ggplot2]}
+    environment:
+      env_id: r_seurat_harmony
+      required_packages:
+      - Seurat
+      - SeuratObject
+      - harmony
+      - Matrix
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/single_cell/seurat_integration_harmony/main.R
       timeout_seconds: 1800
-      args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}", "--batch-var", "{batch_var}"]
-    default_parameters: {batch_var: batch}
-    input_schema: {required: [{name: input, type: seurat_rds}, {name: batch-var, type: metadata_column}], optional: [{name: dry-run, type: flag}]}
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --batch-var
+      - '{batch_var}'
+    default_parameters:
+      batch_var: batch
+    input_schema:
+      required:
+      - name: input
+        type: seurat_rds
+      - name: batch-var
+        type: metadata_column
+      optional:
+      - name: dry-run
+        type: flag
     output_schema:
-      artifacts: [tables/integration_summary.csv, objects/seurat_harmony.rds, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      artifacts:
+      - tables/integration_summary.csv
+      - objects/seurat_harmony.rds
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       seurat_rds: objects/seurat_harmony.rds
-    reviewer_value: [declares batch variable, records integration parameters, separates batch correction from interpretation]
-    reviewer_risk: [overcorrection may remove biology, batch correction cannot rescue confounded design]
-    claim_boundary: "Batch-corrected embedding for exploratory integration; does not prove batch-free biology."
-    figure_outputs: [harmony_embedding]
-    table_outputs: [integration_summary]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    reviewer_value:
+    - declares batch variable
+    - records integration parameters
+    - separates batch correction from interpretation
+    reviewer_risk:
+    - overcorrection may remove biology
+    - batch correction cannot rescue confounded design
+    claim_boundary: Batch-corrected embedding for exploratory integration; does not
+      prove batch-free biology.
+    figure_outputs:
+    - harmony_embedding
+    table_outputs:
+    - integration_summary
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
-    compatible_upstream_modules: [single_cell.seurat_qc.v1]
-    compatible_downstream_modules: [single_cell.seurat_clustering_umap.v1]
+    compatible_upstream_modules:
+    - single_cell.seurat_qc.v1
+    compatible_downstream_modules:
+    - single_cell.seurat_clustering_umap.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: single_cell.seurat_integration_harmony.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: planning_only
+    claim_permission: exploratory_only
+    current_environment_status: pass
   single_cell.seurat_clustering_umap.v1:
     id: single_cell.seurat_clustering_umap.v1
     name: Seurat clustering and UMAP module
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: seurat_clustering_umap
     language: r
-    capability_tags: [single-cell, seurat, clustering, umap, visualization, dry-run]
-    biological_question_types: [cluster discovery, exploratory cell-state visualization]
+    capability_tags:
+    - single-cell
+    - seurat
+    - clustering
+    - umap
+    - visualization
+    - dry-run
+    biological_question_types:
+    - cluster discovery
+    - exploratory cell-state visualization
     source:
       type: thin_wrapper
       path: code_library/modules/single_cell/seurat_clustering_umap/main.R
       origin: code_library/r/bioinformatics_analysis.R::seurat_cluster
       license: MIT
-    environment: {env_id: r_seurat_v5, required_packages: [Seurat, SeuratObject, Matrix, ggplot2]}
+    environment:
+      env_id: r_seurat_v5
+      required_packages:
+      - Seurat
+      - SeuratObject
+      - Matrix
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/single_cell/seurat_clustering_umap/main.R
       timeout_seconds: 1200
-      args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}", "--resolution", "{resolution}"]
-    default_parameters: {resolution: 0.6, npcs: 30}
-    input_schema: {required: [{name: input, type: seurat_rds}], optional: [{name: resolution, type: number}, {name: dry-run, type: flag}]}
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --resolution
+      - '{resolution}'
+    default_parameters:
+      resolution: 0.6
+      npcs: 30
+    input_schema:
+      required:
+      - name: input
+        type: seurat_rds
+      optional:
+      - name: resolution
+        type: number
+      - name: dry-run
+        type: flag
     output_schema:
-      artifacts: [tables/cluster_counts.csv, figures/umap_clusters.png, objects/seurat_clustered.rds, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      artifacts:
+      - tables/cluster_counts.csv
+      - figures/umap_clusters.png
+      - objects/seurat_clustered.rds
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       seurat_rds: objects/seurat_clustered.rds
       cluster_table: tables/cluster_counts.csv
-    reviewer_value: [records clustering resolution, produces auditable UMAP, creates cluster counts]
-    reviewer_risk: [clusters are parameter-sensitive, UMAP distances are visual approximations]
-    claim_boundary: "Cluster visualization is exploratory and requires annotation/validation before inference."
-    figure_outputs: [umap_clusters]
-    table_outputs: [cluster_counts]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    reviewer_value:
+    - records clustering resolution
+    - produces auditable UMAP
+    - creates cluster counts
+    reviewer_risk:
+    - clusters are parameter-sensitive
+    - UMAP distances are visual approximations
+    claim_boundary: Cluster visualization is exploratory and requires annotation/validation
+      before inference.
+    figure_outputs:
+    - umap_clusters
+    table_outputs:
+    - cluster_counts
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
-    compatible_upstream_modules: [single_cell.seurat_qc.v1, single_cell.seurat_integration_harmony.v1]
-    compatible_downstream_modules: [single_cell.marker_feature_plot.v1, single_cell.seurat_findmarkers_group_de.v1, single_cell.pseudobulk_aggregate.v1]
+    compatible_upstream_modules:
+    - single_cell.seurat_qc.v1
+    - single_cell.seurat_integration_harmony.v1
+    compatible_downstream_modules:
+    - single_cell.marker_feature_plot.v1
+    - single_cell.seurat_findmarkers_group_de.v1
+    - single_cell.pseudobulk_aggregate.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: single_cell.seurat_clustering_umap.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   single_cell.marker_feature_plot.v1:
     id: single_cell.marker_feature_plot.v1
     name: Marker feature plot module
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: marker_feature_plot
     language: r
-    capability_tags: [single-cell, seurat, marker, feature-plot, visualization, dry-run]
-    biological_question_types: [marker display, exploratory cell identity support]
+    capability_tags:
+    - single-cell
+    - seurat
+    - marker
+    - feature-plot
+    - visualization
+    - dry-run
+    biological_question_types:
+    - marker display
+    - exploratory cell identity support
     source:
       type: thin_wrapper
       path: code_library/modules/single_cell/marker_feature_plot/main.R
       origin: code_library/r/bioinformatics_analysis.R::plot_feature_nature
       license: MIT
-    environment: {env_id: r_seurat_v5, required_packages: [Seurat, SeuratObject, Matrix, ggplot2]}
+    environment:
+      env_id: r_seurat_v5
+      required_packages:
+      - Seurat
+      - SeuratObject
+      - Matrix
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/single_cell/marker_feature_plot/main.R
       timeout_seconds: 600
-      args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}", "--markers", "{markers}"]
-    default_parameters: {markers: "MS4A1,CD3E,LYZ"}
-    input_schema: {required: [{name: input, type: seurat_rds}, {name: markers, type: comma_separated_gene_symbols}], optional: [{name: dry-run, type: flag}]}
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --markers
+      - '{markers}'
+    default_parameters:
+      markers: MS4A1,CD3E,LYZ
+    input_schema:
+      required:
+      - name: input
+        type: seurat_rds
+      - name: markers
+        type: comma_separated_gene_symbols
+      optional:
+      - name: dry-run
+        type: flag
     output_schema:
-      artifacts: [tables/marker_presence.csv, figures/marker_feature_plot.png, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
-    reviewer_value: [documents requested marker list, records absent markers, links feature plots to object source]
-    reviewer_risk: [marker display alone does not annotate cells, visual expression is not differential evidence]
-    claim_boundary: "Marker display only; expression overlays do not establish cell identity or mechanism alone."
-    figure_outputs: [marker_feature_plot]
-    table_outputs: [marker_presence]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+      artifacts:
+      - tables/marker_presence.csv
+      - figures/marker_feature_plot.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - documents requested marker list
+    - records absent markers
+    - links feature plots to object source
+    reviewer_risk:
+    - marker display alone does not annotate cells
+    - visual expression is not differential evidence
+    claim_boundary: Marker display only; expression overlays do not establish cell
+      identity or mechanism alone.
+    figure_outputs:
+    - marker_feature_plot
+    table_outputs:
+    - marker_presence
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
-    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+    compatible_upstream_modules:
+    - single_cell.seurat_clustering_umap.v1
     compatible_downstream_modules: []
     compute_cost: low
     token_cost: low
-
+    module_id: single_cell.marker_feature_plot.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: planning_only
+    claim_permission: exploratory_only
+    current_environment_status: pass
   single_cell.pseudobulk_aggregate.v1:
     id: single_cell.pseudobulk_aggregate.v1
     name: Single-cell pseudobulk aggregation module
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: pseudobulk_aggregate
     language: r
-    capability_tags: [single-cell, pseudobulk, aggregation, replicate-level, dry-run]
-    biological_question_types: [replicate-level aggregation, cell-type-specific DE setup]
+    capability_tags:
+    - single-cell
+    - pseudobulk
+    - aggregation
+    - replicate-level
+    - dry-run
+    biological_question_types:
+    - replicate-level aggregation
+    - cell-type-specific DE setup
     source:
       type: thin_wrapper
       path: code_library/modules/single_cell/pseudobulk_aggregate/main.R
       origin: code_library/r/bioinformatics_analysis.R::pseudobulk_aggregate
       license: MIT
-    environment: {env_id: r_seurat_v5, required_packages: [Seurat, SeuratObject, Matrix]}
+    environment:
+      env_id: r_seurat_v5
+      required_packages:
+      - Seurat
+      - SeuratObject
+      - Matrix
     execution:
       type: rscript
       script: code_library/modules/single_cell/pseudobulk_aggregate/main.R
       timeout_seconds: 1200
-      args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}", "--sample-column", "{sample_column}", "--group-column", "{group_column}"]
-    default_parameters: {sample_column: sample_id, group_column: seurat_clusters, min_cells: 10}
-    input_schema: {required: [{name: input, type: seurat_rds}, {name: sample-column, type: metadata_column}, {name: group-column, type: metadata_column}], optional: [{name: dry-run, type: flag}]}
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --sample-column
+      - '{sample_column}'
+      - --group-column
+      - '{group_column}'
+    default_parameters:
+      sample_column: sample_id
+      group_column: seurat_clusters
+      min_cells: 10
+    input_schema:
+      required:
+      - name: input
+        type: seurat_rds
+      - name: sample-column
+        type: metadata_column
+      - name: group-column
+        type: metadata_column
+      optional:
+      - name: dry-run
+        type: flag
     output_schema:
-      artifacts: [tables/pseudobulk_metadata.csv, objects/pseudobulk_result.rds, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      artifacts:
+      - tables/pseudobulk_metadata.csv
+      - objects/pseudobulk_result.rds
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       pseudobulk_rds: objects/pseudobulk_result.rds
-    reviewer_value: [moves inference to biological replicate level, records sample and group aggregation, prepares DESeq2 input]
-    reviewer_risk: [sample mapping errors invalidate inference, low cell counts per group can bias pseudobulk]
-    claim_boundary: "Aggregation prepares replicate-level inference; it is not a differential result."
+    reviewer_value:
+    - moves inference to biological replicate level
+    - records sample and group aggregation
+    - prepares DESeq2 input
+    reviewer_risk:
+    - sample mapping errors invalidate inference
+    - low cell counts per group can bias pseudobulk
+    claim_boundary: Aggregation prepares replicate-level inference; it is not a differential
+      result.
     figure_outputs: []
-    table_outputs: [pseudobulk_metadata]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    table_outputs:
+    - pseudobulk_metadata
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
-    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
-    compatible_downstream_modules: [single_cell.pseudobulk_deseq2.v1]
+    compatible_upstream_modules:
+    - single_cell.seurat_clustering_umap.v1
+    compatible_downstream_modules:
+    - single_cell.pseudobulk_deseq2.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: single_cell.pseudobulk_aggregate.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: planning_only
+    claim_permission: exploratory_only
+    current_environment_status: pass
   single_cell.pseudobulk_deseq2.v1:
     id: single_cell.pseudobulk_deseq2.v1
     name: Single-cell pseudobulk DESeq2 module
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: pseudobulk_deseq2
     language: r
-    capability_tags: [single-cell, pseudobulk, deseq2, differential-expression, dry-run]
-    biological_question_types: [cell-type-specific differential expression, replicate-level association]
+    capability_tags:
+    - single-cell
+    - pseudobulk
+    - deseq2
+    - differential-expression
+    - dry-run
+    biological_question_types:
+    - cell-type-specific differential expression
+    - replicate-level association
     source:
       type: thin_wrapper
       path: code_library/modules/single_cell/pseudobulk_deseq2/main.R
       origin: code_library/r/bioinformatics_analysis.R::de_deseq2
       license: MIT
-    environment: {env_id: r_pseudobulk_deseq2, required_packages: [DESeq2, Matrix, ggplot2]}
+    environment:
+      env_id: r_pseudobulk_deseq2
+      required_packages:
+      - DESeq2
+      - Matrix
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/single_cell/pseudobulk_deseq2/main.R
       timeout_seconds: 1800
-      args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}", "--condition-column", "{condition_column}", "--reference", "{reference}", "--target", "{target}"]
-    default_parameters: {condition_column: condition, reference: control, target: case}
-    input_schema: {required: [{name: input, type: pseudobulk_rds}, {name: condition-column, type: metadata_column}, {name: reference, type: group_value}, {name: target, type: group_value}], optional: [{name: dry-run, type: flag}]}
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --condition-column
+      - '{condition_column}'
+      - --reference
+      - '{reference}'
+      - --target
+      - '{target}'
+    default_parameters:
+      condition_column: condition
+      reference: control
+      target: case
+    input_schema:
+      required:
+      - name: input
+        type: pseudobulk_rds
+      - name: condition-column
+        type: metadata_column
+      - name: reference
+        type: group_value
+      - name: target
+        type: group_value
+      optional:
+      - name: dry-run
+        type: flag
     output_schema:
-      artifacts: [tables/pseudobulk_deseq2_results.csv, figures/pseudobulk_deseq2_volcano.png, objects/pseudobulk_deseq2_result.rds, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      artifacts:
+      - tables/pseudobulk_deseq2_results.csv
+      - figures/pseudobulk_deseq2_volcano.png
+      - objects/pseudobulk_deseq2_result.rds
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       ranked_gene_statistic: tables/pseudobulk_deseq2_results.csv
       differential_expression_table: tables/pseudobulk_deseq2_results.csv
-    reviewer_value: [uses biological replicate pseudobulk, records contrast and FDR, produces DE table]
-    reviewer_risk: [requires valid replicate mapping, covariates and batch must be justified, DE result is association not mechanism]
-    claim_boundary: "Pseudobulk DE requires valid replicate/sample mapping and covariate review before publication claims."
-    figure_outputs: [pseudobulk_deseq2_volcano]
-    table_outputs: [pseudobulk_deseq2_results]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    reviewer_value:
+    - uses biological replicate pseudobulk
+    - records contrast and FDR
+    - produces DE table
+    reviewer_risk:
+    - requires valid replicate mapping
+    - covariates and batch must be justified
+    - DE result is association not mechanism
+    claim_boundary: Pseudobulk DE requires valid replicate/sample mapping and covariate
+      review before publication claims.
+    figure_outputs:
+    - pseudobulk_deseq2_volcano
+    table_outputs:
+    - pseudobulk_deseq2_results
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
-    compatible_upstream_modules: [single_cell.pseudobulk_aggregate.v1]
-    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compatible_upstream_modules:
+    - single_cell.pseudobulk_aggregate.v1
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: single_cell.pseudobulk_deseq2.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: hidden_from_production
+    claim_permission: no_claim
+    current_environment_status: blocked
   single_cell.seurat_findmarkers_group_de.v1:
     id: single_cell.seurat_findmarkers_group_de.v1
     name: Seurat FindMarkers group differential expression
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
     step: seurat_findmarkers_group_de
     language: r
-    capability_tags: [single-cell, seurat, findmarkers, marker, differential-expression, exploratory, real-wrapper]
-    biological_question_types: [cell-level marker screening, exploratory group comparison]
+    capability_tags:
+    - single-cell
+    - seurat
+    - findmarkers
+    - marker
+    - differential-expression
+    - exploratory
+    - real-wrapper
+    biological_question_types:
+    - cell-level marker screening
+    - exploratory group comparison
     source:
       type: local_wrapper
       path: code_library/modules/single_cell/seurat_findmarkers_group_de/main.R
@@ -343,102 +757,151 @@ modules:
       license: MIT
     environment:
       env_id: r_seurat_v5
-      required_packages: [Seurat, SeuratObject, Matrix, ggplot2]
-      optional_packages: [MAST]
+      required_packages:
+      - Seurat
+      - SeuratObject
+      - Matrix
+      - ggplot2
+      optional_packages:
+      - MAST
     execution:
       type: rscript
       script: code_library/modules/single_cell/seurat_findmarkers_group_de/main.R
       timeout_seconds: 1800
       args:
-        - "--input"
-        - "{seurat_rds}"
-        - "--out"
-        - "{node_dir}"
-        - "--run-id"
-        - "{run_id}"
-        - "--group-column"
-        - "{group_column}"
-        - "--ident-1"
-        - "{ident_1}"
-        - "--ident-2"
-        - "{ident_2}"
-        - "--subset-column"
-        - "{subset_column}"
-        - "--subset-value"
-        - "{subset_value}"
-        - "--assay"
-        - "{assay}"
-        - "--slot"
-        - "{slot}"
-        - "--test-use"
-        - "{test_use}"
-        - "--min-pct"
-        - "{min_pct}"
-        - "--logfc-threshold"
-        - "{logfc_threshold}"
-        - "--only-pos"
-        - "{only_pos}"
+      - --input
+      - '{seurat_rds}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --group-column
+      - '{group_column}'
+      - --ident-1
+      - '{ident_1}'
+      - --ident-2
+      - '{ident_2}'
+      - --subset-column
+      - '{subset_column}'
+      - --subset-value
+      - '{subset_value}'
+      - --assay
+      - '{assay}'
+      - --slot
+      - '{slot}'
+      - --test-use
+      - '{test_use}'
+      - --min-pct
+      - '{min_pct}'
+      - --logfc-threshold
+      - '{logfc_threshold}'
+      - --only-pos
+      - '{only_pos}'
     default_parameters:
       group_column: condition
       ident_1: target
       ident_2: reference
-      subset_column: ""
-      subset_value: ""
-      assay: ""
+      subset_column: ''
+      subset_value: ''
+      assay: ''
       slot: data
       test_use: wilcox
       min_pct: 0.1
       logfc_threshold: 0.25
-      only_pos: "false"
+      only_pos: 'false'
     input_schema:
       required:
-        - {name: seurat_rds, type: seurat_rds}
-        - {name: group_column, type: metadata_column}
-        - {name: ident_1, type: group_value}
-        - {name: ident_2, type: group_value}
+      - name: seurat_rds
+        type: seurat_rds
+      - name: group_column
+        type: metadata_column
+      - name: ident_1
+        type: group_value
+      - name: ident_2
+        type: group_value
       optional:
-        - {name: subset_column, type: metadata_column}
-        - {name: subset_value, type: group_value}
-        - {name: assay, type: assay_name}
-        - {name: slot, type: assay_slot}
-        - {name: test_use, type: seurat_findmarkers_test}
-        - {name: min_pct, type: number}
-        - {name: logfc_threshold, type: number}
-        - {name: only_pos, type: boolean}
-        - {name: dry-run, type: flag}
+      - name: subset_column
+        type: metadata_column
+      - name: subset_value
+        type: group_value
+      - name: assay
+        type: assay_name
+      - name: slot
+        type: assay_slot
+      - name: test_use
+        type: seurat_findmarkers_test
+      - name: min_pct
+        type: number
+      - name: logfc_threshold
+        type: number
+      - name: only_pos
+        type: boolean
+      - name: dry-run
+        type: flag
     output_schema:
       artifacts:
-        - tables/findmarkers_results.csv
-        - tables/findmarkers_summary.csv
-        - qc/group_size_sample_mapping.csv
-        - figures/findmarkers_volcano.png
-        - objects/findmarkers_parameters.rds
-        - logs/sessionInfo.txt
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      - tables/findmarkers_results.csv
+      - tables/findmarkers_summary.csv
+      - qc/group_size_sample_mapping.csv
+      - figures/findmarkers_volcano.png
+      - objects/findmarkers_parameters.rds
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       ranked_gene_statistic: tables/findmarkers_results.csv
       differential_expression_table: tables/findmarkers_results.csv
       group_size_report: qc/group_size_sample_mapping.csv
-    reviewer_value: [standardized FindMarkers output, group-size/sample-mapping audit, source-map claim boundary]
-    reviewer_risk: [cell-level tests are exploratory for disease contrasts unless replicate-aware inference is documented, biological replicates should be handled with pseudobulk when available]
-    claim_boundary: "Cell-level marker/differential expression is exploratory unless biological replicate-aware inference is documented."
-    figure_outputs: [findmarkers_volcano]
-    table_outputs: [findmarkers_results, findmarkers_summary, group_size_sample_mapping]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    reviewer_value:
+    - standardized FindMarkers output
+    - group-size/sample-mapping audit
+    - source-map claim boundary
+    reviewer_risk:
+    - cell-level tests are exploratory for disease contrasts unless replicate-aware
+      inference is documented
+    - biological replicates should be handled with pseudobulk when available
+    claim_boundary: Cell-level marker/differential expression is exploratory unless
+      biological replicate-aware inference is documented.
+    figure_outputs:
+    - findmarkers_volcano
+    table_outputs:
+    - findmarkers_results
+    - findmarkers_summary
+    - group_size_sample_mapping
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified_real_execution_ready
     method_maturity: validated_parameterized_wrapper
-    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1, single_cell.seurat_qc.v1]
-    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compatible_upstream_modules:
+    - single_cell.seurat_clustering_umap.v1
+    - single_cell.seurat_qc.v1
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: single_cell.seurat_findmarkers_group_de.v1
+    production_capability_grade: production_capable_real_wrapper
+    execution_evidence_level: toy_real_tested
+    strategy_visibility: exploratory_candidate
+    claim_permission: exploratory_only
+    current_environment_status: pass
   bulk_rnaseq.python_builtin_pilot.v1:
     id: bulk_rnaseq.python_builtin_pilot.v1
     name: Built-in bulk RNA-seq pilot adapter
     modality: bulk_rnaseq
     step: differential_expression_pilot
     language: python
-    capability_tags: [bulk-rnaseq, pilot, qc, volcano, heatmap]
+    capability_tags:
+    - bulk-rnaseq
+    - pilot
+    - qc
+    - volcano
+    - heatmap
     source:
       type: standalone_python_script
       path: code_library/modules/bulk_rnaseq/python_builtin_pilot/main.py
@@ -449,479 +912,1294 @@ modules:
       required_packages: []
     input_schema:
       required:
-        - name: count_matrix_csv
-          type: csv
-          description: "Gene-by-sample count matrix with gene column and sample columns."
-        - name: sample_metadata_csv
-          type: csv
-          description: "Sample metadata with sample_id and condition columns."
+      - name: count_matrix_csv
+        type: csv
+        description: Gene-by-sample count matrix with gene column and sample columns.
+      - name: sample_metadata_csv
+        type: csv
+        description: Sample metadata with sample_id and condition columns.
       optional:
-        - name: condition_column
-          type: metadata_column
-        - name: sample_id_column
-          type: metadata_column
-        - name: reference
-          type: group_value
-        - name: target
-          type: group_value
+      - name: condition_column
+        type: metadata_column
+      - name: sample_id_column
+        type: metadata_column
+      - name: reference
+        type: group_value
+      - name: target
+        type: group_value
     output_schema:
       artifacts:
-        - tables/differential_expression_pilot.csv
-        - qc/sample_qc.csv
-        - figures/volcano_plot.svg
-        - figures/deg_heatmap.svg
-        - figure_source_map.yaml
-        - table_source_map.yaml
+      - tables/differential_expression_pilot.csv
+      - qc/sample_qc.csv
+      - figures/volcano_plot.svg
+      - figures/deg_heatmap.svg
+      - figure_source_map.yaml
+      - table_source_map.yaml
     execution:
       type: python
       script: code_library/modules/bulk_rnaseq/python_builtin_pilot/main.py
       timeout_seconds: 600
       args:
-        - "--counts"
-        - "{count_matrix_csv}"
-        - "--metadata"
-        - "{sample_metadata_csv}"
-        - "--out"
-        - "{node_dir}"
-        - "--run-id"
-        - "{run_id}"
-        - "--condition-column"
-        - "{condition_column}"
-        - "--sample-id-column"
-        - "{sample_id_column}"
-        - "--reference"
-        - "{reference}"
-        - "--target"
-        - "{target}"
+      - --counts
+      - '{count_matrix_csv}'
+      - --metadata
+      - '{sample_metadata_csv}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --condition-column
+      - '{condition_column}'
+      - --sample-id-column
+      - '{sample_id_column}'
+      - --reference
+      - '{reference}'
+      - --target
+      - '{target}'
     default_parameters:
       condition_column: condition
       sample_id_column: sample_id
-      reference: ""
-      target: ""
+      reference: ''
+      target: ''
     reviewer_value:
-      - proves scoped execution and source-map writing
+    - proves scoped execution and source-map writing
     reviewer_risk:
-      - approximate statistics are not publication-grade DE
-    claim_boundary: "Workflow execution pilot only; use DESeq2/edgeR/limma for publication-grade inference."
-    figure_outputs: [volcano_plot, deg_heatmap]
-    table_outputs: [differential_expression_pilot, sample_qc]
+    - approximate statistics are not publication-grade DE
+    claim_boundary: Workflow execution pilot only; use DESeq2/edgeR/limma for publication-grade
+      inference.
+    figure_outputs:
+    - volcano_plot
+    - deg_heatmap
+    table_outputs:
+    - differential_expression_pilot
+    - sample_qc
     validation_status: tested_internal
     method_maturity: pilot
     compute_cost: low
     token_cost: low
-
+    module_id: bulk_rnaseq.python_builtin_pilot.v1
+    production_capability_grade: validated_workflow_pilot
+    execution_evidence_level: toy_real_tested
+    strategy_visibility: exploratory_candidate
+    claim_permission: no_claim
+    current_environment_status: pass
   bulk_rnaseq.deseq2_de.v1:
     id: bulk_rnaseq.deseq2_de.v1
     name: Publication-oriented DESeq2 differential expression
     modality: bulk_rnaseq
-    modality_aliases: [bulk, rnaseq, rna_seq]
+    modality_aliases:
+    - bulk
+    - rnaseq
+    - rna_seq
     step: deseq2_de
     language: r
-    capability_tags: [bulk-rnaseq, deseq2, differential-expression, publication-oriented, dry-run]
-    biological_question_types: [bulk RNA-seq group contrast, replicate-level association testing]
-    source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/deseq2_de/main.R, origin: DESeq2_publication_oriented_contract, license: MIT}
-    environment: {env_id: r_bulk_rnaseq, required_packages: [DESeq2, edgeR, limma, ggplot2, pheatmap]}
+    capability_tags:
+    - bulk-rnaseq
+    - deseq2
+    - differential-expression
+    - publication-oriented
+    - dry-run
+    biological_question_types:
+    - bulk RNA-seq group contrast
+    - replicate-level association testing
+    source:
+      type: thin_wrapper
+      path: code_library/modules/bulk_rnaseq/deseq2_de/main.R
+      origin: DESeq2_publication_oriented_contract
+      license: MIT
+    environment:
+      env_id: r_bulk_rnaseq
+      required_packages:
+      - DESeq2
+      - edgeR
+      - limma
+      - ggplot2
+      - pheatmap
     execution:
       type: rscript
       script: code_library/modules/bulk_rnaseq/deseq2_de/main.R
       timeout_seconds: 1800
-      args: ["--counts", "{count_matrix}", "--metadata", "{metadata}", "--out", "{node_dir}", "--run-id", "{run_id}", "--condition-column", "{condition_column}", "--reference", "{reference}", "--target", "{target}"]
-    default_parameters: {condition_column: condition, reference: control, target: case}
-    input_schema: {required: [count_matrix_csv, sample_metadata_csv, condition_column], optional: [covariates, dry-run]}
+      args:
+      - --counts
+      - '{count_matrix}'
+      - --metadata
+      - '{metadata}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --condition-column
+      - '{condition_column}'
+      - --reference
+      - '{reference}'
+      - --target
+      - '{target}'
+    default_parameters:
+      condition_column: condition
+      reference: control
+      target: case
+    input_schema:
+      required:
+      - count_matrix_csv
+      - sample_metadata_csv
+      - condition_column
+      optional:
+      - covariates
+      - dry-run
     output_schema:
-      artifacts: [tables/normalized_counts_summary.csv, tables/deseq2_de_results.csv, figures/deseq2_volcano.png, figures/deseq2_heatmap.png, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
-    reviewer_value: [normalized counts summary, DE table, volcano, heatmap, contrast and FDR record]
-    reviewer_risk: [design matrix must match biological replicates, low sample size limits inference, association is not mechanism]
-    claim_boundary: "Publication-oriented association testing only; causal or mechanism claims require validation."
-    figure_outputs: [deseq2_volcano, deseq2_heatmap]
-    table_outputs: [normalized_counts_summary, deseq2_de_results]
+      artifacts:
+      - tables/normalized_counts_summary.csv
+      - tables/deseq2_de_results.csv
+      - figures/deseq2_volcano.png
+      - figures/deseq2_heatmap.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - normalized counts summary
+    - DE table
+    - volcano
+    - heatmap
+    - contrast and FDR record
+    reviewer_risk:
+    - design matrix must match biological replicates
+    - low sample size limits inference
+    - association is not mechanism
+    claim_boundary: Publication-oriented association testing only; causal or mechanism
+      claims require validation.
+    figure_outputs:
+    - deseq2_volcano
+    - deseq2_heatmap
+    table_outputs:
+    - normalized_counts_summary
+    - deseq2_de_results
     validation_status: publication_oriented_dry_run_verified
     method_maturity: validated_publication_oriented_wrapper
     compatible_upstream_modules: []
-    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: bulk_rnaseq.deseq2_de.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: hidden_from_production
+    claim_permission: exploratory_only
+    current_environment_status: blocked
   bulk_rnaseq.limma_voom_de.v1:
     id: bulk_rnaseq.limma_voom_de.v1
     name: Publication-oriented limma-voom differential expression
     modality: bulk_rnaseq
-    modality_aliases: [bulk, rnaseq, rna_seq]
+    modality_aliases:
+    - bulk
+    - rnaseq
+    - rna_seq
     step: limma_voom_de
     language: r
-    capability_tags: [bulk-rnaseq, limma, voom, differential-expression, publication-oriented, dry-run]
-    biological_question_types: [bulk RNA-seq group contrast, paired or blocked design]
-    source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/limma_voom_de/main.R, origin: limma_voom_publication_oriented_contract, license: MIT}
-    environment: {env_id: r_bulk_rnaseq, required_packages: [limma, edgeR, ggplot2, pheatmap]}
+    capability_tags:
+    - bulk-rnaseq
+    - limma
+    - voom
+    - differential-expression
+    - publication-oriented
+    - dry-run
+    biological_question_types:
+    - bulk RNA-seq group contrast
+    - paired or blocked design
+    source:
+      type: thin_wrapper
+      path: code_library/modules/bulk_rnaseq/limma_voom_de/main.R
+      origin: limma_voom_publication_oriented_contract
+      license: MIT
+    environment:
+      env_id: r_bulk_rnaseq
+      required_packages:
+      - limma
+      - edgeR
+      - ggplot2
+      - pheatmap
     execution:
       type: rscript
       script: code_library/modules/bulk_rnaseq/limma_voom_de/main.R
       timeout_seconds: 1800
-      args: ["--counts", "{count_matrix}", "--metadata", "{metadata}", "--out", "{node_dir}", "--run-id", "{run_id}", "--condition-column", "{condition_column}", "--reference", "{reference}", "--target", "{target}"]
-    default_parameters: {condition_column: condition, reference: control, target: case}
-    input_schema: {required: [count_matrix_csv, sample_metadata_csv, condition_column], optional: [block_column, covariates, dry-run]}
+      args:
+      - --counts
+      - '{count_matrix}'
+      - --metadata
+      - '{metadata}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --condition-column
+      - '{condition_column}'
+      - --reference
+      - '{reference}'
+      - --target
+      - '{target}'
+    default_parameters:
+      condition_column: condition
+      reference: control
+      target: case
+    input_schema:
+      required:
+      - count_matrix_csv
+      - sample_metadata_csv
+      - condition_column
+      optional:
+      - block_column
+      - covariates
+      - dry-run
     output_schema:
-      artifacts: [tables/voom_normalization_summary.csv, tables/limma_voom_de_results.csv, figures/limma_voom_heatmap.png, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      artifacts:
+      - tables/voom_normalization_summary.csv
+      - tables/limma_voom_de_results.csv
+      - figures/limma_voom_heatmap.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       ranked_gene_statistic: tables/limma_voom_de_results.csv
       differential_expression_table: tables/limma_voom_de_results.csv
-    reviewer_value: [voom normalization summary, moderated inference, design matrix transparency]
-    reviewer_risk: [paired/block design must be correct, empirical Bayes cannot fix confounding]
-    claim_boundary: "Publication-oriented association testing; design matrix and covariates must be reviewed."
-    figure_outputs: [limma_voom_heatmap]
-    table_outputs: [voom_normalization_summary, limma_voom_de_results]
+    reviewer_value:
+    - voom normalization summary
+    - moderated inference
+    - design matrix transparency
+    reviewer_risk:
+    - paired/block design must be correct
+    - empirical Bayes cannot fix confounding
+    claim_boundary: Publication-oriented association testing; design matrix and covariates
+      must be reviewed.
+    figure_outputs:
+    - limma_voom_heatmap
+    table_outputs:
+    - voom_normalization_summary
+    - limma_voom_de_results
     validation_status: publication_oriented_dry_run_verified
     method_maturity: validated_publication_oriented_wrapper
     compatible_upstream_modules: []
-    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: bulk_rnaseq.limma_voom_de.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: hidden_from_production
+    claim_permission: exploratory_only
+    current_environment_status: blocked
   bulk_rnaseq.limma_voom_de_real.v1:
     id: bulk_rnaseq.limma_voom_de_real.v1
     name: Real limma-voom differential expression
     modality: bulk_rnaseq
-    modality_aliases: [bulk, rnaseq, rna_seq]
+    modality_aliases:
+    - bulk
+    - rnaseq
+    - rna_seq
     step: limma_voom_de_real
     language: r
-    capability_tags: [bulk-rnaseq, limma, voom, edgeR, differential-expression, sample-level, real-wrapper]
-    biological_question_types: [bulk RNA-seq sample-level group contrast]
+    capability_tags:
+    - bulk-rnaseq
+    - limma
+    - voom
+    - edgeR
+    - differential-expression
+    - sample-level
+    - real-wrapper
+    biological_question_types:
+    - bulk RNA-seq sample-level group contrast
     source:
       type: local_wrapper
       path: code_library/modules/bulk_rnaseq/limma_voom_de_real/main.R
       origin: workflow_builtin_method_asset
       license: MIT
-    environment: {env_id: r_bulk_rnaseq, required_packages: [edgeR, limma, ggplot2]}
+    environment:
+      env_id: r_bulk_rnaseq
+      required_packages:
+      - edgeR
+      - limma
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/bulk_rnaseq/limma_voom_de_real/main.R
       timeout_seconds: 1800
-      args: ["--counts", "{count_matrix}", "--metadata", "{sample_metadata}", "--out", "{node_dir}", "--run-id", "{run_id}", "--condition-column", "{condition_column}", "--sample-id-column", "{sample_id_column}", "--reference", "{reference}", "--target", "{target}"]
-    default_parameters: {condition_column: condition, sample_id_column: sample_id, reference: reference, target: target}
+      args:
+      - --counts
+      - '{count_matrix}'
+      - --metadata
+      - '{sample_metadata}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --condition-column
+      - '{condition_column}'
+      - --sample-id-column
+      - '{sample_id_column}'
+      - --reference
+      - '{reference}'
+      - --target
+      - '{target}'
+    default_parameters:
+      condition_column: condition
+      sample_id_column: sample_id
+      reference: reference
+      target: target
     input_schema:
       required:
-        - {name: count_matrix, type: count_matrix_csv}
-        - {name: sample_metadata, type: sample_metadata_csv}
-        - {name: condition_column, type: metadata_column}
-        - {name: sample_id_column, type: metadata_column}
-        - {name: reference, type: group_value}
-        - {name: target, type: group_value}
-      optional: [{name: dry-run, type: flag}]
+      - name: count_matrix
+        type: count_matrix_csv
+      - name: sample_metadata
+        type: sample_metadata_csv
+      - name: condition_column
+        type: metadata_column
+      - name: sample_id_column
+        type: metadata_column
+      - name: reference
+        type: group_value
+      - name: target
+        type: group_value
+      optional:
+      - name: dry-run
+        type: flag
     output_schema:
       artifacts:
-        - tables/limma_voom_results.csv
-        - qc/design_summary.csv
-        - figures/limma_voom_volcano.png
-        - objects/limma_voom_parameters.rds
-        - logs/sessionInfo.txt
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+      - tables/limma_voom_results.csv
+      - qc/design_summary.csv
+      - figures/limma_voom_volcano.png
+      - objects/limma_voom_parameters.rds
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
     output_bindings:
       ranked_gene_statistic: tables/limma_voom_results.csv
       differential_expression_table: tables/limma_voom_results.csv
       design_summary: qc/design_summary.csv
-    reviewer_value: [real limma voom implementation, explicit sample mapping, contrast-level source maps]
-    reviewer_risk: [sample metadata, contrast coding, covariates, and replicate units require human review]
-    claim_boundary: "Differential expression is association evidence only and depends on valid sample-level design."
-    figure_outputs: [limma_voom_volcano]
-    table_outputs: [limma_voom_results, design_summary]
-    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    reviewer_value:
+    - real limma voom implementation
+    - explicit sample mapping
+    - contrast-level source maps
+    reviewer_risk:
+    - sample metadata
+    - contrast coding
+    - covariates
+    - and replicate units require human review
+    claim_boundary: Differential expression is association evidence only and depends
+      on valid sample-level design.
+    figure_outputs:
+    - limma_voom_volcano
+    table_outputs:
+    - limma_voom_results
+    - design_summary
+    source_map_requirements:
+    - source_data
+    - script
+    - method
+    - statistical_unit
+    - claim_boundary
     validation_status: dry_run_verified_real_execution_ready
     method_maturity: validated_parameterized_wrapper
     compatible_upstream_modules: []
-    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: bulk_rnaseq.limma_voom_de_real.v1
+    production_capability_grade: production_capable_real_wrapper
+    execution_evidence_level: toy_real_tested
+    strategy_visibility: hidden_from_production
+    claim_permission: exploratory_only
+    current_environment_status: blocked
   bulk_rnaseq.wgcna.v1:
     id: bulk_rnaseq.wgcna.v1
     name: Publication-oriented WGCNA module-trait workflow
     modality: bulk_rnaseq
-    modality_aliases: [bulk, rnaseq, rna_seq]
+    modality_aliases:
+    - bulk
+    - rnaseq
+    - rna_seq
     step: wgcna
     language: r
-    capability_tags: [bulk-rnaseq, wgcna, co-expression, module-trait, publication-oriented, dry-run]
-    biological_question_types: [co-expression module discovery, module-trait association]
-    source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/wgcna/main.R, origin: code_library/r/bioinformatics_analysis.R::run_wgcna, license: MIT}
-    environment: {env_id: r_bulk_rnaseq, required_packages: [WGCNA, ggplot2, pheatmap]}
+    capability_tags:
+    - bulk-rnaseq
+    - wgcna
+    - co-expression
+    - module-trait
+    - publication-oriented
+    - dry-run
+    biological_question_types:
+    - co-expression module discovery
+    - module-trait association
+    source:
+      type: thin_wrapper
+      path: code_library/modules/bulk_rnaseq/wgcna/main.R
+      origin: code_library/r/bioinformatics_analysis.R::run_wgcna
+      license: MIT
+    environment:
+      env_id: r_bulk_rnaseq
+      required_packages:
+      - WGCNA
+      - ggplot2
+      - pheatmap
     execution:
       type: rscript
       script: code_library/modules/bulk_rnaseq/wgcna/main.R
       timeout_seconds: 3600
-      args: ["--expression", "{expression_matrix}", "--traits", "{traits}", "--out", "{node_dir}", "--run-id", "{run_id}"]
-    default_parameters: {soft_power: auto, min_module_size: 30, merge_cut_height: 0.25}
-    input_schema: {required: [normalized_expression_matrix, sample_trait_table], optional: [soft_power, dry-run]}
+      args:
+      - --expression
+      - '{expression_matrix}'
+      - --traits
+      - '{traits}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    default_parameters:
+      soft_power: auto
+      min_module_size: 30
+      merge_cut_height: 0.25
+    input_schema:
+      required:
+      - normalized_expression_matrix
+      - sample_trait_table
+      optional:
+      - soft_power
+      - dry-run
     output_schema:
-      artifacts: [tables/wgcna_parameters.csv, tables/wgcna_module_trait_correlation.csv, figures/wgcna_sample_clustering.png, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
-    reviewer_value: [soft power, module count, module-trait correlation, sample clustering, outlier handling]
-    reviewer_risk: [module-trait associations are observational, sample outliers and batch effects can dominate modules]
-    claim_boundary: "Co-expression module association only; hub genes and modules do not prove mechanism."
-    figure_outputs: [wgcna_sample_clustering]
-    table_outputs: [wgcna_parameters, wgcna_module_trait_correlation]
+      artifacts:
+      - tables/wgcna_parameters.csv
+      - tables/wgcna_module_trait_correlation.csv
+      - figures/wgcna_sample_clustering.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - soft power
+    - module count
+    - module-trait correlation
+    - sample clustering
+    - outlier handling
+    reviewer_risk:
+    - module-trait associations are observational
+    - sample outliers and batch effects can dominate modules
+    claim_boundary: Co-expression module association only; hub genes and modules do
+      not prove mechanism.
+    figure_outputs:
+    - wgcna_sample_clustering
+    table_outputs:
+    - wgcna_parameters
+    - wgcna_module_trait_correlation
     validation_status: publication_oriented_dry_run_verified
     method_maturity: validated_publication_oriented_wrapper
     compatible_upstream_modules: []
-    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
     compute_cost: high
     token_cost: medium
-
+    module_id: bulk_rnaseq.wgcna.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: hidden_from_production
+    claim_permission: exploratory_only
+    current_environment_status: blocked
   bulk_rnaseq.fgsea_enrichment.v1:
     id: bulk_rnaseq.fgsea_enrichment.v1
     name: Publication-oriented fgsea enrichment
     modality: bulk_rnaseq
-    modality_aliases: [bulk, rnaseq, rna_seq, enrichment]
+    modality_aliases:
+    - bulk
+    - rnaseq
+    - rna_seq
+    - enrichment
     step: fgsea_enrichment
     language: r
-    capability_tags: [bulk-rnaseq, fgsea, enrichment, pathway, publication-oriented, dry-run]
-    biological_question_types: [ranked gene enrichment, pathway association]
-    source: {type: thin_wrapper, path: code_library/modules/bulk_rnaseq/fgsea_enrichment/main.R, origin: code_library/r/bioinformatics_analysis.R::run_fgsea, license: MIT}
-    environment: {env_id: r_bulk_rnaseq, required_packages: [fgsea, clusterProfiler, ggplot2]}
+    capability_tags:
+    - bulk-rnaseq
+    - fgsea
+    - enrichment
+    - pathway
+    - publication-oriented
+    - dry-run
+    biological_question_types:
+    - ranked gene enrichment
+    - pathway association
+    source:
+      type: thin_wrapper
+      path: code_library/modules/bulk_rnaseq/fgsea_enrichment/main.R
+      origin: code_library/r/bioinformatics_analysis.R::run_fgsea
+      license: MIT
+    environment:
+      env_id: r_bulk_rnaseq
+      required_packages:
+      - fgsea
+      - clusterProfiler
+      - ggplot2
     execution:
       type: rscript
       script: code_library/modules/bulk_rnaseq/fgsea_enrichment/main.R
       timeout_seconds: 1800
-      args: ["--ranked-genes", "{ranked_genes}", "--gene-sets", "{gene_sets}", "--out", "{node_dir}", "--run-id", "{run_id}"]
-    default_parameters: {fdr_method: BH, min_size: 15, max_size: 500}
-    input_schema: {required: [ranked_gene_statistic, gene_set_collection], optional: [gene_universe, database_version, dry-run]}
+      args:
+      - --ranked-genes
+      - '{ranked_genes}'
+      - --gene-sets
+      - '{gene_sets}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    default_parameters:
+      fdr_method: BH
+      min_size: 15
+      max_size: 500
+    input_schema:
+      required:
+      - ranked_gene_statistic
+      - gene_set_collection
+      optional:
+      - gene_universe
+      - database_version
+      - dry-run
     output_schema:
-      artifacts: [tables/gene_set_source.csv, tables/fgsea_results.csv, figures/fgsea_dotplot.png, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
-    reviewer_value: [gene universe, database version, gene-set source, multiple testing]
-    reviewer_risk: [pathway results depend on ranking and database choice, enrichment does not prove pathway activity]
-    claim_boundary: "Pathway enrichment is interpretive and depends on the ranked statistic and gene-set database."
-    figure_outputs: [fgsea_dotplot]
-    table_outputs: [gene_set_source, fgsea_results]
+      artifacts:
+      - tables/gene_set_source.csv
+      - tables/fgsea_results.csv
+      - figures/fgsea_dotplot.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - gene universe
+    - database version
+    - gene-set source
+    - multiple testing
+    reviewer_risk:
+    - pathway results depend on ranking and database choice
+    - enrichment does not prove pathway activity
+    claim_boundary: Pathway enrichment is interpretive and depends on the ranked statistic
+      and gene-set database.
+    figure_outputs:
+    - fgsea_dotplot
+    table_outputs:
+    - gene_set_source
+    - fgsea_results
     validation_status: publication_oriented_dry_run_verified
     method_maturity: validated_publication_oriented_wrapper
-    compatible_upstream_modules: [bulk_rnaseq.deseq2_de.v1, bulk_rnaseq.limma_voom_de.v1, bulk_rnaseq.limma_voom_de_real.v1, single_cell.seurat_findmarkers_group_de.v1, single_cell.pseudobulk_deseq2.v1, bulk_rnaseq.wgcna.v1]
+    compatible_upstream_modules:
+    - bulk_rnaseq.deseq2_de.v1
+    - bulk_rnaseq.limma_voom_de.v1
+    - bulk_rnaseq.limma_voom_de_real.v1
+    - single_cell.seurat_findmarkers_group_de.v1
+    - single_cell.pseudobulk_deseq2.v1
+    - bulk_rnaseq.wgcna.v1
     compatible_downstream_modules: []
     compute_cost: low
     token_cost: low
-
+    module_id: bulk_rnaseq.fgsea_enrichment.v1
+    production_capability_grade: dry_run_contract
+    execution_evidence_level: dry_run_only
+    strategy_visibility: hidden_from_production
+    claim_permission: no_claim
+    current_environment_status: blocked
   bulk_rnaseq.immune_deconvolution_adapter.v1:
     id: bulk_rnaseq.immune_deconvolution_adapter.v1
     name: Immune deconvolution adapter contract
     modality: bulk_rnaseq
-    modality_aliases: [bulk, rnaseq, rna_seq, immune]
+    modality_aliases:
+    - bulk
+    - rnaseq
+    - rna_seq
+    - immune
     step: immune_deconvolution_adapter
     language: r
-    capability_tags: [bulk-rnaseq, immune, deconvolution, cibersort, ssgsea, xcell, adapter, dry-run]
-    biological_question_types: [immune fraction estimation, sample-level immune composition]
-    source: {type: adapter_contract, path: code_library/modules/bulk_rnaseq/immune_deconvolution_adapter/main.R, origin: deconvolution_contract, license: requires_signature_review}
-    environment: {env_id: r_bulk_rnaseq, required_packages: [GSVA, ggplot2, pheatmap]}
+    capability_tags:
+    - bulk-rnaseq
+    - immune
+    - deconvolution
+    - cibersort
+    - ssgsea
+    - xcell
+    - adapter
+    - dry-run
+    biological_question_types:
+    - immune fraction estimation
+    - sample-level immune composition
+    source:
+      type: adapter_contract
+      path: code_library/modules/bulk_rnaseq/immune_deconvolution_adapter/main.R
+      origin: deconvolution_contract
+      license: requires_signature_review
+    environment:
+      env_id: r_bulk_rnaseq
+      required_packages:
+      - GSVA
+      - ggplot2
+      - pheatmap
     execution:
       type: rscript
       script: code_library/modules/bulk_rnaseq/immune_deconvolution_adapter/main.R
       timeout_seconds: 1800
-      args: ["--expression", "{expression_matrix}", "--signature-matrix", "{signature_matrix}", "--out", "{node_dir}", "--run-id", "{run_id}"]
-    default_parameters: {method: ssgsea_or_reviewed_external, normalization: declared}
-    input_schema: {required: [normalized_expression_matrix, reviewed_signature_matrix], optional: [method, dry-run]}
+      args:
+      - --expression
+      - '{expression_matrix}'
+      - --signature-matrix
+      - '{signature_matrix}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    default_parameters:
+      method: ssgsea_or_reviewed_external
+      normalization: declared
+    input_schema:
+      required:
+      - normalized_expression_matrix
+      - reviewed_signature_matrix
+      optional:
+      - method
+      - dry-run
     output_schema:
-      artifacts: [tables/deconvolution_reference.csv, tables/immune_fraction_estimates.csv, figures/immune_fraction_heatmap.png, logs/sessionInfo.txt]
-      source_maps: [figure_source_map.yaml, table_source_map.yaml]
-    reviewer_value: [signature matrix provenance, estimation/validation separation, sample-level fraction table]
-    reviewer_risk: [deconvolution is model-based, signature mismatch can bias fractions, orthogonal validation is required]
-    claim_boundary: "Cell-fraction deconvolution is model-based estimation and requires orthogonal validation."
-    figure_outputs: [immune_fraction_heatmap]
-    table_outputs: [deconvolution_reference, immune_fraction_estimates]
+      artifacts:
+      - tables/deconvolution_reference.csv
+      - tables/immune_fraction_estimates.csv
+      - figures/immune_fraction_heatmap.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - signature matrix provenance
+    - estimation/validation separation
+    - sample-level fraction table
+    reviewer_risk:
+    - deconvolution is model-based
+    - signature mismatch can bias fractions
+    - orthogonal validation is required
+    claim_boundary: Cell-fraction deconvolution is model-based estimation and requires
+      orthogonal validation.
+    figure_outputs:
+    - immune_fraction_heatmap
+    table_outputs:
+    - deconvolution_reference
+    - immune_fraction_estimates
     validation_status: publication_oriented_dry_run_verified
     method_maturity: adapter_contract
     compatible_upstream_modules: []
     compatible_downstream_modules: []
     compute_cost: medium
     token_cost: low
-
+    module_id: bulk_rnaseq.immune_deconvolution_adapter.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: blocked
   spatial.seurat_spatial_qc.v1:
     id: spatial.seurat_spatial_qc.v1
     name: Seurat spatial QC adapter
     modality: spatial
-    modality_aliases: [spatial_transcriptomics, visium, xenium]
+    modality_aliases:
+    - spatial_transcriptomics
+    - visium
+    - xenium
     step: seurat_spatial_qc
     language: r
-    capability_tags: [spatial, qc, coordinates, tissue-section, dry-run]
-    biological_question_types: [spatial data audit, tissue section QC]
-    source: {type: adapter_contract, path: code_library/modules/spatial/seurat_spatial_qc/main.R, origin: spatial_qc_contract, license: MIT}
-    environment: {env_id: r_spatial_omics, required_packages: [Seurat, SeuratObject, ggplot2]}
-    execution: {type: rscript, script: code_library/modules/spatial/seurat_spatial_qc/main.R, timeout_seconds: 900, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
-    input_schema: {required: [spatial_object, coordinates, sample_metadata], optional: [dry-run]}
-    output_schema: {artifacts: [tables/spatial_qc_metrics.csv, figures/spatial_qc.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
-    reviewer_value: [coordinate system, spot/cell/bin unit, tissue section, sample_id, method version]
-    reviewer_risk: [spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
-    claim_boundary: "Spatial QC defines usable spots/cells and tissue section metadata; it is not biological evidence."
-    figure_outputs: [spatial_qc]
-    table_outputs: [spatial_qc_metrics]
+    capability_tags:
+    - spatial
+    - qc
+    - coordinates
+    - tissue-section
+    - dry-run
+    biological_question_types:
+    - spatial data audit
+    - tissue section QC
+    source:
+      type: adapter_contract
+      path: code_library/modules/spatial/seurat_spatial_qc/main.R
+      origin: spatial_qc_contract
+      license: MIT
+    environment:
+      env_id: r_spatial_omics
+      required_packages:
+      - Seurat
+      - SeuratObject
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/spatial/seurat_spatial_qc/main.R
+      timeout_seconds: 900
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    input_schema:
+      required:
+      - spatial_object
+      - coordinates
+      - sample_metadata
+      optional:
+      - dry-run
+    output_schema:
+      artifacts:
+      - tables/spatial_qc_metrics.csv
+      - figures/spatial_qc.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - coordinate system
+    - spot/cell/bin unit
+    - tissue section
+    - sample_id
+    - method version
+    reviewer_risk:
+    - spatial overlap does not prove causality
+    - orthogonal validation required for mechanism claims
+    claim_boundary: Spatial QC defines usable spots/cells and tissue section metadata;
+      it is not biological evidence.
+    figure_outputs:
+    - spatial_qc
+    table_outputs:
+    - spatial_qc_metrics
     validation_status: spatial_dry_run_verified
     method_maturity: adapter_contract
     compatible_upstream_modules: []
-    compatible_downstream_modules: [spatial.spatial_feature_plot.v1, spatial.spatial_domain_detection.v1]
+    compatible_downstream_modules:
+    - spatial.spatial_feature_plot.v1
+    - spatial.spatial_domain_detection.v1
     compute_cost: low
     token_cost: low
-
+    module_id: spatial.seurat_spatial_qc.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   spatial.spatial_feature_plot.v1:
     id: spatial.spatial_feature_plot.v1
     name: Spatial feature plot adapter
     modality: spatial
-    modality_aliases: [spatial_transcriptomics, visium, xenium]
+    modality_aliases:
+    - spatial_transcriptomics
+    - visium
+    - xenium
     step: spatial_feature_plot
     language: r
-    capability_tags: [spatial, feature-plot, visualization, coordinates, dry-run]
-    biological_question_types: [spatial expression visualization]
-    source: {type: adapter_contract, path: code_library/modules/spatial/spatial_feature_plot/main.R, origin: spatial_feature_plot_contract, license: MIT}
-    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
-    execution: {type: rscript, script: code_library/modules/spatial/spatial_feature_plot/main.R, timeout_seconds: 900, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
-    input_schema: {required: [spatial_object, feature_list, coordinates], optional: [dry-run]}
-    output_schema: {artifacts: [tables/spatial_feature_source.csv, figures/spatial_feature_plot.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
-    reviewer_value: [coordinate system, tissue section, sample_id, method version]
-    reviewer_risk: [spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
-    claim_boundary: "Spatial expression visualization is descriptive and does not prove causality."
-    figure_outputs: [spatial_feature_plot]
-    table_outputs: [spatial_feature_source]
+    capability_tags:
+    - spatial
+    - feature-plot
+    - visualization
+    - coordinates
+    - dry-run
+    biological_question_types:
+    - spatial expression visualization
+    source:
+      type: adapter_contract
+      path: code_library/modules/spatial/spatial_feature_plot/main.R
+      origin: spatial_feature_plot_contract
+      license: MIT
+    environment:
+      env_id: r_spatial_omics
+      required_packages:
+      - Seurat
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/spatial/spatial_feature_plot/main.R
+      timeout_seconds: 900
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    input_schema:
+      required:
+      - spatial_object
+      - feature_list
+      - coordinates
+      optional:
+      - dry-run
+    output_schema:
+      artifacts:
+      - tables/spatial_feature_source.csv
+      - figures/spatial_feature_plot.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - coordinate system
+    - tissue section
+    - sample_id
+    - method version
+    reviewer_risk:
+    - spatial overlap does not prove causality
+    - orthogonal validation required for mechanism claims
+    claim_boundary: Spatial expression visualization is descriptive and does not prove
+      causality.
+    figure_outputs:
+    - spatial_feature_plot
+    table_outputs:
+    - spatial_feature_source
     validation_status: spatial_dry_run_verified
     method_maturity: adapter_contract
-    compatible_upstream_modules: [spatial.seurat_spatial_qc.v1]
-    compatible_downstream_modules: [spatial.spatial_ligand_receptor.v1]
+    compatible_upstream_modules:
+    - spatial.seurat_spatial_qc.v1
+    compatible_downstream_modules:
+    - spatial.spatial_ligand_receptor.v1
     compute_cost: low
     token_cost: low
-
+    module_id: spatial.spatial_feature_plot.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   spatial.spatial_domain_detection.v1:
     id: spatial.spatial_domain_detection.v1
     name: Spatial domain detection adapter
     modality: spatial
-    modality_aliases: [spatial_transcriptomics, visium, xenium]
+    modality_aliases:
+    - spatial_transcriptomics
+    - visium
+    - xenium
     step: spatial_domain_detection
     language: r
-    capability_tags: [spatial, domain-detection, clustering, dry-run]
-    biological_question_types: [spatial domain discovery]
-    source: {type: adapter_contract, path: code_library/modules/spatial/spatial_domain_detection/main.R, origin: spatial_domain_contract, license: MIT}
-    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
-    execution: {type: rscript, script: code_library/modules/spatial/spatial_domain_detection/main.R, timeout_seconds: 1800, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
-    input_schema: {required: [spatial_object, coordinates, sample_metadata], optional: [dry-run]}
-    output_schema: {artifacts: [tables/spatial_domain_assignments.csv, figures/spatial_domains.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
-    reviewer_value: [coordinate system, tissue section, sample_id, method version]
-    reviewer_risk: [spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
-    claim_boundary: "Spatial domains are algorithmic groupings and require biological annotation and validation."
-    figure_outputs: [spatial_domains]
-    table_outputs: [spatial_domain_assignments]
+    capability_tags:
+    - spatial
+    - domain-detection
+    - clustering
+    - dry-run
+    biological_question_types:
+    - spatial domain discovery
+    source:
+      type: adapter_contract
+      path: code_library/modules/spatial/spatial_domain_detection/main.R
+      origin: spatial_domain_contract
+      license: MIT
+    environment:
+      env_id: r_spatial_omics
+      required_packages:
+      - Seurat
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/spatial/spatial_domain_detection/main.R
+      timeout_seconds: 1800
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    input_schema:
+      required:
+      - spatial_object
+      - coordinates
+      - sample_metadata
+      optional:
+      - dry-run
+    output_schema:
+      artifacts:
+      - tables/spatial_domain_assignments.csv
+      - figures/spatial_domains.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - coordinate system
+    - tissue section
+    - sample_id
+    - method version
+    reviewer_risk:
+    - spatial overlap does not prove causality
+    - orthogonal validation required for mechanism claims
+    claim_boundary: Spatial domains are algorithmic groupings and require biological
+      annotation and validation.
+    figure_outputs:
+    - spatial_domains
+    table_outputs:
+    - spatial_domain_assignments
     validation_status: spatial_dry_run_verified
     method_maturity: adapter_contract
-    compatible_upstream_modules: [spatial.seurat_spatial_qc.v1]
-    compatible_downstream_modules: [spatial.spatial_ligand_receptor.v1]
+    compatible_upstream_modules:
+    - spatial.seurat_spatial_qc.v1
+    compatible_downstream_modules:
+    - spatial.spatial_ligand_receptor.v1
     compute_cost: medium
     token_cost: low
-
+    module_id: spatial.spatial_domain_detection.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   spatial.deconvolution_cell2location_or_rctd.v1:
     id: spatial.deconvolution_cell2location_or_rctd.v1
     name: Spatial deconvolution adapter for cell2location or RCTD
     modality: spatial
-    modality_aliases: [spatial_transcriptomics, visium, xenium, deconvolution]
+    modality_aliases:
+    - spatial_transcriptomics
+    - visium
+    - xenium
+    - deconvolution
     step: deconvolution_cell2location_or_rctd
     language: r
-    capability_tags: [spatial, deconvolution, cell2location, rctd, reference, dry-run]
-    biological_question_types: [spatial cell-type composition estimation]
-    source: {type: adapter_contract, path: code_library/modules/spatial/deconvolution_cell2location_or_rctd/main.R, origin: spatial_deconvolution_contract, license: requires_reference_review}
-    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
-    execution: {type: rscript, script: code_library/modules/spatial/deconvolution_cell2location_or_rctd/main.R, timeout_seconds: 2400, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
-    input_schema: {required: [spatial_object, reviewed_reference, coordinates], optional: [dry-run]}
-    output_schema: {artifacts: [tables/spatial_deconvolution_fractions.csv, figures/spatial_deconvolution.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
-    reviewer_value: [deconvolution reference, coordinate system, tissue section, sample_id, method version]
-    reviewer_risk: [colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
-    claim_boundary: "Deconvolution estimates cell-type abundance and requires reference and orthogonal validation."
-    figure_outputs: [spatial_deconvolution]
-    table_outputs: [spatial_deconvolution_fractions]
+    capability_tags:
+    - spatial
+    - deconvolution
+    - cell2location
+    - rctd
+    - reference
+    - dry-run
+    biological_question_types:
+    - spatial cell-type composition estimation
+    source:
+      type: adapter_contract
+      path: code_library/modules/spatial/deconvolution_cell2location_or_rctd/main.R
+      origin: spatial_deconvolution_contract
+      license: requires_reference_review
+    environment:
+      env_id: r_spatial_omics
+      required_packages:
+      - Seurat
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/spatial/deconvolution_cell2location_or_rctd/main.R
+      timeout_seconds: 2400
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    input_schema:
+      required:
+      - spatial_object
+      - reviewed_reference
+      - coordinates
+      optional:
+      - dry-run
+    output_schema:
+      artifacts:
+      - tables/spatial_deconvolution_fractions.csv
+      - figures/spatial_deconvolution.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - deconvolution reference
+    - coordinate system
+    - tissue section
+    - sample_id
+    - method version
+    reviewer_risk:
+    - colocalization does not prove physical interaction
+    - spatial overlap does not prove causality
+    - orthogonal validation required for mechanism claims
+    claim_boundary: Deconvolution estimates cell-type abundance and requires reference
+      and orthogonal validation.
+    figure_outputs:
+    - spatial_deconvolution
+    table_outputs:
+    - spatial_deconvolution_fractions
     validation_status: spatial_dry_run_verified
     method_maturity: adapter_contract
-    compatible_upstream_modules: [spatial.seurat_spatial_qc.v1]
-    compatible_downstream_modules: [spatial.spatial_ligand_receptor.v1]
+    compatible_upstream_modules:
+    - spatial.seurat_spatial_qc.v1
+    compatible_downstream_modules:
+    - spatial.spatial_ligand_receptor.v1
     compute_cost: high
     token_cost: medium
-
+    module_id: spatial.deconvolution_cell2location_or_rctd.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   spatial.spatial_ligand_receptor.v1:
     id: spatial.spatial_ligand_receptor.v1
     name: Spatial ligand-receptor hypothesis adapter
     modality: spatial
-    modality_aliases: [spatial_transcriptomics, visium, xenium, communication]
+    modality_aliases:
+    - spatial_transcriptomics
+    - visium
+    - xenium
+    - communication
     step: spatial_ligand_receptor
     language: r
-    capability_tags: [spatial, ligand-receptor, communication, colocalization, hypothesis, dry-run]
-    biological_question_types: [spatial communication hypothesis generation]
-    source: {type: adapter_contract, path: code_library/modules/spatial/spatial_ligand_receptor/main.R, origin: spatial_ligand_receptor_contract, license: requires_database_review}
-    environment: {env_id: r_spatial_omics, required_packages: [Seurat, ggplot2]}
-    execution: {type: rscript, script: code_library/modules/spatial/spatial_ligand_receptor/main.R, timeout_seconds: 1800, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
-    input_schema: {required: [spatial_object, ligand_receptor_database, coordinates], optional: [dry-run]}
-    output_schema: {artifacts: [tables/spatial_ligand_receptor_pairs.csv, figures/spatial_ligand_receptor.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
-    reviewer_value: [ligand-receptor database, coordinate system, tissue section, sample_id, method version]
-    reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
-    claim_boundary: "Ligand-receptor and colocalization signals are hypothesis-generating only."
-    figure_outputs: [spatial_ligand_receptor]
-    table_outputs: [spatial_ligand_receptor_pairs]
+    capability_tags:
+    - spatial
+    - ligand-receptor
+    - communication
+    - colocalization
+    - hypothesis
+    - dry-run
+    biological_question_types:
+    - spatial communication hypothesis generation
+    source:
+      type: adapter_contract
+      path: code_library/modules/spatial/spatial_ligand_receptor/main.R
+      origin: spatial_ligand_receptor_contract
+      license: requires_database_review
+    environment:
+      env_id: r_spatial_omics
+      required_packages:
+      - Seurat
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/spatial/spatial_ligand_receptor/main.R
+      timeout_seconds: 1800
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    input_schema:
+      required:
+      - spatial_object
+      - ligand_receptor_database
+      - coordinates
+      optional:
+      - dry-run
+    output_schema:
+      artifacts:
+      - tables/spatial_ligand_receptor_pairs.csv
+      - figures/spatial_ligand_receptor.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - ligand-receptor database
+    - coordinate system
+    - tissue section
+    - sample_id
+    - method version
+    reviewer_risk:
+    - ligand-receptor inference is hypothesis-generating
+    - colocalization does not prove physical interaction
+    - spatial overlap does not prove causality
+    - orthogonal validation required for mechanism claims
+    claim_boundary: Ligand-receptor and colocalization signals are hypothesis-generating
+      only.
+    figure_outputs:
+    - spatial_ligand_receptor
+    table_outputs:
+    - spatial_ligand_receptor_pairs
     validation_status: spatial_dry_run_verified
     method_maturity: adapter_contract
-    compatible_upstream_modules: [spatial.spatial_feature_plot.v1, spatial.deconvolution_cell2location_or_rctd.v1]
+    compatible_upstream_modules:
+    - spatial.spatial_feature_plot.v1
+    - spatial.deconvolution_cell2location_or_rctd.v1
     compatible_downstream_modules: []
     compute_cost: medium
     token_cost: medium
-
+    module_id: spatial.spatial_ligand_receptor.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   single_cell.cellchat_communication.v1:
     id: single_cell.cellchat_communication.v1
     name: CellChat communication hypothesis adapter
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell, communication]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
+    - communication
     step: cellchat_communication
     language: r
-    capability_tags: [single-cell, cellchat, ligand-receptor, communication, hypothesis, dry-run]
-    biological_question_types: [cell-cell communication hypothesis generation]
-    source: {type: adapter_contract, path: code_library/modules/single_cell/cellchat_communication/main.R, origin: cellchat_contract, license: requires_database_review}
-    environment: {env_id: r_cell_communication, required_packages: [Seurat, ggplot2]}
-    execution: {type: rscript, script: code_library/modules/single_cell/cellchat_communication/main.R, timeout_seconds: 2400, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
-    input_schema: {required: [seurat_object, ligand_receptor_database, cell_group_column], optional: [dry-run]}
-    output_schema: {artifacts: [tables/cellchat_interactions.csv, figures/cellchat_network.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
-    reviewer_value: [ligand-receptor database, cell grouping, method version, communication network]
-    reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
-    claim_boundary: "Cell-cell communication inference is hypothesis-generating and requires validation."
-    figure_outputs: [cellchat_network]
-    table_outputs: [cellchat_interactions]
+    capability_tags:
+    - single-cell
+    - cellchat
+    - ligand-receptor
+    - communication
+    - hypothesis
+    - dry-run
+    biological_question_types:
+    - cell-cell communication hypothesis generation
+    source:
+      type: adapter_contract
+      path: code_library/modules/single_cell/cellchat_communication/main.R
+      origin: cellchat_contract
+      license: requires_database_review
+    environment:
+      env_id: r_cell_communication
+      required_packages:
+      - Seurat
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/single_cell/cellchat_communication/main.R
+      timeout_seconds: 2400
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    input_schema:
+      required:
+      - seurat_object
+      - ligand_receptor_database
+      - cell_group_column
+      optional:
+      - dry-run
+    output_schema:
+      artifacts:
+      - tables/cellchat_interactions.csv
+      - figures/cellchat_network.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - ligand-receptor database
+    - cell grouping
+    - method version
+    - communication network
+    reviewer_risk:
+    - ligand-receptor inference is hypothesis-generating
+    - colocalization does not prove physical interaction
+    - spatial overlap does not prove causality
+    - orthogonal validation required for mechanism claims
+    claim_boundary: Cell-cell communication inference is hypothesis-generating and
+      requires validation.
+    figure_outputs:
+    - cellchat_network
+    table_outputs:
+    - cellchat_interactions
     validation_status: communication_dry_run_verified
     method_maturity: adapter_contract
-    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+    compatible_upstream_modules:
+    - single_cell.seurat_clustering_umap.v1
     compatible_downstream_modules: []
     compute_cost: medium
     token_cost: medium
-
+    module_id: single_cell.cellchat_communication.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   single_cell.nichenet_ligand_target.v1:
     id: single_cell.nichenet_ligand_target.v1
     name: NicheNet ligand-target hypothesis adapter
     modality: single_cell
-    modality_aliases: [scrna, single_cell_rna, single-cell, communication]
+    modality_aliases:
+    - scrna
+    - single_cell_rna
+    - single-cell
+    - communication
     step: nichenet_ligand_target
     language: r
-    capability_tags: [single-cell, nichenet, ligand-target, communication, hypothesis, dry-run]
-    biological_question_types: [ligand-target hypothesis prioritization]
-    source: {type: adapter_contract, path: code_library/modules/single_cell/nichenet_ligand_target/main.R, origin: nichenet_contract, license: requires_prior_review}
-    environment: {env_id: r_cell_communication, required_packages: [Seurat, ggplot2]}
-    execution: {type: rscript, script: code_library/modules/single_cell/nichenet_ligand_target/main.R, timeout_seconds: 2400, args: ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}"]}
-    input_schema: {required: [seurat_object, ligand_target_prior, sender_receiver_definition], optional: [dry-run]}
-    output_schema: {artifacts: [tables/nichenet_ligand_targets.csv, figures/nichenet_ligand_target.png, logs/sessionInfo.txt], source_maps: [figure_source_map.yaml, table_source_map.yaml]}
-    reviewer_value: [ligand-target prior, sender/receiver definition, method version, target ranking]
-    reviewer_risk: [ligand-receptor inference is hypothesis-generating, colocalization does not prove physical interaction, spatial overlap does not prove causality, orthogonal validation required for mechanism claims]
-    claim_boundary: "Ligand-target ranking is hypothesis-generating and does not prove causal signaling."
-    figure_outputs: [nichenet_ligand_target]
-    table_outputs: [nichenet_ligand_targets]
+    capability_tags:
+    - single-cell
+    - nichenet
+    - ligand-target
+    - communication
+    - hypothesis
+    - dry-run
+    biological_question_types:
+    - ligand-target hypothesis prioritization
+    source:
+      type: adapter_contract
+      path: code_library/modules/single_cell/nichenet_ligand_target/main.R
+      origin: nichenet_contract
+      license: requires_prior_review
+    environment:
+      env_id: r_cell_communication
+      required_packages:
+      - Seurat
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/single_cell/nichenet_ligand_target/main.R
+      timeout_seconds: 2400
+      args:
+      - --input
+      - '{input_dir}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    input_schema:
+      required:
+      - seurat_object
+      - ligand_target_prior
+      - sender_receiver_definition
+      optional:
+      - dry-run
+    output_schema:
+      artifacts:
+      - tables/nichenet_ligand_targets.csv
+      - figures/nichenet_ligand_target.png
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    reviewer_value:
+    - ligand-target prior
+    - sender/receiver definition
+    - method version
+    - target ranking
+    reviewer_risk:
+    - ligand-receptor inference is hypothesis-generating
+    - colocalization does not prove physical interaction
+    - spatial overlap does not prove causality
+    - orthogonal validation required for mechanism claims
+    claim_boundary: Ligand-target ranking is hypothesis-generating and does not prove
+      causal signaling.
+    figure_outputs:
+    - nichenet_ligand_target
+    table_outputs:
+    - nichenet_ligand_targets
     validation_status: communication_dry_run_verified
     method_maturity: adapter_contract
-    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1]
+    compatible_upstream_modules:
+    - single_cell.seurat_clustering_umap.v1
     compatible_downstream_modules: []
     compute_cost: medium
     token_cost: medium
-
+    module_id: single_cell.nichenet_ligand_target.v1
+    production_capability_grade: adapter_contract
+    execution_evidence_level: contract_only
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
   multi_omics.evidence_synthesis.v1:
     id: multi_omics.evidence_synthesis.v1
     name: Multi-omics evidence synthesis planner
     modality: multi_omics
     step: evidence_synthesis
     language: yaml_contract
-    capability_tags: [multi-omics, evidence-synthesis, reviewer-risk, source-map]
+    capability_tags:
+    - multi-omics
+    - evidence-synthesis
+    - reviewer-risk
+    - source-map
     source:
       type: planning_contract
       path: config/bioinformatics_method_contract.yaml
@@ -932,23 +2210,240 @@ modules:
       required_packages: []
     input_schema:
       required:
-        - modality_specific_results
-        - sample_matching_table
-        - source_maps
+      - modality_specific_results
+      - sample_matching_table
+      - source_maps
     output_schema:
       artifacts:
-        - tables/evidence_matrix.tsv
-        - review/reviewer_risk_report.md
+      - tables/evidence_matrix.tsv
+      - review/reviewer_risk_report.md
     reviewer_value:
-      - prevents unsupported cross-modality claims
-      - separates discovery, association, and validation layers
+    - prevents unsupported cross-modality claims
+    - separates discovery, association, and validation layers
     reviewer_risk:
-      - unmatched samples can invalidate cross-omics inference
-      - integration can be overread as mechanism without validation
-    claim_boundary: "Evidence synthesis and claim-boundary audit; not an execution-only omics model."
-    figure_outputs: [integrated_evidence_matrix]
-    table_outputs: [evidence_matrix]
+    - unmatched samples can invalidate cross-omics inference
+    - integration can be overread as mechanism without validation
+    claim_boundary: Evidence synthesis and claim-boundary audit; not an execution-only
+      omics model.
+    figure_outputs:
+    - integrated_evidence_matrix
+    table_outputs:
+    - evidence_matrix
     validation_status: planning_contract
     method_maturity: design_ready
     compute_cost: low
     token_cost: medium
+    module_id: multi_omics.evidence_synthesis.v1
+    production_capability_grade: planning_contract
+    execution_evidence_level: no_execution_evidence
+    strategy_visibility: planning_only
+    claim_permission: no_claim
+    current_environment_status: pass
+  single_cell.seurat_subcluster_programs.v1:
+    id: single_cell.seurat_subcluster_programs.v1
+    name: Seurat T-cell-like subcluster and program scoring workflow
+    modality: single_cell
+    step: seurat_subcluster_programs
+    language: r
+    production_capability_grade: production_capable_real_wrapper
+    execution_evidence_level: official_tutorial_validated
+    strategy_visibility: exploratory_candidate
+    claim_permission: exploratory_only
+    current_environment_status: pass
+    capability_tags:
+    - single-cell
+    - seurat
+    - pbmc3k
+    - subcluster
+    - marker
+    - program-score
+    - real-wrapper
+    source:
+      type: local_wrapper
+      path: code_library/modules/single_cell/seurat_subcluster_programs/main.R
+      origin: workflow_builtin_pbmc3k_validation_asset
+      origin_url: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html
+      license: MIT
+    environment:
+      env_id: r_seurat_v5
+      required_packages:
+      - Seurat
+      - Matrix
+      - ggplot2
+    execution:
+      type: rscript
+      script: code_library/modules/single_cell/seurat_subcluster_programs/main.R
+      timeout_seconds: 2400
+      args:
+      - --input
+      - '{seurat_rds}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+      - --subset-markers
+      - '{subset_markers}'
+      - --resolutions
+      - '{resolutions}'
+      - --npcs
+      - '{npcs}'
+      - --marker-method
+      - '{marker_method}'
+      - --only-pos
+      - '{only_pos}'
+      - --min-pct
+      - '{min_pct}'
+      - --logfc-threshold
+      - '{logfc_threshold}'
+    default_parameters:
+      subset_markers: CD3D,CD3E,IL7R,CCR7,S100A4,CD8A,NKG7,GNLY
+      resolutions: 0.2,0.4,0.6,0.8
+      npcs: 10
+      marker_method: wilcox
+      only_pos: 'true'
+      min_pct: 0.1
+      logfc_threshold: 0.25
+    input_schema:
+      required:
+      - name: seurat_rds
+        type: seurat_rds
+      optional:
+      - name: subset_markers
+        type: comma_separated_gene_symbols
+      - name: resolutions
+        type: comma_separated_numbers
+    output_schema:
+      artifacts:
+      - objects/subcluster_seurat.rds
+      - tables/subcluster_cell_counts.csv
+      - tables/resolution_summary.csv
+      - tables/subcluster_markers.csv
+      - tables/program_score_summary.csv
+      - tables/marker_program_mapping.csv
+      - figures/tcell_subset_umap.png
+      - figures/resolution_grid_umap.png
+      - figures/subcluster_marker_heatmap.png
+      - figures/program_score_violin.png
+      - figures/program_score_dotplot.png
+      - qc/subcluster_quality_report.yaml
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    output_bindings:
+      seurat_rds: objects/subcluster_seurat.rds
+      marker_table: tables/subcluster_markers.csv
+      ranked_gene_statistic: tables/subcluster_markers.csv
+      program_score_summary: tables/program_score_summary.csv
+    reviewer_value:
+    - validates TargetTask execution on an official tutorial fixture
+    - records subcluster stability, marker columns, program scores, and source maps
+    - separates exploratory cell-level evidence from disease inference
+    reviewer_risk:
+    - PBMC3K is a workflow-test fixture
+    - cell-level markers are exploratory
+    - UMAP and subclusters are parameter-sensitive
+    claim_boundary: PBMC3K workflow-test exploratory T-cell-like subcluster program
+      only; no disease, clinical, or causal claim.
+    validation_status: official_tutorial_validated
+    method_maturity: real_wrapper
+    compatible_upstream_modules:
+    - single_cell.seurat_pbmc3k_basic.v1
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
+    figure_outputs:
+    - tcell_subset_umap
+    - resolution_grid_umap
+    - subcluster_marker_heatmap
+    - program_score_violin
+    - program_score_dotplot
+    table_outputs:
+    - subcluster_cell_counts
+    - resolution_summary
+    - subcluster_markers
+    - program_score_summary
+    compute_cost: medium
+    token_cost: low
+    module_id: single_cell.seurat_subcluster_programs.v1
+  external.lung_master.de_table_standardizer.v1:
+    id: external.lung_master.de_table_standardizer.v1
+    name: External DE table standardizer
+    modality: bulk_rnaseq
+    step: imported_de_table_standardization
+    language: python
+    production_capability_grade: validated_workflow_pilot
+    execution_evidence_level: toy_real_tested
+    strategy_visibility: exploratory_candidate
+    claim_permission: no_claim
+    current_environment_status: pass
+    capability_tags:
+    - external-code
+    - de-table
+    - ranked-gene-statistic
+    - post-processing
+    - real-wrapper
+    source:
+      type: local_wrapper
+      path: code_library/modules/external/lung_master/de_table_standardizer/main.py
+      origin: lung_master_external_experience_transformation
+      license: user_must_review_original_source_terms
+    environment:
+      env_id: python_builtin
+      required_packages: []
+    execution:
+      type: python
+      script: code_library/modules/external/lung_master/de_table_standardizer/main.py
+      timeout_seconds: 300
+      args:
+      - --input
+      - '{differential_expression_table}'
+      - --out
+      - '{node_dir}'
+      - --run-id
+      - '{run_id}'
+    default_parameters: {}
+    input_schema:
+      required:
+      - name: differential_expression_table
+        type: csv
+      optional:
+      - name: dry-run
+        type: flag
+    output_schema:
+      artifacts:
+      - tables/standardized_de_table.csv
+      - tables/ranked_gene_statistic.csv
+      - tables/significant_genes.csv
+      - qc/input_column_mapping.csv
+      - qc/de_table_quality_summary.csv
+      - logs/sessionInfo.txt
+      source_maps:
+      - figure_source_map.yaml
+      - table_source_map.yaml
+    output_bindings:
+      ranked_gene_statistic: tables/ranked_gene_statistic.csv
+      differential_expression_table: tables/standardized_de_table.csv
+    reviewer_value:
+    - standardizes imported DE columns for downstream enrichment planning
+    - records column mapping and claim boundary
+    - avoids hard-coded project group labels
+    reviewer_risk:
+    - upstream DE model is not re-executed
+    - replicate unit and contrast design are unknown until reviewed
+    - FDR provenance must be audited before interpretation
+    claim_boundary: Imported DE table post-processing only; upstream differential
+      model, replicate unit, contrast design, and FDR provenance must be reviewed
+      before biological claims.
+    validation_status: toy_real_tested
+    method_maturity: real_wrapper_postprocessing
+    compatible_upstream_modules: []
+    compatible_downstream_modules:
+    - bulk_rnaseq.fgsea_enrichment.v1
+    figure_outputs: []
+    table_outputs:
+    - standardized_de_table
+    - ranked_gene_statistic
+    - significant_genes
+    compute_cost: low
+    token_cost: low
+    module_id: external.lung_master.de_table_standardizer.v1

@@ -1,0 +1,18 @@
+schema_version: project_pattern_registry.v1
+patterns:
+  - id: tutorial_fixture_validation
+    scope: official tutorial data used to validate workflow mechanics
+    allowed_claims:
+      - workflow validation
+      - exploratory method demonstration
+    forbidden_claims:
+      - disease mechanism
+      - clinical biomarker
+      - causal state
+  - id: imported_de_table_postprocessing
+    scope: external DE table cleanup and enrichment handoff
+    required_before_claims:
+      - upstream statistical model review
+      - replicate unit review
+      - contrast design review
+      - FDR provenance review

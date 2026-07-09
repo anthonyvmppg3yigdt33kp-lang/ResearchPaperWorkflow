@@ -1,0 +1,98 @@
+schema_version: target_task.v1
+target_id: pbmc3k_t_subcluster_20260709_v1
+title: PBMC3K T-cell-like subcluster workflow validation
+mode: execution_mode
+evidence_grade: official_tutorial_workflow_test
+claim_boundary: "Official PBMC3K tutorial fixture for workflow validation and exploratory T-cell-like subcluster structure only; no disease, clinical, treatment-response, or causal immune-state claim."
+
+data:
+  dataset_id: seurat_official_pbmc3k
+  modality: single_cell
+  format: 10x_mtx
+  input_path: data/raw/pbmc3k/pbmc3k_filtered_gene_bc_matrices
+  role: tutorial_fixture
+  immutable: true
+  source_url: https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
+  source_reference: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html
+
+environment:
+  required_envs:
+    - r_seurat_v5
+  package_policy: fail_closed_if_missing
+  bootstrap_scripts:
+    - scripts/check_r_environment.R
+    - scripts/bootstrap_r_seurat_env.R
+
+analysis_goal:
+  primary_goal: Validate a run-scoped PBMC3K Seurat workflow from official tutorial data through T-cell-like subclustering, marker discovery, program scoring, source maps, and fail-closed packaging.
+  allowed_claims:
+    - workflow validation
+    - exploratory tutorial subcluster structure
+    - method packet demonstration
+  forbidden_claims:
+    - disease mechanism
+    - clinical biomarker
+    - treatment response
+    - causal immune state
+
+workflow:
+  steps:
+    - seurat_basic_workflow
+    - subcluster_reanalysis
+    - marker_detection
+    - program_scoring
+    - source_map_validation
+    - fail_closed_evaluation
+  required_modules:
+    - single_cell.seurat_pbmc3k_basic.v1
+    - single_cell.seurat_subcluster_programs.v1
+
+parameters:
+  qc:
+    min_features: 200
+    max_features: 2500
+    max_mt: 5
+  clustering:
+    npcs: 10
+    resolution: 0.5
+  subclustering:
+    subset_markers: CD3D,CD3E,IL7R,CCR7,S100A4,CD8A,NKG7,GNLY
+    resolutions: 0.2,0.4,0.6,0.8
+    npcs: 10
+  marker_detection:
+    method: wilcox
+    only_pos: true
+    min_pct: 0.1
+    logfc_threshold: 0.25
+  program_scoring:
+    programs:
+      naive_t_like: [CCR7, IL7R, TCF7, LEF1]
+      cytotoxic_t_nk_like: [NKG7, GNLY, GZMB, PRF1]
+      activation_like: [IL2RA, CD69, HLA-DRA, HLA-DRB1]
+
+quality_gates:
+  fail_closed: true
+  require_session_info: true
+  require_source_maps: true
+  require_claim_boundary: true
+  require_no_personal_paths: true
+  require_environment_report: true
+  require_data_registry_hash: true
+
+outputs:
+  required_tables:
+    - tables/subcluster_cell_counts.csv
+    - tables/resolution_summary.csv
+    - tables/subcluster_markers.csv
+    - tables/program_score_summary.csv
+  required_figures:
+    - figures/tcell_subset_umap.png
+    - figures/resolution_grid_umap.png
+    - figures/program_score_violin.png
+  required_qc:
+    - qc/bioinformatics_quality_report.yaml
+    - qc/fail_closed_decision.yaml
+  manuscript_packets:
+    - manuscript/methods_draft.md
+    - manuscript/results_skeleton.md
+    - brief/FIGURE_STORYLINE.md

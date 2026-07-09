@@ -1,0 +1,6 @@
+env_id: python_builtin
+language: Python
+runner: python
+required_packages: []
+session_info_required: false
+claim_boundary: Python stdlib post-processing environment; not proof of upstream DE validity.

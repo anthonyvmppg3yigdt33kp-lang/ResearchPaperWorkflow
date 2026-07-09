@@ -1,0 +1,11 @@
+required_outputs:
+  - node_manifest.yaml
+  - outputs_manifest.yaml
+  - figure_source_map.yaml
+  - table_source_map.yaml
+  - tables/standardized_de_table.csv
+  - tables/ranked_gene_statistic.csv
+  - tables/significant_genes.csv
+  - qc/input_column_mapping.csv
+  - qc/de_table_quality_summary.csv
+  - logs/sessionInfo.txt

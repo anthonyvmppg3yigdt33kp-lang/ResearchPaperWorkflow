@@ -123,7 +123,8 @@ def test_evaluate_run_writes_evidence_graph_outputs_from_source_maps(paper_dir):
         "    path: tables/de.csv\n"
         "    source_inputs: [counts.csv, metadata.csv]\n"
         "    method: pilot logCPM contrast\n"
-        "    statistical_unit: sample\n",
+        "    statistical_unit: sample\n"
+        "    claim_boundary: workflow pilot only; not publication-grade DE\n",
         encoding="utf-8",
     )
 
@@ -146,4 +147,3 @@ def test_workflow_modes_config_is_parseable_and_defers_full_pipeline_by_default(
     assert data["default_route"]["fuzzy_request"] == "exploration_mode"
     assert "target_journal" in data["profiles"]["exploratory_omics"]["deferred_stages"]
     assert "run_analysis" in data["profiles"]["submission_closeout"]["deferred_stages"]
-

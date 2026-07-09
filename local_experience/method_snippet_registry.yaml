@@ -1,0 +1,7 @@
+schema_version: method_snippet_registry.v1
+snippets:
+  - id: generic_de_column_mapping
+    grade: reusable_snippet
+    implemented_by: external.lung_master.de_table_standardizer.v1
+    description: Map common DE table columns to gene, log2_fold_change, p_value, fdr, and rank_statistic.
+    forbidden: hard-coded disease or group label branching

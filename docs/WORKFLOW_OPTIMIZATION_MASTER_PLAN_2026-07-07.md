@@ -2,12 +2,12 @@
 
 Created: 2026-07-07
 
-Canonical framework repo: `C:\Users\HP\Documents\论文\ResearchPaperWorkflow`
+Canonical framework repo: `%USERPROFILE%\Documents\论文\ResearchPaperWorkflow`
 
-Canonical implementation root: `C:\Users\HP\Documents\IgG4-ROD  vs  MALT-L`
+Canonical implementation root: `%USERPROFILE%\Documents\IgG4-ROD  vs  MALT-L`
 
 Current implementation paper root:
-`C:\Users\HP\Documents\IgG4-ROD  vs  MALT-L\papers\strat-bulktranscriptomic_immunedeconvolution_and_wgcna_module-20260629-1729`
+`%USERPROFILE%\Documents\IgG4-ROD  vs  MALT-L\papers\strat-bulktranscriptomic_immunedeconvolution_and_wgcna_module-20260629-1729`
 
 GitHub repo: `anthonyvmppg3yigdt33kp-lang/ResearchPaperWorkflow`
 

@@ -11,6 +11,51 @@ from typing import Any
 import yaml
 
 
+PRODUCTION_CAPABILITY_GRADES = {
+    "production_capable_real_wrapper",
+    "validated_workflow_pilot",
+    "dry_run_contract",
+    "adapter_contract",
+    "scaffold_only",
+    "planning_contract",
+    "blocked_environment",
+    "retired",
+}
+
+EXECUTION_EVIDENCE_LEVELS = {
+    "real_project_data_validated",
+    "official_tutorial_validated",
+    "toy_real_tested",
+    "dry_run_only",
+    "contract_only",
+    "no_execution_evidence",
+}
+
+STRATEGY_VISIBILITY = {
+    "production_candidate",
+    "exploratory_candidate",
+    "planning_only",
+    "hidden_from_production",
+}
+
+CLAIM_PERMISSIONS = {
+    "workflow_test_only",
+    "exploratory_only",
+    "association_with_review",
+    "no_claim",
+}
+
+ENVIRONMENT_STATUSES = {"pass", "degraded", "blocked", "unknown"}
+
+FORBIDDEN_PRODUCTION_GRADES = {
+    "adapter_contract",
+    "scaffold_only",
+    "planning_contract",
+    "blocked_environment",
+    "retired",
+}
+
+
 REQUIRED_MODES = {
     "exploration_mode",
     "analysis_design_mode",
@@ -206,7 +251,9 @@ def validate_method_asset_registries(root: Path) -> list[str]:
     required = {
         "name", "modality", "step", "language", "source", "environment",
         "input_schema", "output_schema", "reviewer_risk", "claim_boundary",
-        "validation_status", "method_maturity",
+        "validation_status", "method_maturity", "production_capability_grade",
+        "execution_evidence_level", "strategy_visibility", "claim_permission",
+        "current_environment_status",
     }
     for module_id, module in modules.items():
         if not isinstance(module, dict):
@@ -218,11 +265,29 @@ def validate_method_asset_registries(root: Path) -> list[str]:
         source_path = ((module.get("source") or {}).get("path") or "")
         if source_path and not (root / source_path).exists():
             issues.append(f"module_registry entry {module_id} source path missing: {source_path}")
+        _validate_enum(issues, module_id, module, "production_capability_grade", PRODUCTION_CAPABILITY_GRADES)
+        _validate_enum(issues, module_id, module, "execution_evidence_level", EXECUTION_EVIDENCE_LEVELS)
+        _validate_enum(issues, module_id, module, "strategy_visibility", STRATEGY_VISIBILITY)
+        _validate_enum(issues, module_id, module, "claim_permission", CLAIM_PERMISSIONS)
+        _validate_enum(issues, module_id, module, "current_environment_status", ENVIRONMENT_STATUSES)
+        grade = str(module.get("production_capability_grade", ""))
+        visibility = str(module.get("strategy_visibility", ""))
+        env_status = str(module.get("current_environment_status", ""))
+        if grade in FORBIDDEN_PRODUCTION_GRADES and visibility in {"production_candidate", "exploratory_candidate"}:
+            issues.append(f"module_registry entry {module_id} forbidden grade is production visible: {grade}/{visibility}")
+        if env_status == "blocked" and visibility in {"production_candidate", "exploratory_candidate"}:
+            issues.append(f"module_registry entry {module_id} environment-blocked module is production visible")
     env_data = load_yaml(env_path) if env_path.exists() else {}
     envs = (env_data or {}).get("environments") or {}
     if env_path.exists() and not envs:
         issues.append("environment_registry must contain at least one environment")
     return issues
+
+
+def _validate_enum(issues: list[str], module_id: str, module: dict[str, Any], key: str, allowed: set[str]) -> None:
+    value = str(module.get(key, ""))
+    if value and value not in allowed:
+        issues.append(f"module_registry entry {module_id} invalid {key}: {value}")
 
 
 def validate_large_files(root: Path, max_bytes: int) -> list[str]:

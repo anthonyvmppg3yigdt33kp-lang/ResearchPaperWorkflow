@@ -52,6 +52,7 @@ class MethodSelector:
             score = self.score_module(module, goal=goal, strategy_eval=strategy_eval)
             payload["method_selection_score"] = score
             payload["strategy_evaluation"] = strategy_eval
+            payload["production_gate"] = self.modules.production_gate(payload)
             scored.append(payload)
         scored.sort(key=lambda item: item["method_selection_score"]["total"], reverse=True)
         return scored[:max_modules]
@@ -77,8 +78,13 @@ class MethodSelector:
         env_status = self._environment_cache[cache_key]
         validation = str(module.get("validation_status", "")).lower()
         maturity = str(module.get("method_maturity", "")).lower()
+        grade = str(module.get("production_capability_grade", ""))
+        visibility = str(module.get("strategy_visibility", ""))
+        env_truth = str(module.get("current_environment_status", "unknown"))
+        production_gate = self.modules.production_gate(module)
         reviewer_value = module.get("reviewer_value", []) or []
         risk = module.get("reviewer_risk", []) or []
+        step_text = str(module.get("step", "")).lower()
 
         biological_fit = 0.65
         if "single" in goal_lower and ("single-cell" in tags or modality == "single_cell"):
@@ -92,7 +98,13 @@ class MethodSelector:
         data_modalities = self.data.modalities() if self.data else []
         data_fit = 0.75 if not data_modalities else (0.95 if modality in data_modalities else 0.45)
         environment_ready = 1.0 if env_status["status"] == "pass" else 0.25
+        if env_truth == "blocked":
+            environment_ready = 0.0
         code_maturity = 0.9 if "validated" in validation or "validated" in maturity else 0.65
+        if grade in {"production_capable_real_wrapper", "validated_workflow_pilot"}:
+            code_maturity = max(code_maturity, 0.82)
+        elif grade in {"dry_run_contract", "adapter_contract", "scaffold_only", "planning_contract"}:
+            code_maturity = min(code_maturity, 0.35)
         figure_value = min(1.0, 0.55 + 0.1 * len(module.get("figure_outputs", []) or []))
         reviewer_risk = min(1.0, 0.15 + 0.12 * len(risk))
         expected_evidence_gain = min(1.0, 0.5 + 0.08 * len(reviewer_value) + 0.05 * len(tags))
@@ -108,6 +120,17 @@ class MethodSelector:
             + strategy_fit * 0.14
             + (1.0 - reviewer_risk) * 0.04
         )
+        if not production_gate["allowed"]:
+            total = min(total, 0.45)
+        if visibility == "production_candidate":
+            total += 0.02
+        if "seurat_basic_workflow" in step_text and any(token in goal_lower for token in ["pbmc", "qc", "umap", "tutorial"]):
+            total += 0.08
+        subcluster_goal = any(token in goal_lower for token in ["subcluster", "sub-cluster", "program", "t-cell", "t cell", "reanalysis"])
+        if ("subcluster" in step_text or "subcluster" in tags) and not subcluster_goal:
+            total -= 0.12
+        elif ("subcluster" in step_text or "subcluster" in tags) and subcluster_goal:
+            total += 0.05
         return {
             "biological_fit": round(biological_fit, 3),
             "data_fit": round(data_fit, 3),
@@ -124,6 +147,12 @@ class MethodSelector:
             "total": round(total, 3),
             "environment_status": env_status["status"],
             "environment_issues": env_status["issues"],
+            "production_capability_grade": grade,
+            "execution_evidence_level": module.get("execution_evidence_level", ""),
+            "strategy_visibility": visibility,
+            "claim_permission": module.get("claim_permission", ""),
+            "current_environment_status": env_truth,
+            "production_gate": production_gate,
         }
 
     @staticmethod
@@ -159,6 +188,9 @@ def render_selection_report(goal: str, selected: list[dict[str, Any]]) -> str:
             f"- Modality/step: {module.get('modality', '')} / {module.get('step', '')}",
             f"- Total score: {score.get('total', 'not_scored')}",
             f"- Environment: {score.get('environment_status', 'unknown')}",
+            f"- Production grade: {score.get('production_capability_grade', 'unknown')}",
+            f"- Strategy visibility: {score.get('strategy_visibility', 'unknown')}",
+            f"- Production gate: {'allowed' if (score.get('production_gate') or {}).get('allowed') else 'blocked'}",
             f"- Strategy decision: {score.get('strategy_decision', 'not_evaluated')}",
             f"- Figure role: {score.get('figure_role', 'not_evaluated')}",
             f"- Reviewer risks: {', '.join(str(r) for r in risks)}",

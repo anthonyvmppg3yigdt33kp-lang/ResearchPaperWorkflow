@@ -35,6 +35,7 @@ class SourceMapValidator:
         "source_inputs",
         "method",
         "statistical_unit",
+        "claim_boundary",
     ]
 
     def validate_figure_map(self, data: dict[str, Any]) -> list[str]:

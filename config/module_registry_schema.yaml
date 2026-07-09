@@ -16,6 +16,11 @@ module_required_fields:
   - claim_boundary
   - validation_status
   - method_maturity
+  - production_capability_grade
+  - execution_evidence_level
+  - strategy_visibility
+  - claim_permission
+  - current_environment_status
 
 source_required_fields:
   - type
@@ -29,6 +34,34 @@ execution_required_when_executable:
   - timeout_seconds
 
 quality_requirements:
+  production_grades:
+    allowed:
+      - production_capable_real_wrapper
+      - validated_workflow_pilot
+      - dry_run_contract
+      - adapter_contract
+      - scaffold_only
+      - planning_contract
+      - blocked_environment
+      - retired
+    forbidden_as_primary:
+      - adapter_contract
+      - scaffold_only
+      - planning_contract
+      - blocked_environment
+      - retired
+  strategy_visibility:
+    allowed:
+      - production_candidate
+      - exploratory_candidate
+      - planning_only
+      - hidden_from_production
+  claim_permission:
+    allowed:
+      - workflow_test_only
+      - exploratory_only
+      - association_with_review
+      - no_claim
   source_maps:
     - figure_source_map.yaml
     - table_source_map.yaml

@@ -31,14 +31,14 @@ only after evidence boundaries, source files, and output ownership are clear.
 
 Observed high-value roots:
 
-- `C:\Users\HP\Documents\论文`: canonical ccRCC-T2DM manuscript workspace.
-- `C:\Users\HP\Documents\IgG4-ROD  vs  MALT-L`: active IgG4-ROD vs MALT-L workflow.
-- `C:\Users\HP\Documents\审稿`: manuscript review workflow.
-- `C:\Users\HP\Documents\Playground`: PubMed MCP and tooling sandbox.
-- `C:\Users\HP\Desktop\rstudio-export (1)`: ccRCC-T2DM code evidence source.
-- `C:\Users\HP\Desktop\singlecell`: single-cell output and visual-evidence root.
-- `C:\Users\HP\Desktop\ResearchPaperWorkflow*`: framework clones and tests.
-- `C:\Users\HP\.codex\skills` and `C:\Users\HP\.agents\skills`: broad skill libraries.
+- `%USERPROFILE%\Documents\论文`: canonical ccRCC-T2DM manuscript workspace.
+- `%USERPROFILE%\Documents\IgG4-ROD  vs  MALT-L`: active IgG4-ROD vs MALT-L workflow.
+- `%USERPROFILE%\Documents\审稿`: manuscript review workflow.
+- `%USERPROFILE%\Documents\Playground`: PubMed MCP and tooling sandbox.
+- `%USERPROFILE%\Desktop\rstudio-export (1)`: ccRCC-T2DM code evidence source.
+- `%USERPROFILE%\Desktop\singlecell`: single-cell output and visual-evidence root.
+- `%USERPROFILE%\Desktop\ResearchPaperWorkflow*`: framework clones and tests.
+- `%USERPROFILE%\.codex\skills` and `%USERPROFILE%\.agents\skills`: broad skill libraries.
 
 Main operational risks:
 
@@ -284,7 +284,7 @@ Codex should follow this decision tree:
 
 Use skills for repeated workflows. Keep each skill focused. Repository skills
 belong in `.agents/skills/<skill>/SKILL.md`; user-global skills belong in
-`C:\Users\HP\.agents\skills` or `C:\Users\HP\.codex\skills`.
+`%USERPROFILE%\.agents\skills` or `%USERPROFILE%\.codex\skills`.
 
 High-priority local skills:
 

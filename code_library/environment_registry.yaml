@@ -1,7 +1,7 @@
-schema_version: "environment_registry.v1"
-updated_at: "2026-07-08"
-purpose: "Execution environment truth source for method assets. This registry declares environments; it does not install packages during agent execution."
-
+schema_version: environment_registry.v5
+updated_at: '2026-07-09'
+purpose: Execution environment truth source for method assets. This registry declares
+  environments; it does not install packages during agent execution.
 environments:
   r_seurat_v5:
     env_id: r_seurat_v5
@@ -10,29 +10,29 @@ environments:
     runner: Rscript
     lock_file: code_library/env_locks/r_seurat_v5.lock.yaml
     required_packages:
-      - Seurat
-      - SeuratObject
-      - Matrix
-      - ggplot2
+    - Seurat
+    - SeuratObject
+    - Matrix
+    - ggplot2
     required_package_check:
       type: r_requireNamespace
     session_info_required: true
     seed_policy: required
     compatible_modules:
-      - single_cell.seurat_pbmc3k_basic.v1
-      - single_cell.seurat_qc.v1
-      - single_cell.seurat_clustering_umap.v1
-      - single_cell.marker_feature_plot.v1
-      - single_cell.pseudobulk_aggregate.v1
-      - single_cell.seurat_findmarkers_group_de.v1
+    - single_cell.seurat_pbmc3k_basic.v1
+    - single_cell.seurat_qc.v1
+    - single_cell.seurat_clustering_umap.v1
+    - single_cell.marker_feature_plot.v1
+    - single_cell.pseudobulk_aggregate.v1
+    - single_cell.seurat_findmarkers_group_de.v1
+    - single_cell.seurat_subcluster_programs.v1
     validation:
-      last_checked: "2026-07-09"
+      last_checked: '2026-07-09'
       status: pass
       checks:
         runner_available: true
         packages_available: true
         lock_file_present: true
-
   r_seurat_harmony:
     env_id: r_seurat_harmony
     language: R
@@ -40,25 +40,24 @@ environments:
     runner: Rscript
     lock_file: code_library/env_locks/r_seurat_harmony.lock.yaml
     required_packages:
-      - Seurat
-      - SeuratObject
-      - harmony
-      - Matrix
-      - ggplot2
+    - Seurat
+    - SeuratObject
+    - harmony
+    - Matrix
+    - ggplot2
     required_package_check:
       type: r_requireNamespace
     session_info_required: true
     seed_policy: required
     compatible_modules:
-      - single_cell.seurat_integration_harmony.v1
+    - single_cell.seurat_integration_harmony.v1
     validation:
-      last_checked: "2026-07-09"
+      last_checked: '2026-07-09'
       status: pass
       checks:
         runner_available: true
         packages_available: true
         lock_file_present: true
-
   r_pseudobulk_deseq2:
     env_id: r_pseudobulk_deseq2
     language: R
@@ -66,23 +65,22 @@ environments:
     runner: Rscript
     lock_file: code_library/env_locks/r_pseudobulk_deseq2.lock.yaml
     required_packages:
-      - DESeq2
-      - Matrix
-      - ggplot2
+    - DESeq2
+    - Matrix
+    - ggplot2
     required_package_check:
       type: r_requireNamespace
     session_info_required: true
     seed_policy: required
     compatible_modules:
-      - single_cell.pseudobulk_deseq2.v1
+    - single_cell.pseudobulk_deseq2.v1
     validation:
-      last_checked: "2026-07-09"
+      last_checked: '2026-07-09'
       status: lock_declared_pending_runtime_package_check
       checks:
         runner_available: null
         packages_available: null
         lock_file_present: true
-
   python_builtin:
     env_id: python_builtin
     language: Python
@@ -95,15 +93,15 @@ environments:
     session_info_required: false
     seed_policy: recommended
     compatible_modules:
-      - bulk_rnaseq.python_builtin_pilot.v1
+    - bulk_rnaseq.python_builtin_pilot.v1
+    - external.lung_master.de_table_standardizer.v1
     validation:
-      last_checked: "2026-07-08"
+      last_checked: '2026-07-08'
       status: pass
       checks:
         runner_available: true
         packages_available: true
         lock_file_present: true
-
   r_bulk_rnaseq:
     env_id: r_bulk_rnaseq
     language: R
@@ -111,34 +109,33 @@ environments:
     runner: Rscript
     lock_file: code_library/env_locks/r_bulk_rnaseq.lock.yaml
     required_packages:
-      - DESeq2
-      - edgeR
-      - limma
-      - WGCNA
-      - fgsea
-      - clusterProfiler
-      - GSVA
-      - ggplot2
-      - pheatmap
+    - DESeq2
+    - edgeR
+    - limma
+    - WGCNA
+    - fgsea
+    - clusterProfiler
+    - GSVA
+    - ggplot2
+    - pheatmap
     required_package_check:
       type: r_requireNamespace
     session_info_required: true
     seed_policy: required
     compatible_modules:
-      - bulk_rnaseq.deseq2_de.v1
-      - bulk_rnaseq.limma_voom_de.v1
-      - bulk_rnaseq.limma_voom_de_real.v1
-      - bulk_rnaseq.wgcna.v1
-      - bulk_rnaseq.fgsea_enrichment.v1
-      - bulk_rnaseq.immune_deconvolution_adapter.v1
+    - bulk_rnaseq.deseq2_de.v1
+    - bulk_rnaseq.limma_voom_de.v1
+    - bulk_rnaseq.limma_voom_de_real.v1
+    - bulk_rnaseq.wgcna.v1
+    - bulk_rnaseq.fgsea_enrichment.v1
+    - bulk_rnaseq.immune_deconvolution_adapter.v1
     validation:
-      last_checked: "2026-07-09"
+      last_checked: '2026-07-09'
       status: lock_declared_pending_runtime_package_check
       checks:
         runner_available: null
         packages_available: null
         lock_file_present: true
-
   r_spatial_omics:
     env_id: r_spatial_omics
     language: R
@@ -146,24 +143,26 @@ environments:
     runner: Rscript
     lock_file: code_library/env_locks/r_spatial_omics.lock.yaml
     required_packages:
-      - Seurat
-      - SeuratObject
-      - ggplot2
+    - Seurat
+    - SeuratObject
+    - ggplot2
     required_package_check:
       type: r_requireNamespace
     session_info_required: true
     seed_policy: required
     compatible_modules:
-      - spatial.seurat_spatial_qc.v1
-      - spatial.spatial_feature_plot.v1
-      - spatial.spatial_domain_detection.v1
-      - spatial.deconvolution_cell2location_or_rctd.v1
-      - spatial.spatial_ligand_receptor.v1
+    - spatial.seurat_spatial_qc.v1
+    - spatial.spatial_feature_plot.v1
+    - spatial.spatial_domain_detection.v1
+    - spatial.deconvolution_cell2location_or_rctd.v1
+    - spatial.spatial_ligand_receptor.v1
     validation:
-      last_checked: "2026-07-09"
+      last_checked: '2026-07-09'
       status: pass
-      checks: {runner_available: true, packages_available: true, lock_file_present: true}
-
+      checks:
+        runner_available: true
+        packages_available: true
+        lock_file_present: true
   r_cell_communication:
     env_id: r_cell_communication
     language: R
@@ -171,16 +170,19 @@ environments:
     runner: Rscript
     lock_file: code_library/env_locks/r_cell_communication.lock.yaml
     required_packages:
-      - Seurat
-      - ggplot2
+    - Seurat
+    - ggplot2
     required_package_check:
       type: r_requireNamespace
     session_info_required: true
     seed_policy: required
     compatible_modules:
-      - single_cell.cellchat_communication.v1
-      - single_cell.nichenet_ligand_target.v1
+    - single_cell.cellchat_communication.v1
+    - single_cell.nichenet_ligand_target.v1
     validation:
-      last_checked: "2026-07-09"
+      last_checked: '2026-07-09'
       status: pass
-      checks: {runner_available: true, packages_available: true, lock_file_present: true}
+      checks:
+        runner_available: true
+        packages_available: true
+        lock_file_present: true

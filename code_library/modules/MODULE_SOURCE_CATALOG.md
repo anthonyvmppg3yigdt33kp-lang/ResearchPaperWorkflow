@@ -94,6 +94,19 @@ Each entry identifies the script a researcher can inspect, delegated common wrap
 - Maturity/validation: validated_publication_oriented_wrapper / publication_oriented_dry_run_verified
 - Claim boundary: Co-expression module association only; hub genes and modules do not prove mechanism.
 
+## external.lung_master.de_table_standardizer.v1
+
+- Name: External DE table standardizer
+- Purpose/use: standardizes imported DE columns for downstream enrichment planning; records column mapping and claim boundary; avoids hard-coded project group labels
+- Modality/step/language: bulk_rnaseq / imported_de_table_standardization / python
+- Primary script: `code_library/modules/external/lung_master/de_table_standardizer/main.py`
+- Auditable scripts: `code_library/modules/external/lung_master/de_table_standardizer/main.py`
+- Functions in primary script: dry_run_rows, first_present, main, parse_float, read_csv, run, standardize_rows, write_csv, write_text
+- Execution type: python
+- Environment lock: `pyproject.toml` status=True
+- Maturity/validation: real_wrapper_postprocessing / toy_real_tested
+- Claim boundary: Imported DE table post-processing only; upstream differential model, replicate unit, contrast design, and FDR provenance must be reviewed before biological claims.
+
 ## multi_omics.evidence_synthesis.v1
 
 - Name: Multi-omics evidence synthesis planner
@@ -236,6 +249,19 @@ Each entry identifies the script a researcher can inspect, delegated common wrap
 - Environment lock: `code_library/env_locks/r_seurat_v5.lock.yaml` status=True
 - Maturity/validation: thin_wrapper / dry_run_verified
 - Claim boundary: QC and filtering only; retained cells are analysis inputs, not biological evidence.
+
+## single_cell.seurat_subcluster_programs.v1
+
+- Name: Seurat T-cell-like subcluster and program scoring workflow
+- Purpose/use: validates TargetTask execution on an official tutorial fixture; records subcluster stability, marker columns, program scores, and source maps; separates exploratory cell-level evidence from disease inference
+- Modality/step/language: single_cell / seurat_subcluster_programs / r
+- Primary script: `code_library/modules/single_cell/seurat_subcluster_programs/main.R`
+- Auditable scripts: `code_library/modules/single_cell/seurat_subcluster_programs/main.R`, `code_library/modules/single_cell/common/sc_module_wrapper.R`
+- Functions in primary script: delegated or script-level workflow
+- Execution type: rscript
+- Environment lock: `code_library/env_locks/r_seurat_v5.lock.yaml` status=True
+- Maturity/validation: real_wrapper / official_tutorial_validated
+- Claim boundary: PBMC3K workflow-test exploratory T-cell-like subcluster program only; no disease, clinical, or causal claim.
 
 ## spatial.deconvolution_cell2location_or_rctd.v1
 

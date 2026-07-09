@@ -1,0 +1,57 @@
+schema_version: target_task_schema.v1
+purpose: Required contract fields for v5 TargetTask execution.
+
+required_top_level:
+  - schema_version
+  - target_id
+  - title
+  - mode
+  - evidence_grade
+  - claim_boundary
+  - data
+  - environment
+  - analysis_goal
+  - workflow
+  - quality_gates
+  - outputs
+
+target_id_pattern: "^[A-Za-z][A-Za-z0-9_-]*_[0-9]{8}_v[0-9]+$"
+
+required_quality_gates:
+  fail_closed: true
+  require_session_info: true
+  require_source_maps: true
+  require_claim_boundary: true
+  require_no_personal_paths: true
+
+required_data_fields:
+  - dataset_id
+  - modality
+  - format
+  - input_path
+  - role
+
+required_environment_fields:
+  - required_envs
+  - package_policy
+
+claim_policy:
+  tutorial_fixtures_must_forbid:
+    - disease mechanism
+    - clinical biomarker
+    - treatment response
+    - causal immune state
+  final_result_paragraph_requires_final_status: pass
+  blocked_or_needs_fix_permission: no_claim_until_fail_closed_passes
+
+artifact_policy:
+  required_run_artifacts:
+    - run_manifest.yaml
+    - analysis_graph.yaml
+    - target_task_resolved.yaml
+    - strategy_decision.yaml
+    - evaluation_report.yaml
+    - qc/bioinformatics_quality_report.yaml
+    - qc/fail_closed_decision.yaml
+    - figure_source_map.yaml
+    - table_source_map.yaml
