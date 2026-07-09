@@ -1,0 +1,21 @@
+schema_version: method_environment_lock.v1
+env_id: r_bulk_rnaseq
+language: R
+runner: Rscript
+locked_at: "2026-07-09"
+lock_type: declared_package_contract
+packages:
+  DESeq2: bioconductor_required
+  edgeR: bioconductor_required
+  limma: bioconductor_required
+  WGCNA: cran_required
+  fgsea: bioconductor_required
+  clusterProfiler: bioconductor_required
+  GSVA: bioconductor_required
+  ggplot2: cran_required
+  pheatmap: cran_required
+checks:
+  runner_available: requires_runtime_validation
+  packages_available: requires_runtime_validation
+  dry_run_wrappers_parse: required
+claim_boundary: Locks declared package contract for bulk method assets; it is not proof that the current runner has all packages installed.

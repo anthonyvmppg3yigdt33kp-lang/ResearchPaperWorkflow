@@ -15,8 +15,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
+from paper_workflow.bioinformatics.method_asset_audit import MethodAssetAuditor
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.module_selector import MethodSelector
+from paper_workflow.bioinformatics.strategy_evaluator import StrategyEvaluator
 from paper_workflow.outputs.result_run_manager import ResultRunManager
 
 
@@ -184,6 +186,8 @@ def test_write_analysis_design_creates_graph_and_selection_report():
         run_dir = manager.run_path("pbmc3k_demo_20260708_v1")
 
         assert design["analysis_graph"]["nodes"]
+        node_inputs = design["analysis_graph"]["nodes"][0]["inputs"]
+        assert node_inputs["input_dir"]["status"] == "bound"
         assert design["selected_modules"][0]["module_id"] == "single_cell.seurat_pbmc3k_basic.v1"
         assert (run_dir / "analysis_graph.yaml").exists()
         assert (run_dir / "method_selection_report.md").exists()
@@ -297,6 +301,41 @@ def test_cli_list_modules_returns_batch7_single_cell_assets():
     assert len(ids) >= 7
     for module_id in BATCH7_SINGLE_CELL_MODULES:
         assert module_id in ids
+
+
+def test_method_asset_audit_has_no_structural_issues():
+    audit = MethodAssetAuditor(REPO_ROOT).run()
+
+    assert audit["issue_count"] == 0
+    assert audit["status"] in {"pass", "warn"}
+    assert audit["warning_count"] >= 1
+
+
+def test_module_source_catalog_covers_registered_modules():
+    registry = ModuleRegistry(REPO_ROOT)
+    catalog = (REPO_ROOT / "code_library" / "modules" / "MODULE_SOURCE_CATALOG.md").read_text(encoding="utf-8")
+
+    for module_id in registry.modules:
+        assert module_id in catalog
+
+
+def test_strategy_evaluator_compares_pseudobulk_de_and_wgcna():
+    registry = ModuleRegistry(REPO_ROOT)
+    evaluator = StrategyEvaluator({"modalities": ["single_cell"], "n_samples": 6, "statistical_unit": "sample"})
+
+    pseudobulk = evaluator.evaluate_module(
+        registry.get("single_cell.pseudobulk_deseq2.v1"),
+        "cell-type differential expression between case and control using biological replicates",
+    )
+    wgcna = evaluator.evaluate_module(
+        registry.get("bulk_rnaseq.wgcna.v1"),
+        "cell-type differential expression between case and control using biological replicates",
+    )
+
+    assert pseudobulk["strategy_fit"] > wgcna["strategy_fit"]
+    assert pseudobulk["decision"] in {"recommended", "candidate_with_requirements"}
+    assert any("preferred" in note for note in pseudobulk["comparison_notes"])
+    assert any("WGCNA" in note for note in wgcna["comparison_notes"])
 
 
 def test_module_registry_includes_batch8_bulk_assets():

@@ -323,8 +323,8 @@ modules:
     language: python
     capability_tags: [bulk-rnaseq, pilot, qc, volcano, heatmap]
     source:
-      type: internal_adapter
-      path: src/paper_workflow/analysis/adapters.py
+      type: standalone_python_script
+      path: code_library/modules/bulk_rnaseq/python_builtin_pilot/main.py
       origin: workflow_builtin
       license: MIT
     environment:
@@ -332,14 +332,55 @@ modules:
       required_packages: []
     input_schema:
       required:
-        - count_matrix_csv
-        - sample_metadata_csv
+        - name: count_matrix_csv
+          type: csv
+          description: "Gene-by-sample count matrix with gene column and sample columns."
+        - name: sample_metadata_csv
+          type: csv
+          description: "Sample metadata with sample_id and condition columns."
+      optional:
+        - name: condition_column
+          type: metadata_column
+        - name: sample_id_column
+          type: metadata_column
+        - name: reference
+          type: group_value
+        - name: target
+          type: group_value
     output_schema:
       artifacts:
         - tables/differential_expression_pilot.csv
         - qc/sample_qc.csv
         - figures/volcano_plot.svg
         - figures/deg_heatmap.svg
+        - figure_source_map.yaml
+        - table_source_map.yaml
+    execution:
+      type: python
+      script: code_library/modules/bulk_rnaseq/python_builtin_pilot/main.py
+      timeout_seconds: 600
+      args:
+        - "--counts"
+        - "{count_matrix_csv}"
+        - "--metadata"
+        - "{sample_metadata_csv}"
+        - "--out"
+        - "{node_dir}"
+        - "--run-id"
+        - "{run_id}"
+        - "--condition-column"
+        - "{condition_column}"
+        - "--sample-id-column"
+        - "{sample_id_column}"
+        - "--reference"
+        - "{reference}"
+        - "--target"
+        - "{target}"
+    default_parameters:
+      condition_column: condition
+      sample_id_column: sample_id
+      reference: ""
+      target: ""
     reviewer_value:
       - proves scoped execution and source-map writing
     reviewer_risk:

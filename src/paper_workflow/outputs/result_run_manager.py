@@ -270,6 +270,7 @@ class ResultRunManager:
                     goal=goal,
                     selected_modules=selected_modules,
                     input_dir=(inputs or [""])[0] if inputs else "",
+                    input_paths=inputs or [],
                     statistical_unit="sample",
                 )
                 graph_payload = graph.to_dict()

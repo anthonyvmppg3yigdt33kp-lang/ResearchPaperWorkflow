@@ -8,6 +8,7 @@ from typing import Any, Optional
 from paper_workflow.bioinformatics.data_registry import DataRegistry
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
+from paper_workflow.bioinformatics.strategy_evaluator import StrategyEvaluator
 
 
 SCRNA_ALIASES = {"scrna", "sc_rna", "single_cell", "single_cell_rna", "single-cell"}
@@ -22,6 +23,7 @@ class MethodSelector:
         self.modules = ModuleRegistry(self.project_root)
         self.environments = EnvironmentRegistry(self.project_root)
         self.data = DataRegistry(self.paper_dir) if self.paper_dir else None
+        self.strategy = StrategyEvaluator(self.data.summary() if self.data else {})
         self._environment_cache: dict[tuple[str, str], dict[str, Any]] = {}
 
     def select(
@@ -40,14 +42,21 @@ class MethodSelector:
 
         scored = []
         for module in candidates:
-            score = self.score_module(module, goal=goal)
             payload = dict(module)
+            strategy_eval = self.strategy.evaluate_module(payload, goal)
+            score = self.score_module(module, goal=goal, strategy_eval=strategy_eval)
             payload["method_selection_score"] = score
+            payload["strategy_evaluation"] = strategy_eval
             scored.append(payload)
         scored.sort(key=lambda item: item["method_selection_score"]["total"], reverse=True)
         return scored[:max_modules]
 
-    def score_module(self, module: dict[str, Any], goal: str = "") -> dict[str, Any]:
+    def score_module(
+        self,
+        module: dict[str, Any],
+        goal: str = "",
+        strategy_eval: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         goal_lower = goal.lower()
         tags = {str(t).lower() for t in module.get("capability_tags", []) or []}
         modality = str(module.get("modality", "")).lower()
@@ -55,7 +64,11 @@ class MethodSelector:
         language = str(module.get("language", ""))
         cache_key = (env_id, language.lower())
         if cache_key not in self._environment_cache:
-            self._environment_cache[cache_key] = self.environments.validate_environment(env_id, language=language)
+            self._environment_cache[cache_key] = self.environments.validate_environment(
+                env_id,
+                language=language,
+                require_packages=False,
+            )
         env_status = self._environment_cache[cache_key]
         validation = str(module.get("validation_status", "")).lower()
         maturity = str(module.get("method_maturity", "")).lower()
@@ -67,6 +80,10 @@ class MethodSelector:
             biological_fit = 0.95
         if "pbmc" in goal_lower and "pbmc3k" in tags:
             biological_fit = 1.0
+        if "pseudobulk" in goal_lower and ("pseudobulk" in tags or "pseudobulk" in str(module.get("step", "")).lower()):
+            biological_fit = 0.98
+        if "wgcna" in goal_lower and ("wgcna" in tags or "wgcna" in str(module.get("step", "")).lower()):
+            biological_fit = 0.92
         data_modalities = self.data.modalities() if self.data else []
         data_fit = 0.75 if not data_modalities else (0.95 if modality in data_modalities else 0.45)
         environment_ready = 1.0 if env_status["status"] == "pass" else 0.25
@@ -74,13 +91,16 @@ class MethodSelector:
         figure_value = min(1.0, 0.55 + 0.1 * len(module.get("figure_outputs", []) or []))
         reviewer_risk = min(1.0, 0.15 + 0.12 * len(risk))
         expected_evidence_gain = min(1.0, 0.5 + 0.08 * len(reviewer_value) + 0.05 * len(tags))
+        strategy_eval = strategy_eval or self.strategy.evaluate_module(module, goal)
+        strategy_fit = float(strategy_eval.get("strategy_fit", 0.6))
         total = (
-            biological_fit * 0.22
-            + data_fit * 0.16
-            + environment_ready * 0.18
-            + code_maturity * 0.16
-            + figure_value * 0.12
-            + expected_evidence_gain * 0.12
+            biological_fit * 0.18
+            + data_fit * 0.14
+            + environment_ready * 0.16
+            + code_maturity * 0.14
+            + figure_value * 0.1
+            + expected_evidence_gain * 0.1
+            + strategy_fit * 0.14
             + (1.0 - reviewer_risk) * 0.04
         )
         return {
@@ -91,6 +111,9 @@ class MethodSelector:
             "figure_value": round(figure_value, 3),
             "reviewer_risk": round(reviewer_risk, 3),
             "expected_evidence_gain": round(expected_evidence_gain, 3),
+            "strategy_fit": round(strategy_fit, 3),
+            "strategy_decision": strategy_eval.get("decision", "candidate"),
+            "figure_role": strategy_eval.get("figure_role", "not_evaluated"),
             "compute_cost": module.get("compute_cost", "unknown"),
             "token_cost": module.get("token_cost", "low"),
             "total": round(total, 3),
@@ -131,6 +154,8 @@ def render_selection_report(goal: str, selected: list[dict[str, Any]]) -> str:
             f"- Modality/step: {module.get('modality', '')} / {module.get('step', '')}",
             f"- Total score: {score.get('total', 'not_scored')}",
             f"- Environment: {score.get('environment_status', 'unknown')}",
+            f"- Strategy decision: {score.get('strategy_decision', 'not_evaluated')}",
+            f"- Figure role: {score.get('figure_role', 'not_evaluated')}",
             f"- Reviewer risks: {', '.join(str(r) for r in risks)}",
             f"- Figure outputs: {', '.join(str(o) for o in outputs) if outputs else 'not_declared'}",
             f"- Claim boundary: {module.get('claim_boundary', 'not_declared')}",

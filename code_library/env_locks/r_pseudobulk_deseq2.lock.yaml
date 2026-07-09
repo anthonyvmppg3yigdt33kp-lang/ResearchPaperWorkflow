@@ -1,0 +1,15 @@
+schema_version: method_environment_lock.v1
+env_id: r_pseudobulk_deseq2
+language: R
+runner: Rscript
+locked_at: "2026-07-09"
+lock_type: declared_package_contract
+packages:
+  DESeq2: bioconductor_required
+  Matrix: cran_or_recommended_required
+  ggplot2: cran_required
+checks:
+  runner_available: requires_runtime_validation
+  packages_available: requires_runtime_validation
+  dry_run_wrappers_parse: required
+claim_boundary: Locks declared package contract for pseudobulk DESeq2; real execution still requires runner and package validation.

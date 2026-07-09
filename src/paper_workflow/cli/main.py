@@ -17,6 +17,7 @@ from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
 from paper_workflow.bioinformatics.code_source_importer import CodeSourceImporter
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
+from paper_workflow.bioinformatics.method_asset_audit import MethodAssetAuditor
 from paper_workflow.bioinformatics.module_feedback import ModuleFeedbackManager
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.module_selector import MethodSelector
@@ -611,6 +612,24 @@ def cmd_list_capabilities(args):
         )
 
 
+def cmd_audit_method_assets(args):
+    result = MethodAssetAuditor(get_root()).run()
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"Status: {result['status']}")
+        print(f"Modules: {result['module_count']}")
+        print(f"Issues: {result['issue_count']}")
+        print(f"Warnings: {result['warning_count']}")
+        for issue in result["issues"]:
+            print(f"  - {issue}")
+        if args.show_warnings:
+            for warning in result["warnings"]:
+                print(f"  - WARNING: {warning}")
+    if args.strict and result["status"] == "fail":
+        sys.exit(1)
+
+
 def cmd_import_code_source(args):
     importer = CodeSourceImporter(get_root())
     try:
@@ -618,6 +637,7 @@ def cmd_import_code_source(args):
             source_id=args.source_id,
             github=args.github or "",
             local=args.local or "",
+            clone_github=args.clone,
             paper_doi=args.paper_doi or "",
             license_text=args.license or "requires_human_review",
         ).to_dict()
@@ -949,9 +969,15 @@ def main():
     source.add_argument("--github")
     source.add_argument("--local")
     p.add_argument("--source-id", required=True)
+    p.add_argument("--clone", action="store_true", help="Clone GitHub source with depth=1, retain parsable scripts, and generate module proposals.")
     p.add_argument("--paper-doi")
     p.add_argument("--license")
     p.add_argument("--json", action="store_true")
+
+    p = sub.add_parser("audit-method-assets")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--strict", action="store_true")
+    p.add_argument("--show-warnings", action="store_true")
 
     p = sub.add_parser("review-code-source")
     p.add_argument("--source-id", required=True)
@@ -1047,6 +1073,7 @@ def main():
      "plan-analysis": cmd_plan_analysis, "run-analysis": cmd_run_analysis,
      "list-modules": cmd_list_modules, "inspect-module": cmd_inspect_module,
      "list-capabilities": cmd_list_capabilities,
+     "audit-method-assets": cmd_audit_method_assets,
      "import-code-source": cmd_import_code_source,
      "review-code-source": cmd_review_code_source,
      "register-figure-style": cmd_register_figure_style,

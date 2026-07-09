@@ -56,7 +56,7 @@ def test_ci_workflow_declares_production_preflight_jobs():
         "method-asset-schema:",
         "cli-smoke-bulk:",
         "cli-smoke-graph-dry-run:",
-        "r-method-smoke-optional:",
+        "r-method-contract:",
         "security-light:",
     ]:
         assert job in workflow

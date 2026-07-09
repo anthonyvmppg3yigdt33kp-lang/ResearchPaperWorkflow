@@ -134,28 +134,139 @@ class AnalysisGraph:
         return ordered
 
 
+def _normalize_input_name(name: str) -> str:
+    return str(name).strip().lower().lstrip("-").replace("-", "_").replace(" ", "_")
+
+
+def _schema_entries(schema: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    entries = []
+    raw = schema.get(key, []) if isinstance(schema, dict) else []
+    for item in raw or []:
+        if isinstance(item, dict):
+            name = str(item.get("name") or item.get("id") or item.get("role") or "")
+            if not name:
+                continue
+            entries.append(
+                {
+                    "name": name,
+                    "type": str(item.get("type", "")),
+                    "description": str(item.get("description", "")),
+                    "required": key == "required",
+                }
+            )
+        else:
+            name = str(item)
+            if name:
+                entries.append({"name": name, "type": "", "description": "", "required": key == "required"})
+    return entries
+
+
+def build_data_bindings(input_paths: list[str] | None = None, input_dir: str = "") -> dict[str, Any]:
+    paths = [str(path) for path in (input_paths or []) if str(path)]
+    if input_dir and input_dir not in paths:
+        paths.insert(0, str(input_dir))
+    bindings: dict[str, Any] = {}
+    if paths:
+        bindings["input_paths"] = paths
+        bindings["primary_input"] = paths[0]
+        bindings["input_dir"] = paths[0]
+        bindings["single_cell"] = paths[0]
+        bindings["count_matrix"] = paths[0]
+        bindings["count_matrix_csv"] = paths[0]
+    if len(paths) > 1:
+        bindings["metadata"] = paths[1]
+        bindings["sample_metadata"] = paths[1]
+        bindings["sample_metadata_csv"] = paths[1]
+    return bindings
+
+
+def build_node_input_contract(
+    module: dict[str, Any],
+    parameters: dict[str, Any],
+    data_bindings: dict[str, Any],
+) -> dict[str, Any]:
+    """Bind a module's input schema to concrete node parameters or data paths."""
+    schema = module.get("input_schema") or {}
+    contract: dict[str, Any] = {}
+    for entry in _schema_entries(schema, "required") + _schema_entries(schema, "optional"):
+        name = entry["name"]
+        key = _normalize_input_name(name)
+        value, source = _resolve_input_value(key, parameters, data_bindings)
+        status = "bound" if value not in ("", None, []) else ("optional_unbound" if not entry["required"] else "unresolved")
+        contract[key] = {
+            **entry,
+            "binding_key": key,
+            "value": value if status == "bound" else "",
+            "binding_source": source,
+            "status": status,
+        }
+    return contract
+
+
+def unresolved_required_inputs(inputs: dict[str, Any]) -> list[str]:
+    missing = []
+    for key, item in (inputs or {}).items():
+        if not isinstance(item, dict):
+            continue
+        if bool(item.get("required")) and item.get("status") != "bound":
+            missing.append(str(item.get("name") or key))
+    return missing
+
+
+def _resolve_input_value(
+    key: str,
+    parameters: dict[str, Any],
+    data_bindings: dict[str, Any],
+) -> tuple[Any, str]:
+    aliases = {
+        "input": ["input", "input_dir", "primary_input", "single_cell"],
+        "input_dir": ["input_dir", "primary_input", "single_cell"],
+        "seurat_object": ["seurat_object", "input", "input_dir", "primary_input", "single_cell"],
+        "seurat_rds": ["seurat_rds", "input", "input_dir", "primary_input"],
+        "pseudobulk_rds": ["pseudobulk_rds", "input", "primary_input"],
+        "count_matrix": ["count_matrix", "count_matrix_csv", "counts", "primary_input"],
+        "count_matrix_csv": ["count_matrix_csv", "count_matrix", "primary_input"],
+        "counts": ["counts", "count_matrix", "primary_input"],
+        "metadata": ["metadata", "sample_metadata", "sample_metadata_csv"],
+        "sample_metadata": ["sample_metadata", "metadata", "sample_metadata_csv"],
+        "sample_metadata_csv": ["sample_metadata_csv", "sample_metadata", "metadata"],
+    }
+    candidates = [key, *aliases.get(key, [])]
+    for candidate in candidates:
+        if candidate in parameters and parameters[candidate] not in ("", None, []):
+            return parameters[candidate], f"parameters.{candidate}"
+    for candidate in candidates:
+        if candidate in data_bindings and data_bindings[candidate] not in ("", None, []):
+            return data_bindings[candidate], f"data_bindings.{candidate}"
+    return "", "unbound"
+
+
 def build_graph_from_selected_modules(
     *,
     run_id: str,
     goal: str,
     selected_modules: list[dict[str, Any]],
     input_dir: str = "",
+    input_paths: list[str] | None = None,
     statistical_unit: str = "sample",
 ) -> AnalysisGraph:
     nodes: list[AnalysisGraphNode] = []
     prior_id = ""
+    data_bindings = build_data_bindings(input_paths=input_paths, input_dir=input_dir)
     for idx, module in enumerate(selected_modules, start=1):
         module_id = str(module.get("id") or module.get("module_id"))
         step = str(module.get("step") or f"step{idx}").replace(" ", "_")
         node_id = f"{step}_{idx}" if step in {node.node_id for node in nodes} else step
         default_parameters = dict(module.get("default_parameters", {}) or {})
-        if input_dir and "input_dir" not in default_parameters:
-            default_parameters["input_dir"] = input_dir
+        if data_bindings.get("input_dir") and "input_dir" not in default_parameters:
+            default_parameters["input_dir"] = data_bindings["input_dir"]
+        node_inputs = build_node_input_contract(module, default_parameters, data_bindings)
         nodes.append(
             AnalysisGraphNode(
                 node_id=node_id,
                 module_id=module_id,
                 depends_on=[prior_id] if prior_id and module.get("chain_after_previous", False) else list(module.get("depends_on", []) or []),
+                inputs=node_inputs,
                 parameters=default_parameters,
                 outputs=list(module.get("output_schema", {}).get("artifacts", []) or []),
             )
@@ -166,11 +277,12 @@ def build_graph_from_selected_modules(
         research_question=goal,
         primary_objective=goal,
         statistical_unit=statistical_unit,
-        data_bindings={"single_cell": input_dir} if input_dir else {},
+        data_bindings=data_bindings,
         execution_policy={
             "require_user_approval": True,
             "require_data_registry": True,
             "require_env_lock": True,
+            "require_node_input_bindings": True,
             "write_scope": f"results/runs/{run_id}/",
             "raw_data_mutation": "forbidden",
         },

@@ -62,6 +62,9 @@ jobs:
       - name: Validate workflow contract
         run: python -m paper_workflow.cli.main validate-contract --strict
 
+      - name: Audit method assets
+        run: python -m paper_workflow.cli.main audit-method-assets --strict --json
+
       - name: Validate method assets
         run: python -m pytest -q tests/test_method_assets.py tests/test_source_map_contracts.py
 
@@ -132,23 +135,19 @@ jobs:
             .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/figure_source_map.yaml
             .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/table_source_map.yaml
 
-  r-method-smoke-optional:
-    name: R Method Smoke Optional
+  r-method-contract:
+    name: R Method Contract
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Check Rscript and wrapper syntax when available
-        run: |
-          if command -v Rscript >/dev/null 2>&1; then
-            Rscript --version
-            Rscript -e "parse('code_library/modules/single_cell/seurat_pbmc3k_basic/main.R')"
-          else
-            echo "Rscript not available; optional R method smoke skipped."
-          fi
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Parse and dry-run R method wrappers
+        run: Rscript scripts/ci_r_method_contract.R
 
   security-light:
     name: Security Light

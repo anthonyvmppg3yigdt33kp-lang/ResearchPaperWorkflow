@@ -63,7 +63,7 @@ environments:
     language: R
     manager: renv_or_system
     runner: Rscript
-    lock_file: ""
+    lock_file: code_library/env_locks/r_pseudobulk_deseq2.lock.yaml
     required_packages:
       - DESeq2
       - Matrix
@@ -76,11 +76,11 @@ environments:
       - single_cell.pseudobulk_deseq2.v1
     validation:
       last_checked: "2026-07-09"
-      status: runner_detected_or_pending_package_check
+      status: lock_declared_pending_runtime_package_check
       checks:
         runner_available: null
         packages_available: null
-        lock_file_present: null
+        lock_file_present: true
 
   python_builtin:
     env_id: python_builtin
@@ -108,7 +108,7 @@ environments:
     language: R
     manager: renv_or_system
     runner: Rscript
-    lock_file: ""
+    lock_file: code_library/env_locks/r_bulk_rnaseq.lock.yaml
     required_packages:
       - DESeq2
       - edgeR
@@ -131,11 +131,11 @@ environments:
       - bulk_rnaseq.immune_deconvolution_adapter.v1
     validation:
       last_checked: "2026-07-09"
-      status: runner_detected_or_pending_package_check
+      status: lock_declared_pending_runtime_package_check
       checks:
         runner_available: null
         packages_available: null
-        lock_file_present: null
+        lock_file_present: true
 
   r_spatial_omics:
     env_id: r_spatial_omics

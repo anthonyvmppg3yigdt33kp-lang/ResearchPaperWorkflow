@@ -1,17 +1,19 @@
-# Research Paper Workflow Framework v4.6.0
+# Research Paper Workflow Framework v4.7.0
 
 Agent-operated research paper workflow for bioinformatics, clinical research,
 and reproducible manuscript production. The current release keeps the
 truth-layer architecture and adds production method-asset orchestration:
-capability-aware planning, executable analysis graphs, environment/data gates,
-evidence synthesis, external code intake, feedback ledgers, and CI preflight.
+strategy-evaluated planning, multilingual analysis graphs, strict node input
+binding, inspectable method source catalogs, environment/data gates, evidence
+synthesis, external code clone/parse/proposal intake, feedback ledgers, and CI
+preflight.
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-CI%20preflight-brightgreen.svg)](tests/)
-[![Version](https://img.shields.io/badge/Version-4.6.0-orange.svg)]()
+[![Version](https://img.shields.io/badge/Version-4.7.0-orange.svg)]()
 
-## What V4.6 Is
+## What V4.7 Is
 
 ResearchPaperWorkflow is not a prompt pack that asks an AI to write a paper in
 one pass. It is an auditable workflow kernel where Claude, Codex, or another
@@ -24,7 +26,7 @@ The current invariant is:
 completed = real execution + verified outputs + concrete gate results + checkpoint consistency
 ```
 
-## V4.6 Additions
+## V4.7 Additions
 
 - Lightweight collaboration modes:
   `exploration_mode`, `analysis_design_mode`, `execution_mode`,
@@ -36,13 +38,17 @@ completed = real execution + verified outputs + concrete gate results + checkpoi
 - Method-asset code library:
   `code_library/module_registry.yaml`, `code_library/environment_registry.yaml`,
   and module-level `module.yaml` / `env_profile.yaml` contracts.
-- Capability-aware strategy planning through `list-capabilities` and
-  `plan-analysis --from-code-library`, producing `analysis_graph.yaml` and
-  `method_selection_report.md`; use `--module-limit` when a validation or
-  upstream-data run should execute only bounded assets.
+- Strategy-evaluated planning through `list-capabilities` and
+  `plan-analysis --from-code-library`, producing `analysis_graph.yaml`,
+  node-level `inputs`, and `method_selection_report.md`; use `--module-limit`
+  when a validation or upstream-data run should execute only bounded assets.
+  The strategy evaluator records method-family decisions such as pseudobulk DE
+  versus WGCNA, spatial deconvolution prerequisites, figure role, sample-size
+  risk, and reviewer-facing requirements.
 - Analysis graph execution through `analysis_graph_executor`, with per-node
-  manifests, stdout/stderr logs, session information, source maps, and run
-  evaluation.
+  manifests, stdout/stderr logs, session information, source maps, run
+  evaluation, strict node input-contract validation, and support for Rscript,
+  Python, shell, and Jupyter method assets.
 - Real method-asset execution is approval-gated and contract-gated: graph runs
   check `DataRegistry`, `EnvironmentRegistry`, lock/package policy, and
   node-level source maps before treating artifacts as analysis evidence. Use
@@ -51,15 +57,19 @@ completed = real execution + verified outputs + concrete gate results + checkpoi
 - Evidence graph synthesis writes `tables/evidence_matrix.tsv`,
   `review/reviewer_risk_report.md`, `brief/FIGURE_STORYLINE.md`, and
   `claims/claim_ledger.jsonl` when `evaluate-run --write-report` is used.
-- External method sources can be imported and reviewed without silent registry
-  mutation through `import-code-source`, `review-code-source`,
-  `register-figure-style`, and `list-figure-styles`.
+- External method sources can be imported, cloned, parsed, proposed, and
+  reviewed without silent registry mutation through `import-code-source
+  --clone`, `review-code-source`, `register-figure-style`, and
+  `list-figure-styles`.
+- `code_library/modules/MODULE_SOURCE_CATALOG.md` lists every registered method
+  asset with purpose, primary script, delegated wrappers, functions, execution
+  type, environment lock, maturity, validation status, and claim boundary.
 - Module usage feedback is recorded in `code_library/module_usage_ledger.jsonl`;
   improvement proposals are explicit review artifacts and never auto-edit the
   module registry.
 - Production CI is split into Python tests, method-asset schema checks,
-  CLI bulk smoke, graph dry-run, optional R method smoke, and light security
-  guards.
+  `audit-method-assets --strict`, CLI bulk smoke, graph dry-run, mandatory R
+  method contract parsing/dry-run, and light security guards.
 - Official Seurat PBMC3K tutorial wrapper under
   `code_library/modules/single_cell/seurat_pbmc3k_basic/`, validated locally
   as a single-cell method-asset smoke path.
@@ -251,8 +261,10 @@ Generated paper projects store recoverable state under `papers/<paper_id>/`:
 
 ## Documentation
 
-- [V4.6 architecture](ARCHITECTURE.md)
-- [V4.6 user guide](USER_GUIDE.md)
+- [V4.7 architecture](docs/METHOD_ASSET_ARCHITECTURE_v4.7.0.md)
+- [V4.7 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.7.0.md)
+- [V4.6 architecture archive](ARCHITECTURE.md)
+- [V4.6 user guide archive](USER_GUIDE.md)
 - [V4.6 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.6.0.md)
 - [V4.6 method-asset architecture](docs/METHOD_ASSET_ARCHITECTURE_v4.6.0.md)
 - [V4.3 Chinese operation guide](docs/OPERATION_GUIDE_ZH.md)
@@ -260,6 +272,7 @@ Generated paper projects store recoverable state under `papers/<paper_id>/`:
 - [V4.4 Codex collaboration system](docs/CODEX_COLLABORATION_SYSTEM.md)
 - [Codex mode interaction guide](docs/CODEX_MODE_INTERACTION_GUIDE_ZH.md)
 - [V4.4 optimization master plan](docs/WORKFLOW_OPTIMIZATION_MASTER_PLAN_2026-07-07.md)
+- [Release notes v4.7.0](docs/RELEASE_NOTES_v4.7.0.md)
 - [Release notes v4.6.0](docs/RELEASE_NOTES_v4.6.0.md)
 - [Release notes v4.5.0](docs/RELEASE_NOTES_v4.5.0.md)
 - [Release notes v4.4.0](docs/RELEASE_NOTES_v4.4.0.md)

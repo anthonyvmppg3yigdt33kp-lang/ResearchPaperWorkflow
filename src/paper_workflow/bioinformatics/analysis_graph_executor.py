@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import subprocess
+import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
@@ -10,7 +12,7 @@ from typing import Any
 
 import yaml
 
-from paper_workflow.bioinformatics.analysis_graph import AnalysisGraph
+from paper_workflow.bioinformatics.analysis_graph import AnalysisGraph, build_node_input_contract, unresolved_required_inputs
 from paper_workflow.bioinformatics.data_registry import DataRegistry
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
@@ -216,6 +218,29 @@ class AnalysisGraphExecutor:
             self._write_node_manifest(node_dir, paper_dir, record)
             return record
 
+        parameters = self._node_parameters(graph, node, module, paper_dir)
+        input_contract = build_node_input_contract(module, parameters, graph.data_bindings)
+        record["input_contract"] = input_contract
+        missing_inputs = unresolved_required_inputs(input_contract)
+        if missing_inputs:
+            message = f"required node inputs unresolved: {', '.join(missing_inputs)}"
+            if execute and bool(graph.execution_policy.get("require_node_input_bindings", True)):
+                record["status"] = "blocked"
+                record["errors"].append(message)
+                self._write_node_manifest(node_dir, paper_dir, record)
+                return record
+            record["warnings"].append(message)
+        write_yaml(
+            node_dir / "parameters.yaml",
+            {
+                "node": node,
+                "module": module_id,
+                "parameters": parameters,
+                "input_contract": input_contract,
+                "updated_at": utc_now(),
+            },
+        )
+
         env_id = str((module.get("environment") or {}).get("env_id", ""))
         require_env_lock = bool(graph.execution_policy.get("require_env_lock", False))
         env_status = self.environments.validate_environment(
@@ -241,13 +266,14 @@ class AnalysisGraphExecutor:
 
         execution = module.get("execution") or {}
         exec_type = str(execution.get("type", "")).lower()
-        if exec_type != "rscript":
+        if exec_type not in {"rscript", "python", "shell", "bash", "jupyter", "notebook", "ipynb"}:
             record["status"] = "blocked"
             record["errors"].append(f"unsupported execution type for graph executor: {exec_type or 'not_declared'}")
             self._write_node_manifest(node_dir, paper_dir, record)
             return record
 
-        runner = env_status.get("runner") or self.environments.resolve_runner(env_id, language="r")
+        runner_language = self._runner_language(exec_type, str(module.get("language", "")))
+        runner = env_status.get("runner") or self.environments.resolve_runner(env_id, language=runner_language)
         script_rel = str((module.get("source") or {}).get("path") or execution.get("script") or "")
         script_path = self.project_root / script_rel
         if not script_path.exists():
@@ -261,25 +287,31 @@ class AnalysisGraphExecutor:
             self._write_node_manifest(node_dir, paper_dir, record)
             return record
 
-        parameters = dict(module.get("default_parameters", {}) or {})
-        parameters.update(node.get("parameters", {}) or {})
-        input_dir = parameters.get("input_dir") or graph.data_bindings.get("single_cell") or graph.data_bindings.get("input_dir") or ""
-        if input_dir:
-            input_path = Path(str(input_dir))
-            if not input_path.is_absolute():
-                input_dir = str((paper_dir / input_path).resolve())
-        parameters["input_dir"] = str(input_dir)
         arg_template = list(execution.get("args", []) or [])
         replacements = {
             "run_id": graph.run_id,
             "node_id": node_id,
             "node_dir": str(node_dir.resolve()),
-            "input_dir": str(input_dir),
             "project_root": str(self.project_root),
             **{k: str(v) for k, v in parameters.items()},
         }
-        args = [str(item).format(**replacements) for item in arg_template]
-        command = [str(runner), str(script_path), *args]
+        args = []
+        for item in arg_template:
+            try:
+                args.append(str(item).format(**replacements))
+            except KeyError as exc:
+                record["status"] = "blocked"
+                record["errors"].append(f"command argument placeholder has no bound value: {exc.args[0]}")
+                self._write_node_manifest(node_dir, paper_dir, record)
+                return record
+        command, command_issue = self._build_command(exec_type, str(runner), script_path, args, node_dir)
+        if command_issue:
+            record["status"] = "blocked"
+            record["errors"].append(command_issue)
+            self._write_node_manifest(node_dir, paper_dir, record)
+            return record
+        record["execution_type"] = exec_type
+        record["script"] = script_rel
         record["command"] = command
         timeout = int(execution.get("timeout_seconds", 1800))
         completed = subprocess.run(
@@ -310,6 +342,105 @@ class AnalysisGraphExecutor:
             record["errors"].append(f"node command failed with exit code {completed.returncode}")
         self._write_node_manifest(node_dir, paper_dir, record)
         return record
+
+    def _node_parameters(
+        self,
+        graph: AnalysisGraph,
+        node: dict[str, Any],
+        module: dict[str, Any],
+        paper_dir: Path,
+    ) -> dict[str, Any]:
+        parameters = dict(module.get("default_parameters", {}) or {})
+        parameters.update(node.get("parameters", {}) or {})
+        for key in [
+            "input_dir",
+            "input",
+            "count_matrix",
+            "count_matrix_csv",
+            "metadata",
+            "sample_metadata",
+            "sample_metadata_csv",
+            "seurat_object",
+            "seurat_rds",
+            "pseudobulk_rds",
+        ]:
+            if key not in parameters and graph.data_bindings.get(key):
+                parameters[key] = graph.data_bindings[key]
+        if "input_dir" not in parameters and graph.data_bindings.get("single_cell"):
+            parameters["input_dir"] = graph.data_bindings["single_cell"]
+        path_like = {
+            "input_dir",
+            "input",
+            "count_matrix",
+            "count_matrix_csv",
+            "metadata",
+            "sample_metadata",
+            "sample_metadata_csv",
+            "seurat_object",
+            "seurat_rds",
+            "pseudobulk_rds",
+        }
+        for key in path_like:
+            value = parameters.get(key)
+            if value in ("", None, []):
+                continue
+            path = Path(str(value))
+            if not path.is_absolute():
+                parameters[key] = str((paper_dir / path).resolve())
+        return parameters
+
+    @staticmethod
+    def _runner_language(exec_type: str, module_language: str) -> str:
+        if exec_type == "rscript":
+            return "r"
+        if exec_type in {"python", "jupyter", "notebook", "ipynb"}:
+            return "python"
+        return module_language.lower()
+
+    @staticmethod
+    def _build_command(
+        exec_type: str,
+        runner: str,
+        script_path: Path,
+        args: list[str],
+        node_dir: Path,
+    ) -> tuple[list[str], str]:
+        if exec_type == "rscript":
+            return [runner, str(script_path), *args], ""
+        if exec_type == "python":
+            python_runner = runner or sys.executable or shutil.which("python") or ""
+            if not python_runner:
+                return [], "python runner unavailable"
+            return [python_runner, str(script_path), *args], ""
+        if exec_type in {"shell", "bash"}:
+            suffix = script_path.suffix.lower()
+            if suffix == ".ps1":
+                shell_runner = shutil.which("pwsh") or shutil.which("powershell") or runner
+                if not shell_runner:
+                    return [], "PowerShell runner unavailable for shell method asset"
+                return [shell_runner, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path), *args], ""
+            shell_runner = runner or shutil.which("bash") or shutil.which("sh") or ""
+            if not shell_runner:
+                return [], "shell runner unavailable"
+            return [shell_runner, str(script_path), *args], ""
+        if exec_type in {"jupyter", "notebook", "ipynb"}:
+            jupyter_runner = shutil.which("jupyter") or runner
+            if not jupyter_runner:
+                return [], "jupyter runner unavailable"
+            output_path = node_dir / "executed_notebook.ipynb"
+            return [
+                jupyter_runner,
+                "nbconvert",
+                "--to",
+                "notebook",
+                "--execute",
+                str(script_path),
+                "--output",
+                output_path.name,
+                "--output-dir",
+                str(node_dir),
+            ], ""
+        return [], f"unsupported execution type for graph executor: {exec_type or 'not_declared'}"
 
     @staticmethod
     def _write_node_manifest(node_dir: Path, paper_dir: Path, record: dict[str, Any]) -> None:

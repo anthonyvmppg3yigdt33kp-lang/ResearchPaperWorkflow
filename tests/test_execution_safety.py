@@ -134,3 +134,102 @@ def test_graph_executor_records_blocked_manifest_without_approval():
         assert "analysis graph execution requires explicit user approval" in manifest["errors"]
     finally:
         tmp.cleanup()
+
+
+def test_graph_executor_runs_python_method_asset():
+    tmp = tempfile.TemporaryDirectory()
+    try:
+        root = Path(tmp.name)
+        paper = root / "papers" / "test_paper"
+        run_dir = paper / "results" / "runs" / "python_graph"
+        module_dir = root / "code_library" / "modules" / "python_demo"
+        module_dir.mkdir(parents=True)
+        run_dir.mkdir(parents=True)
+        (root / "AGENTS.md").write_text("# Test root\n", encoding="utf-8")
+        (root / "src").mkdir()
+        (root / "code_library" / "environment_registry.yaml").write_text(
+            yaml.safe_dump(
+                {
+                    "environments": {
+                        "python_builtin": {
+                            "env_id": "python_builtin",
+                            "language": "Python",
+                            "runner": sys.executable,
+                            "required_packages": [],
+                        }
+                    }
+                },
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+        (root / "code_library" / "module_registry.yaml").write_text(
+            yaml.safe_dump(
+                {
+                    "modules": {
+                        "python.demo.v1": {
+                            "id": "python.demo.v1",
+                            "name": "Python demo method asset",
+                            "modality": "bulk_rnaseq",
+                            "step": "python_demo",
+                            "language": "python",
+                            "capability_tags": ["python", "demo"],
+                            "source": {"type": "local_script", "path": "code_library/modules/python_demo/main.py"},
+                            "environment": {"env_id": "python_builtin"},
+                            "execution": {
+                                "type": "python",
+                                "script": "code_library/modules/python_demo/main.py",
+                                "args": ["--input", "{input_dir}", "--out", "{node_dir}", "--run-id", "{run_id}", "--message", "{message}"],
+                            },
+                            "default_parameters": {"message": "hello"},
+                            "input_schema": {"required": [{"name": "input_dir", "type": "directory"}]},
+                            "output_schema": {"artifacts": ["tables/result.csv"]},
+                            "reviewer_risk": ["demo only"],
+                            "claim_boundary": "executor test only",
+                            "validation_status": "test_fixture",
+                            "method_maturity": "test_fixture",
+                        }
+                    }
+                },
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+        (module_dir / "main.py").write_text(
+            "import argparse\n"
+            "from pathlib import Path\n"
+            "p = argparse.ArgumentParser()\n"
+            "p.add_argument('--input')\n"
+            "p.add_argument('--out', required=True)\n"
+            "p.add_argument('--run-id', required=True)\n"
+            "p.add_argument('--message', required=True)\n"
+            "args = p.parse_args()\n"
+            "out = Path(args.out) / 'tables'\n"
+            "out.mkdir(parents=True, exist_ok=True)\n"
+            "(out / 'result.csv').write_text('run_id,message\\n' + args.run_id + ',' + args.message + '\\n', encoding='utf-8')\n",
+            encoding="utf-8",
+        )
+        graph = AnalysisGraph(
+            run_id="python_graph",
+            research_question="Run python method",
+            primary_objective="Run python method",
+            statistical_unit="sample",
+            data_bindings={"input_dir": "data/input"},
+            execution_policy={
+                "require_user_approval": True,
+                "require_data_registry": False,
+                "require_env_lock": False,
+                "require_node_input_bindings": True,
+            },
+            nodes=[AnalysisGraphNode(node_id="python_demo", module_id="python.demo.v1")],
+        )
+
+        result = AnalysisGraphExecutor(root).run(graph, run_dir, execute=True, approval=True)
+        manifest = yaml.safe_load((run_dir / "nodes" / "python_demo" / "node_manifest.yaml").read_text(encoding="utf-8"))
+
+        assert result.status == "completed"
+        assert manifest["execution_type"] == "python"
+        assert manifest["input_contract"]["input_dir"]["status"] == "bound"
+        assert (run_dir / "nodes" / "python_demo" / "tables" / "result.csv").exists()
+    finally:
+        tmp.cleanup()
