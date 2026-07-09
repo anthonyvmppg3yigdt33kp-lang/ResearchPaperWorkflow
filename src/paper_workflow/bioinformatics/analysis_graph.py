@@ -224,6 +224,11 @@ def _resolve_input_value(
         "seurat_object": ["seurat_object", "input", "input_dir", "primary_input", "single_cell"],
         "seurat_rds": ["seurat_rds", "input", "input_dir", "primary_input"],
         "pseudobulk_rds": ["pseudobulk_rds", "input", "primary_input"],
+        "ranked_genes": ["ranked_genes", "ranked_gene_statistic"],
+        "ranked_gene_statistic": ["ranked_gene_statistic", "ranked_genes"],
+        "differential_expression_table": ["differential_expression_table", "ranked_gene_statistic", "ranked_genes"],
+        "gene_set_collection": ["gene_set_collection", "gene_sets"],
+        "gene_sets": ["gene_sets", "gene_set_collection"],
         "count_matrix": ["count_matrix", "count_matrix_csv", "counts", "primary_input"],
         "count_matrix_csv": ["count_matrix_csv", "count_matrix", "primary_input"],
         "counts": ["counts", "count_matrix", "primary_input"],
@@ -241,6 +246,46 @@ def _resolve_input_value(
     return "", "unbound"
 
 
+def _binding_aliases(key: str, module: dict[str, Any]) -> list[str]:
+    step = str(module.get("step", "")).lower()
+    tags = {str(t).lower() for t in module.get("capability_tags", []) or []}
+    aliases = {
+        "input": ["seurat_rds", "pseudobulk_rds", "count_matrix", "ranked_gene_statistic"],
+        "seurat_object": ["seurat_rds"],
+        "seurat_rds": ["seurat_rds"],
+        "pseudobulk_rds": ["pseudobulk_rds"],
+        "ranked_genes": ["ranked_gene_statistic", "differential_expression_table"],
+        "ranked_gene_statistic": ["ranked_gene_statistic", "differential_expression_table"],
+        "count_matrix": ["count_matrix", "count_matrix_csv"],
+        "sample_metadata": ["sample_metadata", "sample_metadata_csv"],
+    }
+    preferred = aliases.get(key, [key])
+    if key == "input" and ("pseudobulk" in step or "pseudobulk" in tags):
+        preferred = ["pseudobulk_rds", "seurat_rds", "count_matrix"]
+    if key == "input" and ("seurat" in step or "single-cell" in tags or "single_cell" in str(module.get("modality", ""))):
+        preferred = ["seurat_rds", "pseudobulk_rds", "count_matrix"]
+    return preferred
+
+
+def _bind_upstream_input(
+    key: str,
+    module: dict[str, Any],
+    available_bindings: dict[str, tuple[str, str]],
+) -> tuple[str, str, str]:
+    for binding_name in _binding_aliases(key, module):
+        if binding_name in available_bindings:
+            upstream_node_id, rel_path = available_bindings[binding_name]
+            return f"nodes/{upstream_node_id}/{rel_path}", f"upstream_output.{upstream_node_id}.{binding_name}", upstream_node_id
+    return "", "unbound", ""
+
+
+def _module_output_bindings(module: dict[str, Any]) -> dict[str, str]:
+    bindings = module.get("output_bindings", {}) or {}
+    if isinstance(bindings, dict):
+        return {str(k): str(v) for k, v in bindings.items() if str(k) and str(v)}
+    return {}
+
+
 def build_graph_from_selected_modules(
     *,
     run_id: str,
@@ -253,24 +298,54 @@ def build_graph_from_selected_modules(
     nodes: list[AnalysisGraphNode] = []
     prior_id = ""
     data_bindings = build_data_bindings(input_paths=input_paths, input_dir=input_dir)
+    available_bindings: dict[str, tuple[str, str]] = {}
+    module_by_node: dict[str, str] = {}
     for idx, module in enumerate(selected_modules, start=1):
         module_id = str(module.get("id") or module.get("module_id"))
         step = str(module.get("step") or f"step{idx}").replace(" ", "_")
         node_id = f"{step}_{idx}" if step in {node.node_id for node in nodes} else step
         default_parameters = dict(module.get("default_parameters", {}) or {})
-        if data_bindings.get("input_dir") and "input_dir" not in default_parameters:
+        if idx == 1 and data_bindings.get("input_dir") and "input_dir" not in default_parameters:
             default_parameters["input_dir"] = data_bindings["input_dir"]
         node_inputs = build_node_input_contract(module, default_parameters, data_bindings)
+        inferred_dependencies = set(str(dep) for dep in (module.get("depends_on", []) or []) if str(dep))
+        for input_key, input_item in node_inputs.items():
+            if not isinstance(input_item, dict):
+                continue
+            already_bound_from_parameters = input_item.get("status") == "bound" and str(input_item.get("binding_source", "")).startswith("parameters.")
+            if already_bound_from_parameters:
+                continue
+            bound_value, source, upstream_node_id = _bind_upstream_input(input_key, module, available_bindings)
+            if not bound_value:
+                if input_item.get("status") == "bound":
+                    default_parameters.setdefault(input_key, input_item.get("value"))
+                continue
+            input_item["value"] = bound_value
+            input_item["binding_source"] = source
+            input_item["status"] = "bound"
+            default_parameters[input_key] = bound_value
+            if upstream_node_id:
+                inferred_dependencies.add(upstream_node_id)
+        compatible_upstream = {str(item) for item in module.get("compatible_upstream_modules", []) or []}
+        if compatible_upstream:
+            for existing_node_id, existing_module_id in module_by_node.items():
+                if existing_module_id in compatible_upstream:
+                    inferred_dependencies.add(existing_node_id)
+        if prior_id and module.get("chain_after_previous", False):
+            inferred_dependencies.add(prior_id)
         nodes.append(
             AnalysisGraphNode(
                 node_id=node_id,
                 module_id=module_id,
-                depends_on=[prior_id] if prior_id and module.get("chain_after_previous", False) else list(module.get("depends_on", []) or []),
+                depends_on=sorted(inferred_dependencies),
                 inputs=node_inputs,
                 parameters=default_parameters,
                 outputs=list(module.get("output_schema", {}).get("artifacts", []) or []),
             )
         )
+        for binding_name, rel_path in _module_output_bindings(module).items():
+            available_bindings[binding_name] = (node_id, rel_path)
+        module_by_node[node_id] = module_id
         prior_id = node_id
     return AnalysisGraph(
         run_id=run_id,

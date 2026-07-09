@@ -1,0 +1,12 @@
+required_outputs:
+  - outputs_manifest.yaml
+  - node_manifest.yaml
+  - tables/findmarkers_results.csv
+  - tables/findmarkers_summary.csv
+  - qc/group_size_sample_mapping.csv
+  - figures/findmarkers_volcano.png
+  - objects/findmarkers_parameters.rds
+  - logs/sessionInfo.txt
+  - figure_source_map.yaml
+  - table_source_map.yaml
+publication_grade: false

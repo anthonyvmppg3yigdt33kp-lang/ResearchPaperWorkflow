@@ -1,0 +1,5 @@
+id: single_cell.seurat_findmarkers_group_de.v1
+name: Seurat FindMarkers group differential-expression module
+family: seurat_findmarkers_group_de
+status: production_scaffold
+claim_boundary: "Cell-level marker/differential expression is exploratory unless biological replicate-aware inference is documented."

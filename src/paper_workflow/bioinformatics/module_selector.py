@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 from paper_workflow.bioinformatics.data_registry import DataRegistry
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
+from paper_workflow.bioinformatics.literature_method_advisor import LiteratureMethodAdvisor
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.strategy_evaluator import StrategyEvaluator
 
@@ -24,6 +25,7 @@ class MethodSelector:
         self.environments = EnvironmentRegistry(self.project_root)
         self.data = DataRegistry(self.paper_dir) if self.paper_dir else None
         self.strategy = StrategyEvaluator(self.data.summary() if self.data else {})
+        self.literature_advisor = LiteratureMethodAdvisor(self.paper_dir)
         self._environment_cache: dict[tuple[str, str], dict[str, Any]] = {}
 
     def select(
@@ -44,6 +46,9 @@ class MethodSelector:
         for module in candidates:
             payload = dict(module)
             strategy_eval = self.strategy.evaluate_module(payload, goal)
+            evidence_notes = self.literature_advisor.method_notes(str(strategy_eval.get("method_family", "")))
+            if evidence_notes:
+                strategy_eval["evidence_packet_notes"] = evidence_notes
             score = self.score_module(module, goal=goal, strategy_eval=strategy_eval)
             payload["method_selection_score"] = score
             payload["strategy_evaluation"] = strategy_eval

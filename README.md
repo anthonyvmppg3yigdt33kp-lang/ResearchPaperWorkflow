@@ -1,19 +1,19 @@
-# Research Paper Workflow Framework v4.7.0
+# Research Paper Workflow Framework v4.8.0
 
 Agent-operated research paper workflow for bioinformatics, clinical research,
-and reproducible manuscript production. The current release keeps the
-truth-layer architecture and adds production method-asset orchestration:
-strategy-evaluated planning, multilingual analysis graphs, strict node input
-binding, inspectable method source catalogs, environment/data gates, evidence
-synthesis, external code clone/parse/proposal intake, feedback ledgers, and CI
-preflight.
+and reproducible manuscript production. The current release upgrades the
+method-asset layer from script intake and proposal review into a sustainable
+bioinformatics method asset library: method-block extraction, depersonalized
+adaptation scaffolds, executable Seurat/limma wrappers, graph output-to-input
+artifact binding, strategy guidance, bioinformatics-specific run QA, source-map
+boundaries, and CI preflight.
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-CI%20preflight-brightgreen.svg)](tests/)
-[![Version](https://img.shields.io/badge/Version-4.7.0-orange.svg)]()
+[![Version](https://img.shields.io/badge/Version-4.8.0-orange.svg)]()
 
-## What V4.7 Is
+## What V4.8 Is
 
 ResearchPaperWorkflow is not a prompt pack that asks an AI to write a paper in
 one pass. It is an auditable workflow kernel where Claude, Codex, or another
@@ -26,7 +26,7 @@ The current invariant is:
 completed = real execution + verified outputs + concrete gate results + checkpoint consistency
 ```
 
-## V4.7 Additions
+## V4.8 Additions
 
 - Lightweight collaboration modes:
   `exploration_mode`, `analysis_design_mode`, `execution_mode`,
@@ -59,8 +59,23 @@ completed = real execution + verified outputs + concrete gate results + checkpoi
   `claims/claim_ledger.jsonl` when `evaluate-run --write-report` is used.
 - External method sources can be imported, cloned, parsed, proposed, and
   reviewed without silent registry mutation through `import-code-source
-  --clone`, `review-code-source`, `register-figure-style`, and
-  `list-figure-styles`.
+  --clone`, `review-code-source`, `adapt-method-block`, `register-figure-style`,
+  and `list-figure-styles`. Intake now writes `method_blocks.yaml` with source
+  file, line range, detected calls, project-specific terms, parameterization
+  plan, candidate module family, reviewer risk, and claim boundary.
+- `adapt-method-block` generates external adapted module scaffolds only after
+  explicit review approval; `--register` can produce a `registry_patch.yaml`
+  after license approval, but never mutates `module_registry.yaml` silently.
+- Reusable executable method assets now include
+  `single_cell.seurat_findmarkers_group_de.v1` and
+  `bulk_rnaseq.limma_voom_de_real.v1`, with dry-run contract outputs and
+  fail-closed real execution when required R packages or inputs are missing.
+- Analysis graph planning understands module `output_bindings`, so downstream
+  nodes can bind upstream artifacts such as `seurat_rds` and
+  `ranked_gene_statistic` instead of rereading only the original input.
+- `evaluate-run --write-report` writes `qc/bioinformatics_quality_report.yaml`
+  and `qc/next_analysis_plan.yaml` for method-specific table, source-map,
+  session-info, data-registry, leakage, and next-step checks.
 - `code_library/modules/MODULE_SOURCE_CATALOG.md` lists every registered method
   asset with purpose, primary script, delegated wrappers, functions, execution
   type, environment lock, maturity, validation status, and claim boundary.
@@ -261,8 +276,10 @@ Generated paper projects store recoverable state under `papers/<paper_id>/`:
 
 ## Documentation
 
-- [V4.7 architecture](docs/METHOD_ASSET_ARCHITECTURE_v4.7.0.md)
-- [V4.7 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.7.0.md)
+- [V4.8 architecture](docs/METHOD_ASSET_ARCHITECTURE_v4.8.0.md)
+- [V4.8 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.8.0.md)
+- [V4.7 architecture archive](docs/METHOD_ASSET_ARCHITECTURE_v4.7.0.md)
+- [V4.7 method-asset orchestration guide archive](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.7.0.md)
 - [V4.6 architecture archive](ARCHITECTURE.md)
 - [V4.6 user guide archive](USER_GUIDE.md)
 - [V4.6 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.6.0.md)
@@ -272,6 +289,7 @@ Generated paper projects store recoverable state under `papers/<paper_id>/`:
 - [V4.4 Codex collaboration system](docs/CODEX_COLLABORATION_SYSTEM.md)
 - [Codex mode interaction guide](docs/CODEX_MODE_INTERACTION_GUIDE_ZH.md)
 - [V4.4 optimization master plan](docs/WORKFLOW_OPTIMIZATION_MASTER_PLAN_2026-07-07.md)
+- [Release notes v4.8.0](docs/RELEASE_NOTES_v4.8.0.md)
 - [Release notes v4.7.0](docs/RELEASE_NOTES_v4.7.0.md)
 - [Release notes v4.6.0](docs/RELEASE_NOTES_v4.6.0.md)
 - [Release notes v4.5.0](docs/RELEASE_NOTES_v4.5.0.md)

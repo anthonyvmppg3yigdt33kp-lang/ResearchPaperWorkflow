@@ -1,0 +1,6 @@
+inputs:
+  - name: dry_run_fixture
+    type: generated
+    publication_evidence: false
+sample_mapping:
+  status: dry_run_not_replicate_aware

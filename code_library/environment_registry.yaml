@@ -24,6 +24,7 @@ environments:
       - single_cell.seurat_clustering_umap.v1
       - single_cell.marker_feature_plot.v1
       - single_cell.pseudobulk_aggregate.v1
+      - single_cell.seurat_findmarkers_group_de.v1
     validation:
       last_checked: "2026-07-09"
       status: pass
@@ -126,6 +127,7 @@ environments:
     compatible_modules:
       - bulk_rnaseq.deseq2_de.v1
       - bulk_rnaseq.limma_voom_de.v1
+      - bulk_rnaseq.limma_voom_de_real.v1
       - bulk_rnaseq.wgcna.v1
       - bulk_rnaseq.fgsea_enrichment.v1
       - bulk_rnaseq.immune_deconvolution_adapter.v1

@@ -1,0 +1,5 @@
+required_outputs:
+- outputs_manifest.yaml
+- node_manifest.yaml
+- outputs_manifest.yaml
+publication_grade: false

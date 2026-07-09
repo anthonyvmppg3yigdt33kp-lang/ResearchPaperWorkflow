@@ -15,6 +15,7 @@ get_arg <- function(flag, default = "") {
 }
 
 input_dir <- get_arg("--input")
+reported_input_dir <- input_dir
 out_dir <- get_arg("--out", "seurat_pbmc3k_basic_out")
 run_id <- get_arg("--run-id", "seurat_pbmc3k_basic")
 markers_arg <- get_arg("--markers", "MS4A1,GNLY,CD3E,CD14,FCER1A,FCGR3A,LYZ,PPBP,CD8A")
@@ -92,7 +93,7 @@ filtered_cells <- ncol(pbmc)
 
 retention <- data.frame(
   run_id = run_id,
-  input_dir = data_dir,
+  input_dir = reported_input_dir,
   initial_cells = initial_cells,
   filtered_cells = filtered_cells,
   retained_fraction = filtered_cells / max(initial_cells, 1),
@@ -175,16 +176,19 @@ write_yaml_lines(
     "    source_inputs: 10X matrix directory",
     "    method: CreateSeuratObject metadata and PercentageFeatureSet",
     "    statistical_unit: cell",
+    "    claim_boundary: tutorial workflow QC only",
     "  - table_id: cell_retention",
     "    path: qc/cell_retention.csv",
     "    source_inputs: qc/qc_metrics.csv",
     "    method: nFeature_RNA and percent.mt threshold filter",
     "    statistical_unit: cell",
+    "    claim_boundary: tutorial fixture filtering summary only",
     "  - table_id: cluster_counts",
     "    path: tables/cluster_counts.csv",
     "    source_inputs: objects/pbmc3k_seurat_basic.rds",
     "    method: table(Idents(pbmc)) after FindClusters",
-    "    statistical_unit: cell"
+    "    statistical_unit: cell",
+    "    claim_boundary: exploratory tutorial cluster-size summary only"
   )
 )
 

@@ -16,6 +16,11 @@ build/
 papers/
 strategy/
 
+# External code intake keeps review manifests, but mirrored third-party source
+# copies must stay local until license/provenance review approves redistribution.
+code_library/external_sources/*/original/
+code_library/external_sources/*/_clone_tmp/
+
 # Data (large files)
 *.h5ad
 *.rds

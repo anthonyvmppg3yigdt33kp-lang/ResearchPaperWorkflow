@@ -1,0 +1,5 @@
+id: bulk_rnaseq.limma_voom_de_real.v1
+name: Real limma-voom sample-level differential-expression module
+family: limma_voom_de
+status: production_scaffold
+claim_boundary: "Differential expression is association evidence only and depends on valid sample-level design."

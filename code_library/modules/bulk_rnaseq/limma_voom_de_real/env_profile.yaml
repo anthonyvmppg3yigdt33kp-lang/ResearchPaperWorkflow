@@ -1,0 +1,7 @@
+env_id: r_bulk_rnaseq
+language: R
+required_packages:
+  - edgeR
+  - limma
+  - ggplot2
+session_info_required: true

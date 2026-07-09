@@ -143,20 +143,21 @@ class AnalysisGraphExecutor:
             "execution_status": status,
             "executed_at": utc_now(),
             "dry_run": not execute,
+            "paper_dir": self._project_relative_path(paper_dir),
             "analysis_graph": "analysis_graph.yaml",
             "approval_required": approval_required,
             "approval_granted": bool(approval),
-            "module_registry": str(self.modules.registry_path),
+            "module_registry": self._project_relative_path(self.modules.registry_path),
             "module_registry_hash": self.modules.content_hash(),
-            "environment_registry": str(self.environments.registry_path),
+            "environment_registry": self._project_relative_path(self.environments.registry_path),
             "environment_registry_hash": self.environments.content_hash(),
             "environment_reproducibility_grade": reproducibility_grade,
-            "data_registry": data_status.get("data_registry", ""),
+            "data_registry": self._sanitize_for_manifest(data_status).get("data_registry", ""),
             "data_registry_hash": data_status.get("data_registry_hash", ""),
             "input_manifest": data_status.get("input_manifest", {}),
-            "data_status": data_status,
+            "data_status": self._sanitize_for_manifest(data_status),
             "source_map_status": source_map_status,
-            "nodes": node_records,
+            "nodes": [self._sanitize_for_manifest(record) for record in node_records],
             "node_environment": [record.get("environment", {}) for record in node_records if record.get("environment")],
             "outputs_generated": output_paths,
             "warnings": warnings,
@@ -218,7 +219,7 @@ class AnalysisGraphExecutor:
             self._write_node_manifest(node_dir, paper_dir, record)
             return record
 
-        parameters = self._node_parameters(graph, node, module, paper_dir)
+        parameters = self._node_parameters(graph, node, module, paper_dir, run_dir)
         input_contract = build_node_input_contract(module, parameters, graph.data_bindings)
         record["input_contract"] = input_contract
         missing_inputs = unresolved_required_inputs(input_contract)
@@ -291,7 +292,7 @@ class AnalysisGraphExecutor:
         replacements = {
             "run_id": graph.run_id,
             "node_id": node_id,
-            "node_dir": str(node_dir.resolve()),
+            "node_dir": self._project_relative_path(node_dir),
             "project_root": str(self.project_root),
             **{k: str(v) for k, v in parameters.items()},
         }
@@ -304,7 +305,8 @@ class AnalysisGraphExecutor:
                 record["errors"].append(f"command argument placeholder has no bound value: {exc.args[0]}")
                 self._write_node_manifest(node_dir, paper_dir, record)
                 return record
-        command, command_issue = self._build_command(exec_type, str(runner), script_path, args, node_dir)
+        script_arg = self._project_relative_path(script_path)
+        command, command_issue = self._build_command(exec_type, str(runner), script_path, script_arg, args, node_dir)
         if command_issue:
             record["status"] = "blocked"
             record["errors"].append(command_issue)
@@ -349,9 +351,16 @@ class AnalysisGraphExecutor:
         node: dict[str, Any],
         module: dict[str, Any],
         paper_dir: Path,
+        run_dir: Path,
     ) -> dict[str, Any]:
         parameters = dict(module.get("default_parameters", {}) or {})
         parameters.update(node.get("parameters", {}) or {})
+        for key, item in (node.get("inputs", {}) or {}).items():
+            if not isinstance(item, dict) or item.get("status") != "bound":
+                continue
+            value = item.get("value")
+            if value not in ("", None, []):
+                parameters.setdefault(str(key), value)
         for key in [
             "input_dir",
             "input",
@@ -363,6 +372,11 @@ class AnalysisGraphExecutor:
             "seurat_object",
             "seurat_rds",
             "pseudobulk_rds",
+            "ranked_genes",
+            "ranked_gene_statistic",
+            "differential_expression_table",
+            "gene_sets",
+            "gene_set_collection",
         ]:
             if key not in parameters and graph.data_bindings.get(key):
                 parameters[key] = graph.data_bindings[key]
@@ -379,6 +393,11 @@ class AnalysisGraphExecutor:
             "seurat_object",
             "seurat_rds",
             "pseudobulk_rds",
+            "ranked_genes",
+            "ranked_gene_statistic",
+            "differential_expression_table",
+            "gene_sets",
+            "gene_set_collection",
         }
         for key in path_like:
             value = parameters.get(key)
@@ -386,7 +405,14 @@ class AnalysisGraphExecutor:
                 continue
             path = Path(str(value))
             if not path.is_absolute():
-                parameters[key] = str((paper_dir / path).resolve())
+                if str(value).replace("\\", "/").startswith("nodes/"):
+                    parameters[key] = self._project_relative_path(run_dir / path)
+                else:
+                    parameters[key] = self._project_relative_path(paper_dir / path)
+            else:
+                parameters[key] = self._project_relative_path(path)
+        if "ranked_genes" not in parameters and parameters.get("ranked_gene_statistic"):
+            parameters["ranked_genes"] = parameters["ranked_gene_statistic"]
         return parameters
 
     @staticmethod
@@ -402,27 +428,28 @@ class AnalysisGraphExecutor:
         exec_type: str,
         runner: str,
         script_path: Path,
+        script_arg: str,
         args: list[str],
         node_dir: Path,
     ) -> tuple[list[str], str]:
         if exec_type == "rscript":
-            return [runner, str(script_path), *args], ""
+            return [runner, script_arg, *args], ""
         if exec_type == "python":
             python_runner = runner or sys.executable or shutil.which("python") or ""
             if not python_runner:
                 return [], "python runner unavailable"
-            return [python_runner, str(script_path), *args], ""
+            return [python_runner, script_arg, *args], ""
         if exec_type in {"shell", "bash"}:
             suffix = script_path.suffix.lower()
             if suffix == ".ps1":
                 shell_runner = shutil.which("pwsh") or shutil.which("powershell") or runner
                 if not shell_runner:
                     return [], "PowerShell runner unavailable for shell method asset"
-                return [shell_runner, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path), *args], ""
+                return [shell_runner, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script_arg, *args], ""
             shell_runner = runner or shutil.which("bash") or shutil.which("sh") or ""
             if not shell_runner:
                 return [], "shell runner unavailable"
-            return [shell_runner, str(script_path), *args], ""
+            return [shell_runner, script_arg, *args], ""
         if exec_type in {"jupyter", "notebook", "ipynb"}:
             jupyter_runner = shutil.which("jupyter") or runner
             if not jupyter_runner:
@@ -434,7 +461,7 @@ class AnalysisGraphExecutor:
                 "--to",
                 "notebook",
                 "--execute",
-                str(script_path),
+                script_arg,
                 "--output",
                 output_path.name,
                 "--output-dir",
@@ -442,9 +469,8 @@ class AnalysisGraphExecutor:
             ], ""
         return [], f"unsupported execution type for graph executor: {exec_type or 'not_declared'}"
 
-    @staticmethod
-    def _write_node_manifest(node_dir: Path, paper_dir: Path, record: dict[str, Any]) -> None:
-        write_yaml(node_dir / "node_manifest.yaml", {**record, "updated_at": utc_now()})
+    def _write_node_manifest(self, node_dir: Path, paper_dir: Path, record: dict[str, Any]) -> None:
+        write_yaml(node_dir / "node_manifest.yaml", {**self._sanitize_for_manifest(record), "updated_at": utc_now()})
         rel = str((node_dir / "node_manifest.yaml").relative_to(paper_dir)).replace("\\", "/")
         if rel not in record["artifacts"]:
             record["artifacts"].append(rel)
@@ -503,6 +529,7 @@ class AnalysisGraphExecutor:
                         "source_inputs": "node input and parameters",
                         "method": record.get("module_id", ""),
                         "statistical_unit": graph.statistical_unit,
+                        "claim_boundary": module.get("claim_boundary", "workflow-generated analysis table; interpret with module risk notes"),
                         "source_map_quality": "incomplete_fallback",
                     })
         write_yaml(run_dir / "figure_source_map.yaml", {"schema_version": "analysis_graph_source_map.v1", "figures": figures})
@@ -532,6 +559,11 @@ class AnalysisGraphExecutor:
             if not isinstance(item, dict):
                 continue
             entry = {**item, **context, "source_map_quality": "node_declared"}
+            if not entry.get("claim_boundary"):
+                entry["claim_boundary"] = (
+                    context.get("module_claim_boundary")
+                    or f"workflow-generated {kind}; interpret with module risk notes"
+                )
             for field in path_fields:
                 value = entry.get(field)
                 if isinstance(value, str):
@@ -549,3 +581,28 @@ class AnalysisGraphExecutor:
         if not value or value.startswith(("results/", "nodes/", "/", "\\")) or ":" in value[:3]:
             return value.replace("\\", "/")
         return f"{node_rel}/{value}".replace("\\", "/")
+
+    def _project_relative_path(self, path: Path) -> str:
+        try:
+            resolved = Path(path).resolve()
+            return str(resolved.relative_to(self.project_root.resolve())).replace("\\", "/")
+        except (OSError, ValueError):
+            return str(path).replace("\\", "/")
+
+    def _sanitize_for_manifest(self, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {key: self._sanitize_for_manifest(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._sanitize_for_manifest(item) for item in value]
+        if isinstance(value, str):
+            return self._sanitize_path_text(value)
+        return value
+
+    def _sanitize_path_text(self, value: str) -> str:
+        try:
+            path = Path(value)
+            if path.is_absolute():
+                return self._project_relative_path(path)
+        except (OSError, ValueError):
+            pass
+        return value.replace("\\", "/")

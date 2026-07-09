@@ -1,0 +1,7 @@
+id: external.lung_master_nsclc_20260523.dea_tvsbh_postprocess.v1
+source_id: lung_master_nsclc_20260523_v1
+source_block_id: dea_tvsbh__differential_expression_script__L1__e1476a90
+family: generic_reviewed_method
+status: adapted_scaffold_requires_tests
+claim_boundary: Imported differential-expression summaries require upstream design
+  and replicate provenance before manuscript claims.

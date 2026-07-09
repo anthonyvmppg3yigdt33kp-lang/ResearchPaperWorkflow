@@ -18,6 +18,7 @@ import yaml
 from paper_workflow.bioinformatics.analysis_graph import build_graph_from_selected_modules
 from paper_workflow.bioinformatics.evidence_synthesizer import EvidenceSynthesizer
 from paper_workflow.bioinformatics.module_selector import MethodSelector, render_selection_report
+from paper_workflow.bioinformatics.run_quality_rules import BioinformaticsRunQualityRules
 from paper_workflow.outputs.source_map import SourceMapValidator
 
 
@@ -139,6 +140,13 @@ class ResultRunManager:
         self.validate_run_id(run_id)
         return self.runs_dir / run_id
 
+    def _display_path(self, path: Path) -> str:
+        try:
+            root = self.paper_dir.parents[1]
+            return str(Path(path).resolve().relative_to(root.resolve())).replace("\\", "/")
+        except (OSError, ValueError, IndexError):
+            return str(path).replace("\\", "/")
+
     def create_run(
         self,
         run_id: str,
@@ -161,7 +169,7 @@ class ResultRunManager:
             "mode": mode,
             "status": status,
             "created_at": utc_now(),
-            "paper_dir": str(self.paper_dir),
+            "paper_dir": self._display_path(self.paper_dir),
             "outputs_generated": [],
             "notes": notes,
         }
@@ -437,6 +445,7 @@ class ResultRunManager:
             source_map_valid=source_status["status"] == "pass",
             write_outputs=write_report,
         )
+        bioinformatics_quality = BioinformaticsRunQualityRules(run_dir).evaluate(write_outputs=write_report)
         stderr_warning_count = 0
         for stderr_path in run_dir.rglob("stderr.log"):
             text = stderr_path.read_text(encoding="utf-8", errors="replace").lower()
@@ -468,7 +477,7 @@ class ResultRunManager:
 
         evaluation = RunEvaluation(
             run_id=run_id,
-            run_path=str(run_dir),
+            run_path=self._display_path(run_dir),
             status=status,
             missing_required_files=missing,
             output_file_count=len(files),
@@ -496,7 +505,10 @@ class ResultRunManager:
             evidence_summary=evidence_packet["summary"],
         )
         if write_report:
-            write_yaml(run_dir / "evaluation_report.yaml", evaluation.to_dict())
+            payload = evaluation.to_dict()
+            payload["bioinformatics_quality"] = bioinformatics_quality["report"]
+            payload["next_analysis_plan"] = bioinformatics_quality["next_analysis_plan"]
+            write_yaml(run_dir / "evaluation_report.yaml", payload)
         return evaluation
 
     def brief_status(self) -> dict[str, Any]:

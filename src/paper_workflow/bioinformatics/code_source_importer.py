@@ -13,6 +13,8 @@ from typing import Any
 
 import yaml
 
+from paper_workflow.bioinformatics.source_parser import SourceParser
+
 
 SOURCE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{1,80}$")
 SKIP_PARTS = {".git", "__pycache__", ".pytest_cache", "node_modules", ".venv", "renv"}
@@ -52,6 +54,7 @@ class SourceImportResult:
     manifest_path: str
     retained_count: int
     parsed_count: int
+    method_block_count: int
     proposal_count: int
     status: str
 
@@ -62,6 +65,7 @@ class SourceImportResult:
             "manifest_path": self.manifest_path,
             "retained_count": self.retained_count,
             "parsed_count": self.parsed_count,
+            "method_block_count": self.method_block_count,
             "proposal_count": self.proposal_count,
             "status": self.status,
         }
@@ -114,7 +118,8 @@ class CodeSourceImporter:
             origin_url = github
 
         parsed = self._parse_retained_scripts(source_dir, retained)
-        proposals = self._generate_module_proposals(source_id, parsed)
+        method_blocks = SourceParser(source_dir).method_blocks(parsed)
+        proposals = self._generate_module_proposals(source_id, parsed, method_blocks)
 
         manifest = {
             "source_id": source_id,
@@ -126,6 +131,7 @@ class CodeSourceImporter:
             "clone_performed": bool(clone_github and github),
             "files_retained": [item["path"] for item in retained],
             "analysis_capabilities": sorted({cap for item in parsed for cap in item.get("capability_keywords", [])}),
+            "method_block_count": len(method_blocks),
             "figure_style_features": [],
             "allowed_use": [
                 "provenance review",
@@ -148,6 +154,16 @@ class CodeSourceImporter:
                 "parsed_at": utc_now(),
                 "script_count": len(parsed),
                 "scripts": parsed,
+            },
+        )
+        write_yaml(
+            source_dir / "method_blocks.yaml",
+            {
+                "source_id": source_id,
+                "generated_at": utc_now(),
+                "method_block_count": len(method_blocks),
+                "status": "requires_human_review",
+                "method_blocks": method_blocks,
             },
         )
         write_yaml(
@@ -183,6 +199,7 @@ class CodeSourceImporter:
             manifest_path=str(source_dir / "source_manifest.yaml"),
             retained_count=len(retained),
             parsed_count=len(parsed),
+            method_block_count=len(method_blocks),
             proposal_count=len(proposals),
             status="imported_for_review",
         )
@@ -371,17 +388,31 @@ class CodeSourceImporter:
         return "commandArgs(" in text or "optparse" in text or "argparse" in text
 
     @staticmethod
-    def _generate_module_proposals(source_id: str, parsed: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _generate_module_proposals(
+        source_id: str,
+        parsed: list[dict[str, Any]],
+        method_blocks: list[dict[str, Any]] | None = None,
+    ) -> list[dict[str, Any]]:
         proposals = []
+        blocks_by_source: dict[str, list[dict[str, Any]]] = {}
+        for block in method_blocks or []:
+            blocks_by_source.setdefault(str(block.get("source_file", "")), []).append(block)
         for item in parsed:
             stem = Path(item["path"]).stem.lower()
             safe_stem = re.sub(r"[^a-z0-9_]+", "_", stem).strip("_") or "script"
             capabilities = item.get("capability_keywords", []) or []
+            blocks = blocks_by_source.get(item["path"], [])
+            block_families = sorted({str(block.get("method_family", "")) for block in blocks if block.get("method_family")})
+            candidate_families = sorted({str(block.get("candidate_module_family", "")) for block in blocks if block.get("candidate_module_family")})
             modality = "single_cell" if any(cap in capabilities for cap in ["seurat", "scanpy", "anndata"]) else (
                 "bulk_rnaseq" if any(cap in capabilities for cap in ["deseq2", "limma", "edger", "wgcna", "fgsea"]) else (
                     "spatial" if "spatial" in capabilities or "deconvolution" in capabilities else "general"
                 )
             )
+            if any("findmarkers" in family or family.startswith("seurat") for family in block_families):
+                modality = "single_cell"
+            elif any("limma" in family or "deseq2" in family or "enrichment" in family for family in block_families):
+                modality = "bulk_rnaseq"
             proposals.append(
                 {
                     "proposed_module_id": f"external.{source_id}.{safe_stem}.v1",
@@ -389,6 +420,9 @@ class CodeSourceImporter:
                     "language": item["language"],
                     "modality": modality,
                     "capability_tags": capabilities,
+                    "method_block_count": len(blocks),
+                    "method_families": block_families,
+                    "candidate_module_families": candidate_families,
                     "function_count": item.get("function_count", 0),
                     "functions": item.get("functions", [])[:20],
                     "has_cli_entrypoint": item.get("has_cli_entrypoint", False),

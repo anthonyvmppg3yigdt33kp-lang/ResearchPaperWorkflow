@@ -1,0 +1,1587 @@
+source_id: lung_master_nsclc_20260523_v1
+generated_at: '2026-07-09T08:48:21+00:00'
+registry_update_allowed: false
+proposals:
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.scrna_functions.v1
+  source_path: original/Functions/scRNA_functions.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - umap
+  - heatmap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 46
+  functions:
+  - CellCycleScoring
+  - CellCycleScoring10x
+  - PCA_ElbowPlot
+  - __barplotGroupsDataFrame
+  - __checkCoExpression
+  - __findMitochondrialGenes
+  - __findRibosomialGenes
+  - __init__
+  - __label
+  - __normaliseGroupsDataFrame
+  - __plotSingleRidgePlot
+  - __rgb2hex
+  - assignCellType
+  - assignGate
+  - assignOrigin
+  - checkCoexpression
+  - checkMarkerGenesPerCluster
+  - computeUMAP
+  - getAnnotationMatrix
+  - load10XSanger
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.cell_label_visualisation.v1
+  source_path: original/SpatialTranscriptomics/cell2location/cell_label_visualisation.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - main
+  - spatial_plot
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.cell_type_lr_matching.v1
+  source_path: original/SpatialTranscriptomics/cell2location/cell_type_LR_matching.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.cell_type_lr_plotting.v1
+  source_path: original/SpatialTranscriptomics/cell2location/cell_type_LR_plotting.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  - heatmap
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.config.v1
+  source_path: original/SpatialTranscriptomics/cell2location/config.py
+  language: python
+  modality: spatial
+  capability_tags:
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.estimate_expression_signatures.v1
+  source_path: original/SpatialTranscriptomics/cell2location/estimate_expression_signatures.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.lr_construct_null.v1
+  source_path: original/SpatialTranscriptomics/cell2location/LR_construct_null.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.plot_cci_vs_cell_proportion.v1
+  source_path: original/SpatialTranscriptomics/cell2location/plot_CCI_vs_cell_proportion.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_cell2location.v1
+  source_path: original/SpatialTranscriptomics/cell2location/run_cell2location.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_cell_abundances.v1
+  source_path: original/SpatialTranscriptomics/cell2location/run_cell_abundances.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - main
+  - select_slide
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_colocation.v1
+  source_path: original/SpatialTranscriptomics/cell2location/run_colocation.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - NMF_Colocation
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_colocation_local.v1
+  source_path: original/SpatialTranscriptomics/cell2location/run_colocation_local.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  - heatmap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - run_colocation
+  - save_plot
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.spatial_autocorrelation_pysal.v1
+  source_path: original/SpatialTranscriptomics/cell2location/spatial_autocorrelation_pysal.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.study_threshold_lr.v1
+  source_path: original/SpatialTranscriptomics/cell2location/study_threshold_LR.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.visium_qc_and_visualisation.v1
+  source_path: original/SpatialTranscriptomics/cell2location/visium_qc_and_visualisation.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 3
+  functions:
+  - main
+  - read_and_qc
+  - select_slide
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a1_spatial_qc.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/a1_spatial_qc.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - clean_adata
+  - plot_hists
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.b1_summarise_frequency.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/b1_summarise_frequency.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - summarise_frequency
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.b2_spatial_r_filtered.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/b2_Spatial_R_filtered.R
+  language: r
+  modality: spatial
+  capability_tags:
+  - spatial
+  method_block_count: 4
+  method_families:
+  - percent_expression_summary
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  - single_cell.percent_composition_stats
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.b3_retrieve_colocalisation.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/b3_retrieve_colocalisation.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - plot_dendro
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.b4_nmf_colocation.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/b4_NMF_colocation.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.c1_lr_colocalisation.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/c1_LR_colocalisation.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.c2_lr_colocalisation_plot.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/c2_LR_colocalisation_plot.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - spatial
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.c3_lr_colocalisation_test.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/c3_LR_colocalisation_test.py
+  language: python
+  modality: spatial
+  capability_tags:
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.c4_lr_heatmap_and_boxplot.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/c4_LR_heatmap_and_boxplot.R
+  language: r
+  modality: spatial
+  capability_tags:
+  - spatial
+  - heatmap
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.visium_scrna_comparison.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/Visium_scRNA_comparison.R
+  language: r
+  modality: spatial
+  capability_tags:
+  - spatial
+  method_block_count: 4
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.functions.v1
+  source_path: original/SpatialTranscriptomics/downstream_analysis/_functions.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - spatial
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 3
+  functions:
+  - plot_boxes
+  - plot_spatial
+  - select_slide
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.cellphonedb_data_and_figures.v1
+  source_path: original/scRNA-Seq/R_pipeline/cellphoneDB_data_and_figures.R
+  language: r
+  modality: general
+  capability_tags:
+  - heatmap
+  method_block_count: 4
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 1
+  functions:
+  - swap_pair
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.cell_count_sfig1_plot.v1
+  source_path: original/scRNA-Seq/R_pipeline/Cell_count_SFig1_plot.R
+  language: r
+  modality: general
+  capability_tags: []
+  method_block_count: 2
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.correlations_and_clustering.v1
+  source_path: original/scRNA-Seq/R_pipeline/Correlations_and_clustering.R
+  language: r
+  modality: general
+  capability_tags:
+  - heatmap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.dea_intratumour.v1
+  source_path: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  language: r
+  modality: bulk_rnaseq
+  capability_tags:
+  - fgsea
+  - heatmap
+  - volcano
+  method_block_count: 6
+  method_families:
+  - differential_expression_script
+  - enrichment
+  - plotting
+  - volcano_plot
+  candidate_module_families:
+  - bulk_rnaseq.differential_expression_postprocess
+  - bulk_rnaseq.fgsea_enrichment
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.dea_luad_vs_lusc.v1
+  source_path: original/scRNA-Seq/R_pipeline/DEA_LUAD_vs_LUSC.R
+  language: r
+  modality: bulk_rnaseq
+  capability_tags:
+  - fgsea
+  - heatmap
+  - volcano
+  method_block_count: 1
+  method_families:
+  - differential_expression_script
+  candidate_module_families:
+  - bulk_rnaseq.differential_expression_postprocess
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.dea_tvsbh.v1
+  source_path: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  language: r
+  modality: bulk_rnaseq
+  capability_tags:
+  - fgsea
+  - heatmap
+  - volcano
+  method_block_count: 9
+  method_families:
+  - differential_expression_script
+  - enrichment
+  - plotting
+  - volcano_plot
+  candidate_module_families:
+  - bulk_rnaseq.differential_expression_postprocess
+  - bulk_rnaseq.fgsea_enrichment
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.downsampling_iteration.v1
+  source_path: original/scRNA-Seq/R_pipeline/Downsampling_iteration.R
+  language: r
+  modality: general
+  capability_tags: []
+  method_block_count: 3
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 1
+  functions:
+  - marginal_distribution
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.foetal_macs_signature.v1
+  source_path: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  language: r
+  modality: single_cell
+  capability_tags:
+  - seurat
+  - umap
+  method_block_count: 15
+  method_families:
+  - plotting
+  - seurat_feature_plot
+  - seurat_marker_plot
+  - seurat_qc_plot
+  candidate_module_families:
+  - general.plotting
+  - single_cell.marker_feature_plot
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.pct_stats_new.v1
+  source_path: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  language: r
+  modality: general
+  capability_tags: []
+  method_block_count: 15
+  method_families:
+  - percent_expression_summary
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  - single_cell.percent_composition_stats
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.plot_clinical.v1
+  source_path: original/scRNA-Seq/R_pipeline/Plot_clinical.R
+  language: r
+  modality: general
+  capability_tags: []
+  method_block_count: 2
+  method_families:
+  - clinical_plot
+  - plotting
+  candidate_module_families:
+  - general.clinical_plot
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.calculate_abundances.v1
+  source_path: original/scRNA-Seq/PythonPipeline/02_celltype_abundances/calculate_abundances.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a1_select_hvgs.v1
+  source_path: original/scRNA-Seq/PythonPipeline/03_label_transfer_analysis/a1_select_HVGs.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - PreprocessDataset
+  - restructure
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.b1_label_transfer_immune_all.v1
+  source_path: original/scRNA-Seq/PythonPipeline/03_label_transfer_analysis/b1_label_transfer_immune.all.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  - heatmap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a1_compute_paga.v1
+  source_path: original/scRNA-Seq/PythonPipeline/06_trajectory_analysis/a1_compute_paga.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - umap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - restructure
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a2_compute_fle.v1
+  source_path: original/scRNA-Seq/PythonPipeline/06_trajectory_analysis/a2_compute_fle.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a3_plot_pagafle.v1
+  source_path: original/scRNA-Seq/PythonPipeline/06_trajectory_analysis/a3_plot_pagafle.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a1_combine.v1
+  source_path: original/scRNA-Seq/PythonPipeline/08_combined_foetal_analysis/a1_combine.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - restructure
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a2_pegasus_analysis.v1
+  source_path: original/scRNA-Seq/PythonPipeline/08_combined_foetal_analysis/a2_pegasus-analysis.py
+  language: python
+  modality: general
+  capability_tags:
+  - umap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a1_plot_contour_violinbox.v1
+  source_path: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/a1_plot_contour_violinbox.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 3
+  functions:
+  - plot_boxviolin
+  - plot_contours
+  - transform_counts
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a2_subclustering_plot_umap_violinbox.v1
+  source_path: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/a2_subclustering_plot_umap_violinbox.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - umap
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 1
+  functions:
+  - transform_counts
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.e2_deseq2_on_pseudo.v1
+  source_path: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/e2_DESeq2_on_pseudo.R
+  language: r
+  modality: bulk_rnaseq
+  capability_tags:
+  - deseq2
+  - volcano
+  method_block_count: 4
+  method_families:
+  - deseq2_de
+  - plotting
+  candidate_module_families:
+  - bulk_rnaseq.deseq2_de
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.c1_genes_above_30pct.v1
+  source_path: original/scRNA-Seq/PythonPipeline/09_small_issues/ComputeCellProportion/c1_genes_above_30pct.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 1
+  method_families:
+  - percent_expression_summary
+  candidate_module_families:
+  - single_cell.percent_composition_stats
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.c2_genes_above_30pct_tumour.v1
+  source_path: original/scRNA-Seq/PythonPipeline/09_small_issues/ComputeCellProportion/c2_genes_above_30pct_tumour.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 1
+  method_families:
+  - percent_expression_summary
+  candidate_module_families:
+  - single_cell.percent_composition_stats
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.config.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/config.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.data_creation.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/data_creation.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.data_creation_by_cancer.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/data_creation_by_cancer.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_cellphonedb.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/run_CellPhoneDB.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_data_creation.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/run_data_creation.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_data_creation_by_cancer.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/run_data_creation_by_cancer.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a1_plotdots_sharedlr.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/LRdotplots/a1_plotdots_sharedLR.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 1
+  functions:
+  - restructure
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.a2_plotdots_lr.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/LRdotplots/a2_plotdots_LR.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 1
+  functions:
+  - restructure
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.make_proportion_plots.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/make_proportion_plots.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.plot.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/plot.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  method_block_count: 1
+  method_families:
+  - plotting
+  candidate_module_families:
+  - general.plotting
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_similarity_score.v1
+  source_path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/run_similarity_score.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 3
+  functions:
+  - cosine_sim_vectors
+  - get_ranks
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.batch_submit.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/0_emptyDrop/batch_submit.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_emptydrop.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/0_emptyDrop/run_EmptyDrop.R
+  language: r
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.batch_submit.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/1_mergingAndQualityControl/batch_submit.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_merging_samples_and_qc.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/1_mergingAndQualityControl/run_merging_samples_and_QC.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - anndata
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - add_sample_anndata
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.sample_metadata_full.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/1_mergingAndQualityControl/sample_metadata_full.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.batch_submit.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/2_batchCorrection/batch_submit.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_hvg_pca_harmony.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/2_batchCorrection/run_hvg_pca_harmony.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - umap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 2
+  functions:
+  - main
+  - runUMAP
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.merging_dict.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/3_clustering/merging_dict.py
+  language: python
+  modality: general
+  capability_tags: []
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 0
+  functions: []
+  has_cli_entrypoint: false
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_clustering_heatmap.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/3_clustering/run_clustering_heatmap.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - umap
+  - heatmap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration
+- proposed_module_id: external.lung_master_nsclc_20260523_v1.run_subclustering_heatmap.v1
+  source_path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/3_clustering/run_subclustering_heatmap.py
+  language: python
+  modality: single_cell
+  capability_tags:
+  - scanpy
+  - spatial
+  - umap
+  - heatmap
+  method_block_count: 0
+  method_families: []
+  candidate_module_families: []
+  function_count: 1
+  functions:
+  - main
+  has_cli_entrypoint: true
+  proposal_status: requires_human_review_and_adapter_tests
+  registry_update_allowed: false
+  required_next_steps:
+  - license review
+  - script function review by researcher
+  - input/output contract extraction
+  - adapter or direct execution test
+  - source-map and claim-boundary declaration

@@ -1,0 +1,1339 @@
+source_id: lung_master_nsclc_20260523_v1
+parsed_at: '2026-07-09T08:48:20+00:00'
+script_count: 70
+scripts:
+- path: original/Functions/scRNA_functions.py
+  language: python
+  size_bytes: 76428
+  sha256: a6f074d57e3c307d89313eaf44e54bef54b765d65569157ed7cbfcee536e1403
+  functions:
+  - CellCycleScoring
+  - CellCycleScoring10x
+  - PCA_ElbowPlot
+  - __barplotGroupsDataFrame
+  - __checkCoExpression
+  - __findMitochondrialGenes
+  - __findRibosomialGenes
+  - __init__
+  - __label
+  - __normaliseGroupsDataFrame
+  - __plotSingleRidgePlot
+  - __rgb2hex
+  - assignCellType
+  - assignGate
+  - assignOrigin
+  - checkCoexpression
+  - checkMarkerGenesPerCluster
+  - computeUMAP
+  - getAnnotationMatrix
+  - load10XSanger
+  - loadMetadata
+  - loadSmartSeqCRUK
+  - loadSmartSeqSanger
+  - mappingAnnotatedToEnsembl
+  - mappingEnsemblToAnnotated
+  - mergeClusters
+  - mergeGroups
+  - plot3D
+  - plot3DContinuous
+  - plotBarPlotFeatures
+  - plotBarPlotGroup
+  - plotBoxPlotGroup
+  - plotGenesRankGroups
+  - plotHVGs
+  - plotHistrogram
+  - plotPieCharts
+  - plotScatter
+  - plotScatterDatasets
+  - plotUMAP
+  - plotViolinVariableGroup
+  - readAnnotationMatrix
+  - readMarkerListFoetal
+  - ridge_plot
+  - run_subclustering
+  - scrublet_doublet_removal_10X
+  - write10x
+  function_count: 46
+  imports_or_packages:
+  - IPython.display
+  - gzip
+  - itertools
+  - json
+  - matplotlib
+  - numpy
+  - os
+  - pandas
+  - pandas.api.types
+  - plotly
+  - plotly.graph_objs
+  - plotly.subplots
+  - scanpy
+  - scipy.io
+  - scipy.sparse
+  - scrublet
+  - seaborn
+  - sklearn.cluster
+  - umap
+  capability_keywords:
+  - scanpy
+  - anndata
+  - umap
+  - heatmap
+  has_cli_entrypoint: false
+- path: original/SpatialTranscriptomics/cell2location/cell_label_visualisation.py
+  language: python
+  size_bytes: 4586
+  sha256: 0cd78e201a0934294396f7b01ef952647599f27c3b66edf60bd46d7d0b69fb96
+  functions:
+  - main
+  - spatial_plot
+  function_count: 2
+  imports_or_packages:
+  - anndata
+  - cell2location
+  - cell2location.plt.mapping_video
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - numpy
+  - os
+  - pickle
+  - scanpy
+  - sys
+  - visium_qc_and_visualisation
+  - warnings
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/cell_type_LR_matching.py
+  language: python
+  size_bytes: 6454
+  sha256: f833eb37ada6a93be0bb9ac1dfadda9cc4f0494b11bc6e99ad29d87e0a384bd6
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - anndata
+  - argparse
+  - matplotlib.backends.backend_pdf
+  - matplotlib.colors
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - scanpy
+  - scipy.spatial
+  - seaborn
+  - sklearn.preprocessing
+  - visium_qc_and_visualisation
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/cell_type_LR_plotting.py
+  language: python
+  size_bytes: 5071
+  sha256: a39df45debb770b4633ca5bb846aa04dad432e64d25f192e9032d87435672b9e
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - anndata
+  - argparse
+  - matplotlib.backends.backend_pdf
+  - matplotlib.colors
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - scanpy
+  - scipy.spatial
+  - seaborn
+  - sklearn.preprocessing
+  - visium_qc_and_visualisation
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  - heatmap
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/config.py
+  language: python
+  size_bytes: 5665
+  sha256: f3fa8ba0470547868e94db4a5c32121e6748afd3ddd69255c90203c4c6869915
+  functions: []
+  function_count: 0
+  imports_or_packages: []
+  capability_keywords:
+  - spatial
+  has_cli_entrypoint: false
+- path: original/SpatialTranscriptomics/cell2location/estimate_expression_signatures.py
+  language: python
+  size_bytes: 3266
+  sha256: d0c2397348c528a67585ea9f68281d9f480757caafb3aff8658db85f09fc0a8c
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - anndata
+  - argparse
+  - cell2location
+  - config
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - scvi
+  - seaborn
+  - sys
+  - torch
+  - warnings
+  capability_keywords:
+  - scanpy
+  - anndata
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/LR_construct_null.py
+  language: python
+  size_bytes: 6251
+  sha256: 80e0975c456595a4b80d81953d54ebe07bd40f5388ea278b0d9c123a4683e055
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - anndata
+  - matplotlib.backends.backend_pdf
+  - matplotlib.colors
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - scanpy
+  - scipy.spatial
+  - scipy.stats
+  - seaborn
+  - sklearn.preprocessing
+  - visium_qc_and_visualisation
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: false
+- path: original/SpatialTranscriptomics/cell2location/plot_CCI_vs_cell_proportion.py
+  language: python
+  size_bytes: 3938
+  sha256: bf0c77e92b5a4d1a01eaccc9d8cc6256c44912f0623bcee37d208467e7a97e50
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - argparse
+  - esda
+  - libpysal
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - scanpy
+  - seaborn
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/run_cell2location.py
+  language: python
+  size_bytes: 6943
+  sha256: cc3de21c4e09941617b04134d7860237229e9b98af62ed2b4a08572e00b7746d
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - anndata
+  - argparse
+  - cell2location
+  - config
+  - gc
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - scvi
+  - seaborn
+  - sys
+  - torch
+  - visium_qc_and_visualisation
+  - warnings
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/run_cell_abundances.py
+  language: python
+  size_bytes: 3394
+  sha256: 9042b492a992a262536733a50cbf49a1d53ad6b145f0c43d850eed1368e593c2
+  functions:
+  - main
+  - select_slide
+  function_count: 2
+  imports_or_packages:
+  - anndata
+  - argparse
+  - cell2location
+  - config
+  - gc
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - scvi
+  - seaborn
+  - sys
+  - torch
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/run_colocation.py
+  language: python
+  size_bytes: 6405
+  sha256: de7a7e04acc12f464afe43c311d3fb8bea6a6634376f709852c80aa14f43b517
+  functions:
+  - NMF_Colocation
+  - main
+  function_count: 2
+  imports_or_packages:
+  - anndata
+  - cell2location
+  - gc
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - re
+  - run_colocation_local
+  - scanpy
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/run_colocation_local.py
+  language: python
+  size_bytes: 17886
+  sha256: 7dcfcf58566d8a94663f5017f3f97d2f37584b7daf51eaacf9f0a9e3e8d92f2b
+  functions:
+  - run_colocation
+  - save_plot
+  function_count: 2
+  imports_or_packages:
+  - cell2location.models
+  - cell2location.plt
+  - cell2location.region.spatial_knn
+  - gc
+  - matplotlib
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pickle
+  - re
+  - scanpy
+  - time
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  - heatmap
+  has_cli_entrypoint: false
+- path: original/SpatialTranscriptomics/cell2location/spatial_autocorrelation_pysal.py
+  language: python
+  size_bytes: 4398
+  sha256: ae45a4e58cfcaf291afdcd5b5495e52a10311e9c9ea71c9355edff040cc3ee27
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - argparse
+  - esda
+  - libpysal
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - scanpy
+  - seaborn
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/study_threshold_LR.py
+  language: python
+  size_bytes: 11837
+  sha256: 19587e53bc17fc4570cace2ef27762cb37025140b621ade32ca07889678292c6
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - anndata
+  - argparse
+  - cell2location
+  - gc
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - scipy.spatial
+  - scvi
+  - seaborn
+  - sys
+  - torch
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/cell2location/visium_qc_and_visualisation.py
+  language: python
+  size_bytes: 6559
+  sha256: 8894eba92b6e48e5cc2a78f02d5284c8683164e31e2dc29b1279a4861519ac1c
+  functions:
+  - main
+  - read_and_qc
+  - select_slide
+  function_count: 3
+  imports_or_packages:
+  - anndata
+  - cell2location
+  - gc
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/a1_spatial_qc.py
+  language: python
+  size_bytes: 3911
+  sha256: 4b4299ee2d4fc6e64a805227551c27020920ca1fda4664d5fa625d0743a411ff
+  functions:
+  - clean_adata
+  - plot_hists
+  function_count: 2
+  imports_or_packages:
+  - _functions
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - os
+  - pandas
+  - scanpy
+  - seaborn
+  - sys
+  capability_keywords:
+  - scanpy
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/b1_summarise_frequency.py
+  language: python
+  size_bytes: 3292
+  sha256: efb0d5955d34722cbf74ff4027534b5b66d1dd8cf3d5240095128f62e8acffce
+  functions:
+  - summarise_frequency
+  function_count: 1
+  imports_or_packages:
+  - _functions
+  - matplotlib.backends.backend_pdf
+  - os
+  - pandas
+  - scanpy
+  - scipy.stats
+  - statsmodels.stats.multitest
+  - sys
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/b2_Spatial_R_filtered.R
+  language: r
+  size_bytes: 8409
+  sha256: b3ec61b31753e1e256d5d1849d0c04e5ad2ec365dc82fef0e45383db81a0eeda
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - tidyverse
+  capability_keywords:
+  - spatial
+  has_cli_entrypoint: false
+- path: original/SpatialTranscriptomics/downstream_analysis/b3_retrieve_colocalisation.py
+  language: python
+  size_bytes: 2615
+  sha256: 0f730a7313f09b622102dbe5b6008e4537f058a1b4bae607d38a7ac84d3a3e78
+  functions:
+  - plot_dendro
+  function_count: 1
+  imports_or_packages:
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - pandas
+  - scanpy
+  - scipy.cluster.hierarchy
+  - scipy.spatial.distance
+  - seaborn
+  - sys
+  capability_keywords:
+  - scanpy
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/b4_NMF_colocation.py
+  language: python
+  size_bytes: 895
+  sha256: 0efb12aabc4893d893e6d744a837a7862585ae0c28a7735da128969e565452c3
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - cell2location
+  - numpy
+  - os
+  - scanpy
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/c1_LR_colocalisation.py
+  language: python
+  size_bytes: 4175
+  sha256: 74923a8d2c05706e37aabc7b88bba23d48c5cb3abcfd946cffd5c276ffc7eb5b
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - _functions
+  - gc
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - seaborn
+  - sklearn.metrics
+  - sys
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/c2_LR_colocalisation_plot.py
+  language: python
+  size_bytes: 2800
+  sha256: a07bdfd3fffb220af746bd7f34ed97d57c7643f28da5978159acfb307cb8e669
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - _functions
+  - gc
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - seaborn
+  - sklearn.metrics
+  - sys
+  capability_keywords:
+  - scanpy
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/c3_LR_colocalisation_test.py
+  language: python
+  size_bytes: 3583
+  sha256: c638afe4b7d86988e336c824dfea366ad612f1527243cf12ccb2fbd02af64e3d
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - os
+  - pandas
+  - scipy.stats
+  - statsmodels.stats.multitest
+  - sys
+  capability_keywords:
+  - spatial
+  has_cli_entrypoint: true
+- path: original/SpatialTranscriptomics/downstream_analysis/c4_LR_heatmap_and_boxplot.R
+  language: r
+  size_bytes: 3229
+  sha256: db6f95272a4eabd124d98d4a95c8b46ecb8a21149d168dbd8fb648ddd3d0471a
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - tidyverse
+  capability_keywords:
+  - spatial
+  - heatmap
+  has_cli_entrypoint: false
+- path: original/SpatialTranscriptomics/downstream_analysis/Visium_scRNA_comparison.R
+  language: r
+  size_bytes: 13052
+  sha256: 611db042a9dc6cff495d8a85c25373f03cd1272849d047d16df3ac9c5d41a703
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - tidyverse
+  capability_keywords:
+  - spatial
+  has_cli_entrypoint: false
+- path: original/SpatialTranscriptomics/downstream_analysis/_functions.py
+  language: python
+  size_bytes: 2707
+  sha256: c60c713020ffd5d8a27fde5acbdb48b1b143318a231ecde0c4486c99b697486e
+  functions:
+  - plot_boxes
+  - plot_spatial
+  - select_slide
+  function_count: 3
+  imports_or_packages:
+  - matplotlib
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - scanpy
+  - seaborn
+  - sys
+  capability_keywords:
+  - scanpy
+  - anndata
+  - spatial
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/cellphoneDB_data_and_figures.R
+  language: r
+  size_bytes: 23411
+  sha256: bf41aee868bab85b0b36cda29587fc982657ffaf95af2b0dadbe4679e448e012
+  functions:
+  - swap_pair
+  function_count: 1
+  imports_or_packages:
+  - ComplexHeatmap
+  - RColorBrewer
+  - Vennerable
+  - circlize
+  - ggalluvial
+  - ggsankey
+  - ggvenn
+  - reshape2
+  - tidyverse
+  capability_keywords:
+  - heatmap
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/Cell_count_SFig1_plot.R
+  language: r
+  size_bytes: 8959
+  sha256: 81138da179fa8005ed88d6d1caecb5f4bfc74e89be34734be5d8463414132a8a
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - tidyverse
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/Correlations_and_clustering.R
+  language: r
+  size_bytes: 4356
+  sha256: c717704dd97d7c7162ef5138bb397dcdea10734934f52d816d1a1e68cc24d00b
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - RColorBrewer
+  - corrplot
+  - pheatmap
+  - tidyverse
+  capability_keywords:
+  - heatmap
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  language: r
+  size_bytes: 12759
+  sha256: 1cfe4b06ff800447ecfdba9c0de82c9d436e6ff7dd915157dc6cc11cfa8af7fc
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - EnhancedVolcano
+  - Homo.sapiens
+  - RColorBrewer
+  - Vennerable
+  - clusterProfiler
+  - ggrepel
+  - ggvenn
+  - pheatmap
+  - tidyverse
+  capability_keywords:
+  - fgsea
+  - heatmap
+  - volcano
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/DEA_LUAD_vs_LUSC.R
+  language: r
+  size_bytes: 8724
+  sha256: f9fb6d52bc13cf6acd52b29cb4385b08f6f19eecb5ce1bf085c3e77dd6ee7b33
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - EnhancedVolcano
+  - Homo.sapiens
+  - RColorBrewer
+  - Vennerable
+  - clusterProfiler
+  - ggrepel
+  - ggvenn
+  - pheatmap
+  - tidyverse
+  capability_keywords:
+  - fgsea
+  - heatmap
+  - volcano
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  language: r
+  size_bytes: 19095
+  sha256: 5eabe5bc2e1b31ebc4d8b0488afdca7c8124c8911e55aee516d2158af391c34f
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - EnhancedVolcano
+  - Homo.sapiens
+  - clusterProfiler
+  - ggrepel
+  - pheatmap
+  - tidyverse
+  capability_keywords:
+  - fgsea
+  - heatmap
+  - volcano
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/Downsampling_iteration.R
+  language: r
+  size_bytes: 4099
+  sha256: 2c30453281afc1647d41ccc3a2ede8264d73ff6b9bf0321c5f333d48a4735c60
+  functions:
+  - marginal_distribution
+  function_count: 1
+  imports_or_packages:
+  - cowplot
+  - readxl
+  - tidyverse
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  language: r
+  size_bytes: 12097
+  sha256: 0d1bdf3d37212d58b836bdbde637fb50a1ee89b61ae9eac5a55dcdbdc2e77b60
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - RColorBrewer
+  - Seurat
+  - SeuratDisk
+  - tidyverse
+  capability_keywords:
+  - seurat
+  - umap
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  language: r
+  size_bytes: 35848
+  sha256: dfe65ae8fdcc07041ad24c0b4f465da51da1ccb48744c8eac7705ef831a459a8
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - tidyverse
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/R_pipeline/Plot_clinical.R
+  language: r
+  size_bytes: 1969
+  sha256: 99efab9dda74c35d4094167f6ef3532d2bad72ca5ab6158d9bd8312fbeef6b42
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - tidyverse
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/02_celltype_abundances/calculate_abundances.py
+  language: python
+  size_bytes: 7892
+  sha256: b280124ccfa4d8549d92ef7a3663fef917464021e80564223012e073e30df218
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - gc
+  - json
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - pandas
+  - scRNA_functions
+  - scanpy
+  - sys
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/03_label_transfer_analysis/a1_select_HVGs.py
+  language: python
+  size_bytes: 4492
+  sha256: 746eb60f7a770685cb7e74ce9c18fc410579cb646e27ad9056f45e0e2bf24172
+  functions:
+  - PreprocessDataset
+  - restructure
+  function_count: 2
+  imports_or_packages:
+  - gc
+  - scanpy
+  - sys
+  capability_keywords:
+  - scanpy
+  - anndata
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/03_label_transfer_analysis/b1_label_transfer_immune.all.py
+  language: python
+  size_bytes: 6123
+  sha256: fc5df0595d200ff69dd26e2ae6e33d7ccfc07f54c00226d8badb58cfb7ec11a6
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - gc
+  - matplotlib.pyplot
+  - os
+  - scanpy
+  - scarches
+  - sys
+  capability_keywords:
+  - scanpy
+  - anndata
+  - heatmap
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/06_trajectory_analysis/a1_compute_paga.py
+  language: python
+  size_bytes: 3109
+  sha256: 9e18123633f4f6424448de42685a4f43cce1f68b2a4440645979fe8f9e2fd74c
+  functions:
+  - restructure
+  function_count: 1
+  imports_or_packages:
+  - gc
+  - scanpy
+  - sys
+  capability_keywords:
+  - scanpy
+  - umap
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/06_trajectory_analysis/a2_compute_fle.py
+  language: python
+  size_bytes: 1877
+  sha256: 4b1d27be58fa0c243bc40ad610c309c2b13c33d85ad9cdc83e5f892f056acf1e
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - gc
+  - pegasus
+  capability_keywords: []
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/06_trajectory_analysis/a3_plot_pagafle.py
+  language: python
+  size_bytes: 2031
+  sha256: 0e400179848f89491a2942a0b195ca6ae6831f0f7df3f554596c7c2f5c0b90f2
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - gc
+  - matplotlib.pyplot
+  - scanpy
+  - scvelo
+  - sys
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/08_combined_foetal_analysis/a1_combine.py
+  language: python
+  size_bytes: 4783
+  sha256: 9ff2f4240caffa8431f11e11b188e5882ba99148d1f3976387a31f63806a9723
+  functions:
+  - restructure
+  function_count: 1
+  imports_or_packages:
+  - gc
+  - pandas
+  - scanpy
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/08_combined_foetal_analysis/a2_pegasus-analysis.py
+  language: python
+  size_bytes: 4863
+  sha256: 749b36a497eeeeaff4580ac852acac1e2ab6f95a306e7c600a3e9d94ebc35cb1
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - matplotlib.pyplot
+  - numba.core.errors
+  - pegasus
+  - seaborn
+  - warnings
+  capability_keywords:
+  - umap
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/a1_plot_contour_violinbox.py
+  language: python
+  size_bytes: 3572
+  sha256: 1a90bf93a0b9b4a3ceb4f54c381d1df09ba7538b4516e20381b9ca1a1c1529fe
+  functions:
+  - plot_boxviolin
+  - plot_contours
+  - transform_counts
+  function_count: 3
+  imports_or_packages:
+  - gc
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - os
+  - pandas
+  - scanpy
+  - seaborn
+  - sys
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/a2_subclustering_plot_umap_violinbox.py
+  language: python
+  size_bytes: 4417
+  sha256: 812e825327111ed7247337fb136d6155786281442de03b1f99aa7779a4ce9221
+  functions:
+  - transform_counts
+  function_count: 1
+  imports_or_packages:
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - seaborn
+  - sklearn.cluster
+  - sys
+  capability_keywords:
+  - scanpy
+  - umap
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/e2_DESeq2_on_pseudo.R
+  language: r
+  size_bytes: 1920
+  sha256: bb266680a022995a2b740d854c4d9ddeea1bb3650dd19ad85dccbd1bcca66200
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - DESeq2
+  - ggplot2
+  - ggrepel
+  capability_keywords:
+  - deseq2
+  - volcano
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/09_small_issues/ComputeCellProportion/c1_genes_above_30pct.py
+  language: python
+  size_bytes: 1638
+  sha256: b67f46957faec00a2ede622bfcef802a5967a6ec65795373db1f8968425e33de
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - gc
+  - pandas
+  - scanpy
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/09_small_issues/ComputeCellProportion/c2_genes_above_30pct_tumour.py
+  language: python
+  size_bytes: 2057
+  sha256: ddbcdae3e4548ddd117c76291728d3228129d25cb696edb856ffa19ab0473913
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - pandas
+  - scanpy
+  - sys
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/config.py
+  language: python
+  size_bytes: 374
+  sha256: fb300c5bb27d8f3184bc914d2e40313d7fe94e8c685d1d52985b51cad8394cd3
+  functions: []
+  function_count: 0
+  imports_or_packages: []
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/data_creation.py
+  language: python
+  size_bytes: 3003
+  sha256: 1cf88d45e64e3238b21084da01893fef06347ee178ca7e29eb0d4e2aaefc73b2
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - argparse
+  - config
+  - math
+  - matplotlib
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - scipy
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/data_creation_by_cancer.py
+  language: python
+  size_bytes: 2512
+  sha256: 88f465c8713dfdf5edf3e490201a0e2cf530e43c137697515610b9f9a89780f0
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - config
+  - math
+  - matplotlib
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - scanpy
+  - scipy
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/run_CellPhoneDB.py
+  language: python
+  size_bytes: 1001
+  sha256: b169c5fd975aaa681ca7eeac07fea2509982c43b8026d194292d9bfa0a513c19
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - os
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/run_data_creation.py
+  language: python
+  size_bytes: 746
+  sha256: 7345626034d7d2fa8f545f43cc76e5ae0715e829d10e4e09f486c3e2d809c3bb
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - os
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/run_data_creation_by_cancer.py
+  language: python
+  size_bytes: 613
+  sha256: 0dd4e99b483590c9d86c6e36fa0c11f09aabf68ad377c2e453819534b02ea933
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - os
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/LRdotplots/a1_plotdots_sharedLR.py
+  language: python
+  size_bytes: 4144
+  sha256: c1fed3439f22abc760bc9dfdf28cf0d81c683ab30520e51c2298343562a82706
+  functions:
+  - restructure
+  function_count: 1
+  imports_or_packages:
+  - gc
+  - matplotlib.pyplot
+  - pandas
+  - scanpy
+  - seaborn
+  - sys
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/LRdotplots/a2_plotdots_LR.py
+  language: python
+  size_bytes: 3824
+  sha256: cf1b0a38d486dd35a5923c0d0a1b20cbd40dd00f6d37fbcf31b6adb864780469
+  functions:
+  - restructure
+  function_count: 1
+  imports_or_packages:
+  - gc
+  - matplotlib.pyplot
+  - pandas
+  - scanpy
+  - seaborn
+  - sys
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/make_proportion_plots.py
+  language: python
+  size_bytes: 2948
+  sha256: 537dba08173a487a23d982846b0f3ad6e1b8b5887ac7501caffebf5e19ed3449
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - collections
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - seaborn
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/plot.py
+  language: python
+  size_bytes: 4467
+  sha256: 2e858b58c5fafed5fc6ea1c1ec6e596a5b3dac3851dd561b3e66b4d0d0788ea6
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - math
+  - matplotlib
+  - matplotlib.pyplot
+  - numpy
+  - os
+  - pandas
+  - plotly.express
+  - plotly.offline
+  - scanpy
+  - scipy
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/run_similarity_score.py
+  language: python
+  size_bytes: 3841
+  sha256: ad088b311005f5d8f054ed0e4f4f12892ac9f49063e92eceee4f550742046130
+  functions:
+  - cosine_sim_vectors
+  - get_ranks
+  - main
+  function_count: 3
+  imports_or_packages:
+  - argparse
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - seaborn
+  - sklearn.feature_extraction.text
+  - sklearn.metrics.pairwise
+  capability_keywords: []
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/0_emptyDrop/batch_submit.py
+  language: python
+  size_bytes: 6258
+  sha256: efcba7d833f06df6d5242cd854ab13c9143339297a466631074d9683eb691194
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - os
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/0_emptyDrop/run_EmptyDrop.R
+  language: r
+  size_bytes: 3424
+  sha256: b4f33ab4d22b828a7d13eb42193d5067311ce64f0960bbf4982de18ba2c2ab9e
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - DropletUtils
+  - knitr
+  capability_keywords: []
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/1_mergingAndQualityControl/batch_submit.py
+  language: python
+  size_bytes: 640
+  sha256: 77d506521c52e289dea158df1ce6f400ecc58981deff1dc40a980aea5228ddcf
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - os
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/1_mergingAndQualityControl/run_merging_samples_and_QC.py
+  language: python
+  size_bytes: 16082
+  sha256: d594284e698df7b1d2c70c28cd42eb4e5b1802beb9bf8669c0fca5c5b7395890
+  functions:
+  - add_sample_anndata
+  - main
+  function_count: 2
+  imports_or_packages:
+  - math
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - sample_metadata_full
+  - scRNA_functions
+  - scanpy
+  - scipy
+  - scipy.sparse
+  - scrublet
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  - anndata
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/1_mergingAndQualityControl/sample_metadata_full.py
+  language: python
+  size_bytes: 32784
+  sha256: 9acef35aac95d378f229e7ffe9d7bdb78fbac395febf1610b9c13e0beb8efbe7
+  functions: []
+  function_count: 0
+  imports_or_packages: []
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/2_batchCorrection/batch_submit.py
+  language: python
+  size_bytes: 571
+  sha256: 8d8d66ba6d70f7ae1fd87b591ee77521ec64a5029260a6e91042f43110154ec5
+  functions: []
+  function_count: 0
+  imports_or_packages:
+  - os
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/2_batchCorrection/run_hvg_pca_harmony.py
+  language: python
+  size_bytes: 10762
+  sha256: 7f97bf64c3809a723ff3691b182ba5ccd4435b4e0ae3a4497c3ffbf82665cbbb
+  functions:
+  - main
+  - runUMAP
+  function_count: 2
+  imports_or_packages:
+  - argparse
+  - harmonypy
+  - math
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - scRNA_functions
+  - scanpy
+  - scipy
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  - umap
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/3_clustering/merging_dict.py
+  language: python
+  size_bytes: 1461
+  sha256: f252e272fce7c392ad0d8c25e6d33aca71feb1f5cb1c7c42a83f773635de1668
+  functions: []
+  function_count: 0
+  imports_or_packages: []
+  capability_keywords: []
+  has_cli_entrypoint: false
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/3_clustering/run_clustering_heatmap.py
+  language: python
+  size_bytes: 8229
+  sha256: ed0e689c3d68251532ad4c284e291b64b89e27748f6e3982e04468fb32302ac9
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - argparse
+  - math
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - numpy
+  - pandas
+  - scRNA_functions
+  - scanpy
+  - scipy
+  - seaborn
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  - umap
+  - heatmap
+  has_cli_entrypoint: true
+- path: original/scRNA-Seq/PythonPipeline/01_preprocessing_annotation/3_clustering/run_subclustering_heatmap.py
+  language: python
+  size_bytes: 7638
+  sha256: 943d199e4df53c7c72fb48bb9b85755a68becd84e0cf462263b6309457d833e0
+  functions:
+  - main
+  function_count: 1
+  imports_or_packages:
+  - math
+  - matplotlib
+  - matplotlib.backends.backend_pdf
+  - matplotlib.pyplot
+  - merging_dict
+  - numpy
+  - pandas
+  - scRNA_functions
+  - scanpy
+  - scipy
+  - scipy.sparse
+  - scipy.spatial
+  - seaborn
+  - sklearn.model_selection
+  - sklearn.preprocessing
+  - sklearn.utils
+  - sys
+  - warnings
+  capability_keywords:
+  - scanpy
+  - spatial
+  - umap
+  - heatmap
+  has_cli_entrypoint: true

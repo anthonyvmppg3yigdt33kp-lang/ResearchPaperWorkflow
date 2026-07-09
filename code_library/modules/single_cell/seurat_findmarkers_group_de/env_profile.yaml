@@ -1,0 +1,10 @@
+env_id: r_seurat_v5
+language: R
+required_packages:
+  - Seurat
+  - SeuratObject
+  - Matrix
+  - ggplot2
+optional_packages:
+  - MAST
+session_info_required: true

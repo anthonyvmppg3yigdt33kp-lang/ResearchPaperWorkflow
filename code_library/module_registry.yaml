@@ -112,6 +112,8 @@ modules:
     output_schema:
       artifacts: [qc/cell_retention.csv, objects/seurat_qc.rds, logs/sessionInfo.txt]
       source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      seurat_rds: objects/seurat_qc.rds
     reviewer_value: [documents cell retention, records QC thresholds]
     reviewer_risk: [filter thresholds can bias downstream composition, QC alone is not biological evidence]
     claim_boundary: "QC and filtering only; retained cells are analysis inputs, not biological evidence."
@@ -150,6 +152,8 @@ modules:
     output_schema:
       artifacts: [tables/integration_summary.csv, objects/seurat_harmony.rds, logs/sessionInfo.txt]
       source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      seurat_rds: objects/seurat_harmony.rds
     reviewer_value: [declares batch variable, records integration parameters, separates batch correction from interpretation]
     reviewer_risk: [overcorrection may remove biology, batch correction cannot rescue confounded design]
     claim_boundary: "Batch-corrected embedding for exploratory integration; does not prove batch-free biology."
@@ -188,6 +192,9 @@ modules:
     output_schema:
       artifacts: [tables/cluster_counts.csv, figures/umap_clusters.png, objects/seurat_clustered.rds, logs/sessionInfo.txt]
       source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      seurat_rds: objects/seurat_clustered.rds
+      cluster_table: tables/cluster_counts.csv
     reviewer_value: [records clustering resolution, produces auditable UMAP, creates cluster counts]
     reviewer_risk: [clusters are parameter-sensitive, UMAP distances are visual approximations]
     claim_boundary: "Cluster visualization is exploratory and requires annotation/validation before inference."
@@ -197,7 +204,7 @@ modules:
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
     compatible_upstream_modules: [single_cell.seurat_qc.v1, single_cell.seurat_integration_harmony.v1]
-    compatible_downstream_modules: [single_cell.marker_feature_plot.v1, single_cell.pseudobulk_aggregate.v1]
+    compatible_downstream_modules: [single_cell.marker_feature_plot.v1, single_cell.seurat_findmarkers_group_de.v1, single_cell.pseudobulk_aggregate.v1]
     compute_cost: medium
     token_cost: low
 
@@ -264,6 +271,8 @@ modules:
     output_schema:
       artifacts: [tables/pseudobulk_metadata.csv, objects/pseudobulk_result.rds, logs/sessionInfo.txt]
       source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      pseudobulk_rds: objects/pseudobulk_result.rds
     reviewer_value: [moves inference to biological replicate level, records sample and group aggregation, prepares DESeq2 input]
     reviewer_risk: [sample mapping errors invalidate inference, low cell counts per group can bias pseudobulk]
     claim_boundary: "Aggregation prepares replicate-level inference; it is not a differential result."
@@ -302,6 +311,9 @@ modules:
     output_schema:
       artifacts: [tables/pseudobulk_deseq2_results.csv, figures/pseudobulk_deseq2_volcano.png, objects/pseudobulk_deseq2_result.rds, logs/sessionInfo.txt]
       source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      ranked_gene_statistic: tables/pseudobulk_deseq2_results.csv
+      differential_expression_table: tables/pseudobulk_deseq2_results.csv
     reviewer_value: [uses biological replicate pseudobulk, records contrast and FDR, produces DE table]
     reviewer_risk: [requires valid replicate mapping, covariates and batch must be justified, DE result is association not mechanism]
     claim_boundary: "Pseudobulk DE requires valid replicate/sample mapping and covariate review before publication claims."
@@ -311,7 +323,112 @@ modules:
     validation_status: dry_run_verified
     method_maturity: thin_wrapper
     compatible_upstream_modules: [single_cell.pseudobulk_aggregate.v1]
-    compatible_downstream_modules: []
+    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compute_cost: medium
+    token_cost: low
+
+  single_cell.seurat_findmarkers_group_de.v1:
+    id: single_cell.seurat_findmarkers_group_de.v1
+    name: Seurat FindMarkers group differential expression
+    modality: single_cell
+    modality_aliases: [scrna, single_cell_rna, single-cell]
+    step: seurat_findmarkers_group_de
+    language: r
+    capability_tags: [single-cell, seurat, findmarkers, marker, differential-expression, exploratory, real-wrapper]
+    biological_question_types: [cell-level marker screening, exploratory group comparison]
+    source:
+      type: local_wrapper
+      path: code_library/modules/single_cell/seurat_findmarkers_group_de/main.R
+      origin: workflow_builtin_method_asset
+      license: MIT
+    environment:
+      env_id: r_seurat_v5
+      required_packages: [Seurat, SeuratObject, Matrix, ggplot2]
+      optional_packages: [MAST]
+    execution:
+      type: rscript
+      script: code_library/modules/single_cell/seurat_findmarkers_group_de/main.R
+      timeout_seconds: 1800
+      args:
+        - "--input"
+        - "{seurat_rds}"
+        - "--out"
+        - "{node_dir}"
+        - "--run-id"
+        - "{run_id}"
+        - "--group-column"
+        - "{group_column}"
+        - "--ident-1"
+        - "{ident_1}"
+        - "--ident-2"
+        - "{ident_2}"
+        - "--subset-column"
+        - "{subset_column}"
+        - "--subset-value"
+        - "{subset_value}"
+        - "--assay"
+        - "{assay}"
+        - "--slot"
+        - "{slot}"
+        - "--test-use"
+        - "{test_use}"
+        - "--min-pct"
+        - "{min_pct}"
+        - "--logfc-threshold"
+        - "{logfc_threshold}"
+        - "--only-pos"
+        - "{only_pos}"
+    default_parameters:
+      group_column: condition
+      ident_1: target
+      ident_2: reference
+      subset_column: ""
+      subset_value: ""
+      assay: ""
+      slot: data
+      test_use: wilcox
+      min_pct: 0.1
+      logfc_threshold: 0.25
+      only_pos: "false"
+    input_schema:
+      required:
+        - {name: seurat_rds, type: seurat_rds}
+        - {name: group_column, type: metadata_column}
+        - {name: ident_1, type: group_value}
+        - {name: ident_2, type: group_value}
+      optional:
+        - {name: subset_column, type: metadata_column}
+        - {name: subset_value, type: group_value}
+        - {name: assay, type: assay_name}
+        - {name: slot, type: assay_slot}
+        - {name: test_use, type: seurat_findmarkers_test}
+        - {name: min_pct, type: number}
+        - {name: logfc_threshold, type: number}
+        - {name: only_pos, type: boolean}
+        - {name: dry-run, type: flag}
+    output_schema:
+      artifacts:
+        - tables/findmarkers_results.csv
+        - tables/findmarkers_summary.csv
+        - qc/group_size_sample_mapping.csv
+        - figures/findmarkers_volcano.png
+        - objects/findmarkers_parameters.rds
+        - logs/sessionInfo.txt
+      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      ranked_gene_statistic: tables/findmarkers_results.csv
+      differential_expression_table: tables/findmarkers_results.csv
+      group_size_report: qc/group_size_sample_mapping.csv
+    reviewer_value: [standardized FindMarkers output, group-size/sample-mapping audit, source-map claim boundary]
+    reviewer_risk: [cell-level tests are exploratory for disease contrasts unless replicate-aware inference is documented, biological replicates should be handled with pseudobulk when available]
+    claim_boundary: "Cell-level marker/differential expression is exploratory unless biological replicate-aware inference is documented."
+    figure_outputs: [findmarkers_volcano]
+    table_outputs: [findmarkers_results, findmarkers_summary, group_size_sample_mapping]
+    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    validation_status: dry_run_verified_real_execution_ready
+    method_maturity: validated_parameterized_wrapper
+    compatible_upstream_modules: [single_cell.seurat_clustering_umap.v1, single_cell.seurat_qc.v1]
+    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
     compute_cost: medium
     token_cost: low
 
@@ -447,6 +564,9 @@ modules:
     output_schema:
       artifacts: [tables/voom_normalization_summary.csv, tables/limma_voom_de_results.csv, figures/limma_voom_heatmap.png, logs/sessionInfo.txt]
       source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      ranked_gene_statistic: tables/limma_voom_de_results.csv
+      differential_expression_table: tables/limma_voom_de_results.csv
     reviewer_value: [voom normalization summary, moderated inference, design matrix transparency]
     reviewer_risk: [paired/block design must be correct, empirical Bayes cannot fix confounding]
     claim_boundary: "Publication-oriented association testing; design matrix and covariates must be reviewed."
@@ -454,6 +574,61 @@ modules:
     table_outputs: [voom_normalization_summary, limma_voom_de_results]
     validation_status: publication_oriented_dry_run_verified
     method_maturity: validated_publication_oriented_wrapper
+    compatible_upstream_modules: []
+    compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
+    compute_cost: medium
+    token_cost: low
+
+  bulk_rnaseq.limma_voom_de_real.v1:
+    id: bulk_rnaseq.limma_voom_de_real.v1
+    name: Real limma-voom differential expression
+    modality: bulk_rnaseq
+    modality_aliases: [bulk, rnaseq, rna_seq]
+    step: limma_voom_de_real
+    language: r
+    capability_tags: [bulk-rnaseq, limma, voom, edgeR, differential-expression, sample-level, real-wrapper]
+    biological_question_types: [bulk RNA-seq sample-level group contrast]
+    source:
+      type: local_wrapper
+      path: code_library/modules/bulk_rnaseq/limma_voom_de_real/main.R
+      origin: workflow_builtin_method_asset
+      license: MIT
+    environment: {env_id: r_bulk_rnaseq, required_packages: [edgeR, limma, ggplot2]}
+    execution:
+      type: rscript
+      script: code_library/modules/bulk_rnaseq/limma_voom_de_real/main.R
+      timeout_seconds: 1800
+      args: ["--counts", "{count_matrix}", "--metadata", "{sample_metadata}", "--out", "{node_dir}", "--run-id", "{run_id}", "--condition-column", "{condition_column}", "--sample-id-column", "{sample_id_column}", "--reference", "{reference}", "--target", "{target}"]
+    default_parameters: {condition_column: condition, sample_id_column: sample_id, reference: reference, target: target}
+    input_schema:
+      required:
+        - {name: count_matrix, type: count_matrix_csv}
+        - {name: sample_metadata, type: sample_metadata_csv}
+        - {name: condition_column, type: metadata_column}
+        - {name: sample_id_column, type: metadata_column}
+        - {name: reference, type: group_value}
+        - {name: target, type: group_value}
+      optional: [{name: dry-run, type: flag}]
+    output_schema:
+      artifacts:
+        - tables/limma_voom_results.csv
+        - qc/design_summary.csv
+        - figures/limma_voom_volcano.png
+        - objects/limma_voom_parameters.rds
+        - logs/sessionInfo.txt
+      source_maps: [figure_source_map.yaml, table_source_map.yaml]
+    output_bindings:
+      ranked_gene_statistic: tables/limma_voom_results.csv
+      differential_expression_table: tables/limma_voom_results.csv
+      design_summary: qc/design_summary.csv
+    reviewer_value: [real limma voom implementation, explicit sample mapping, contrast-level source maps]
+    reviewer_risk: [sample metadata, contrast coding, covariates, and replicate units require human review]
+    claim_boundary: "Differential expression is association evidence only and depends on valid sample-level design."
+    figure_outputs: [limma_voom_volcano]
+    table_outputs: [limma_voom_results, design_summary]
+    source_map_requirements: [source_data, script, method, statistical_unit, claim_boundary]
+    validation_status: dry_run_verified_real_execution_ready
+    method_maturity: validated_parameterized_wrapper
     compatible_upstream_modules: []
     compatible_downstream_modules: [bulk_rnaseq.fgsea_enrichment.v1]
     compute_cost: medium
@@ -520,7 +695,7 @@ modules:
     table_outputs: [gene_set_source, fgsea_results]
     validation_status: publication_oriented_dry_run_verified
     method_maturity: validated_publication_oriented_wrapper
-    compatible_upstream_modules: [bulk_rnaseq.deseq2_de.v1, bulk_rnaseq.limma_voom_de.v1, bulk_rnaseq.wgcna.v1]
+    compatible_upstream_modules: [bulk_rnaseq.deseq2_de.v1, bulk_rnaseq.limma_voom_de.v1, bulk_rnaseq.limma_voom_de_real.v1, single_cell.seurat_findmarkers_group_de.v1, single_cell.pseudobulk_deseq2.v1, bulk_rnaseq.wgcna.v1]
     compatible_downstream_modules: []
     compute_cost: low
     token_cost: low

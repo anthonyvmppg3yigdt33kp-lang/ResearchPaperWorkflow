@@ -1,0 +1,6 @@
+source_id: lung_master_nsclc_20260523_v1
+status: pending_human_review
+license_declared: requires_human_review
+registry_update_allowed: false
+notes: Do not register executable modules until license/provenance review and tests
+  pass.

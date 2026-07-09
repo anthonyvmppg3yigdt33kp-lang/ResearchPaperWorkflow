@@ -1,0 +1,5 @@
+inputs:
+- name: toy_input
+  status: dry_run_fixture
+  publication_evidence: false
+source_block: dea_tvsbh__differential_expression_script__L1__e1476a90

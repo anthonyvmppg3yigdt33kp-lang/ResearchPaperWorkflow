@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from paper_workflow.bioinformatics.literature_method_advisor import default_method_guidance
+
 
 class StrategyEvaluator:
     """Evaluate method assets against data readiness and reviewer value."""
@@ -19,6 +21,7 @@ class StrategyEvaluator:
     def evaluate_module(self, module: dict[str, Any], goal: str) -> dict[str, Any]:
         question_type = self.infer_question_type(goal)
         method_family = self.method_family(module)
+        guidance = default_method_guidance(question_type)
         modalities = {str(m).lower().replace("-", "_") for m in self.data_summary.get("modalities", []) or []}
         n_samples = self._int(self.data_summary.get("n_samples", 0))
         tags = {str(t).lower() for t in module.get("capability_tags", []) or []}
@@ -109,8 +112,15 @@ class StrategyEvaluator:
             "strategy_fit": round(fit, 3),
             "decision": decision,
             "figure_role": self.figure_role(module, fit, risks),
+            "recommended_methods": guidance.get("recommended_methods", []),
+            "not_recommended_methods": guidance.get("not_recommended_methods", []),
             "prerequisites": prerequisites,
+            "minimum_data_requirements": guidance.get("minimum_data_requirements", []),
+            "statistical_unit": guidance.get("statistical_unit", self.data_summary.get("statistical_unit", "not_declared")),
             "risks": risks,
+            "reviewer_risk": risks,
+            "claim_boundary": module.get("claim_boundary", ""),
+            "next_step_plan": guidance.get("next_step_plan", []),
             "comparison_notes": comparison_notes,
             "data_context": {
                 "modalities": sorted(modalities),
@@ -122,19 +132,21 @@ class StrategyEvaluator:
     @staticmethod
     def infer_question_type(goal: str) -> str:
         text = goal.lower()
-        if any(token in text for token in ["pseudobulk", "cell-type differential", "cell type differential", "celltype differential"]):
+        if any(token in text for token in ["pseudobulk", "cell-type differential", "cell type differential", "celltype differential", "findmarkers", "findallmarkers", "mast", "差异分析", "差异基因", "组间比较", "疾病组", "对照组"]):
             return "cell_type_de"
-        if any(token in text for token in ["deseq", "limma", "edge", "differential", "de ", "contrast", "case", "control"]):
+        if any(token in text for token in ["deseq", "limma", "voom", "edge", "differential", "de ", "contrast", "case", "control"]):
             return "bulk_de"
-        if any(token in text for token in ["wgcna", "co-expression", "coexpression", "module-trait", "hub gene"]):
+        if any(token in text for token in ["wgcna", "co-expression", "coexpression", "module-trait", "hub gene", "调控网络", "共表达"]):
             return "network"
-        if any(token in text for token in ["deconvolution", "cell fraction", "cell abundance", "rctd", "cell2location"]):
+        if any(token in text for token in ["deconvolution", "cell fraction", "cell abundance", "rctd", "cell2location", "免疫浸润"]):
             return "spatial_deconvolution"
         if any(token in text for token in ["annotation", "cell type", "cell identity", "marker"]):
             return "annotation"
-        if any(token in text for token in ["cellchat", "nichenet", "ligand", "receptor", "communication"]):
+        if any(token in text for token in ["cellchat", "nichenet", "ligand", "receptor", "communication", "细胞通讯"]):
             return "communication"
-        if any(token in text for token in ["figure", "visual", "umap", "plot", "heatmap"]):
+        if any(token in text for token in ["go", "kegg", "gsea", "fgsea", "clusterprofiler", "富集分析", "通路分析"]):
+            return "enrichment"
+        if any(token in text for token in ["figure", "visual", "umap", "plot", "heatmap", "绘图"]):
             return "visualization"
         if any(token in text for token in ["single-cell", "single cell", "scrna", "pbmc"]):
             return "single_cell_preprocessing"

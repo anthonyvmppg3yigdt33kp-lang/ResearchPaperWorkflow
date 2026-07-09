@@ -1,0 +1,3622 @@
+source_id: lung_master_nsclc_20260523_v1
+generated_at: '2026-07-09T08:48:20+00:00'
+method_block_count: 82
+status: requires_human_review
+method_blocks:
+- block_id: cell_type_lr_plotting__plotting__L1__d453a0bf
+  source_file: original/SpatialTranscriptomics/cell2location/cell_type_LR_plotting.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id001 []
+  disease_or_project_terms: *id001
+  object_terms:
+  - adata_lr
+  - cci_count
+  - cci_count_spot
+  - model
+  - model_env
+  - outDir
+  - spot_factors
+  - threshold_name
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      adata_lr: review_for_generalization
+      cci_count: review_for_generalization
+      cci_count_spot: review_for_generalization
+      model: review_for_generalization
+      model_env: review_for_generalization
+      outDir: review_for_generalization
+      spot_factors: review_for_generalization
+      threshold_name: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: plot_cci_vs_cell_proportion__plotting__L1__4dd907d5
+  source_file: original/SpatialTranscriptomics/cell2location/plot_CCI_vs_cell_proportion.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id002
+  - tumour
+  disease_or_project_terms: *id002
+  object_terms:
+  - adata
+  - adata_env
+  - adata_env_slide
+  - bkg
+  - inDir
+  - model
+  - model_env
+  - plotDir
+  - sample
+  - tumour
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      tumour: parameter_or_provenance_only
+    object_term_review:
+      adata: review_for_generalization
+      adata_env: review_for_generalization
+      adata_env_slide: review_for_generalization
+      bkg: review_for_generalization
+      inDir: review_for_generalization
+      model: review_for_generalization
+      model_env: review_for_generalization
+      plotDir: review_for_generalization
+      sample: review_for_generalization
+      tumour: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: b2_spatial_r_filtered__plotting__L66__b6ec3054
+  source_file: original/SpatialTranscriptomics/downstream_analysis/b2_Spatial_R_filtered.R
+  line_start: 66
+  line_end: 72
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id003
+  - Background
+  - tumour
+  - Tumour
+  disease_or_project_terms: *id003
+  object_terms:
+  - CAMLs
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Background: parameter_or_provenance_only
+      tumour: parameter_or_provenance_only
+      Tumour: parameter_or_provenance_only
+    object_term_review:
+      CAMLs: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: b2_spatial_r_filtered__percent_expression_summary__L83__6b653390
+  source_file: original/SpatialTranscriptomics/downstream_analysis/b2_Spatial_R_filtered.R
+  line_start: 83
+  line_end: 89
+  language: r
+  method_family: percent_expression_summary
+  detected_calls:
+  - wilcox.test
+  packages:
+  - stats
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id004 []
+  disease_or_project_terms: *id004
+  object_terms:
+  - cell
+  - temp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      cell: review_for_generalization
+      temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: b2_spatial_r_filtered__plotting__L139__0358bdc0
+  source_file: original/SpatialTranscriptomics/downstream_analysis/b2_Spatial_R_filtered.R
+  line_start: 139
+  line_end: 145
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id005
+  - Background
+  - Tumour
+  disease_or_project_terms: *id005
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Background: parameter_or_provenance_only
+      Tumour: parameter_or_provenance_only
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: b2_spatial_r_filtered__percent_expression_summary__L157__a1f8cf15
+  source_file: original/SpatialTranscriptomics/downstream_analysis/b2_Spatial_R_filtered.R
+  line_start: 157
+  line_end: 163
+  language: r
+  method_family: percent_expression_summary
+  detected_calls:
+  - wilcox.test
+  packages:
+  - stats
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id006 []
+  disease_or_project_terms: *id006
+  object_terms:
+  - cell
+  - temp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      cell: review_for_generalization
+      temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: c2_lr_colocalisation_plot__plotting__L1__733a73bd
+  source_file: original/SpatialTranscriptomics/downstream_analysis/c2_LR_colocalisation_plot.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id007
+  - Background
+  - Healthy
+  - LUAD
+  - LUSC
+  disease_or_project_terms: *id007
+  object_terms:
+  - ABD_FIELD
+  - ENV_LST
+  - GENE_COUNT_THRESH
+  - LR_LST
+  - OUT_DIR
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Background: parameter_or_provenance_only
+      Healthy: parameter_or_provenance_only
+      LUAD: parameter_or_provenance_only
+      LUSC: parameter_or_provenance_only
+    object_term_review:
+      ABD_FIELD: review_for_generalization
+      ENV_LST: review_for_generalization
+      GENE_COUNT_THRESH: review_for_generalization
+      LR_LST: review_for_generalization
+      OUT_DIR: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: c4_lr_heatmap_and_boxplot__plotting__L73__8266b25e
+  source_file: original/SpatialTranscriptomics/downstream_analysis/c4_LR_heatmap_and_boxplot.R
+  line_start: 73
+  line_end: 79
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id008 []
+  disease_or_project_terms: *id008
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: visium_scrna_comparison__plotting__L215__d22fb37c
+  source_file: original/SpatialTranscriptomics/downstream_analysis/Visium_scRNA_comparison.R
+  line_start: 215
+  line_end: 221
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id009 []
+  disease_or_project_terms: *id009
+  object_terms:
+  - comparisonBH
+  - comparisonT
+  - p1
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      comparisonBH: review_for_generalization
+      comparisonT: review_for_generalization
+      p1: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: visium_scrna_comparison__plotting__L223__52a3faf9
+  source_file: original/SpatialTranscriptomics/downstream_analysis/Visium_scRNA_comparison.R
+  line_start: 223
+  line_end: 229
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id010
+  - Tumour
+  disease_or_project_terms: *id010
+  object_terms:
+  - p2
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Tumour: parameter_or_provenance_only
+    object_term_review:
+      p2: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: visium_scrna_comparison__plotting__L264__573b1add
+  source_file: original/SpatialTranscriptomics/downstream_analysis/Visium_scRNA_comparison.R
+  line_start: 264
+  line_end: 270
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id011 []
+  disease_or_project_terms: *id011
+  object_terms:
+  - comparison_st_BH
+  - comparison_st_T
+  - p3
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      comparison_st_BH: review_for_generalization
+      comparison_st_T: review_for_generalization
+      p3: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: visium_scrna_comparison__plotting__L272__676846df
+  source_file: original/SpatialTranscriptomics/downstream_analysis/Visium_scRNA_comparison.R
+  line_start: 272
+  line_end: 278
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id012
+  - Tumour
+  disease_or_project_terms: *id012
+  object_terms:
+  - p4
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Tumour: parameter_or_provenance_only
+    object_term_review:
+      p4: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: cellphonedb_data_and_figures__plotting__L235__c970faad
+  source_file: original/scRNA-Seq/R_pipeline/cellphoneDB_data_and_figures.R
+  line_start: 235
+  line_end: 241
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id013 []
+  disease_or_project_terms: *id013
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: cellphonedb_data_and_figures__plotting__L284__caff7542
+  source_file: original/scRNA-Seq/R_pipeline/cellphoneDB_data_and_figures.R
+  line_start: 284
+  line_end: 290
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id014 []
+  disease_or_project_terms: *id014
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: cellphonedb_data_and_figures__plotting__L333__cda02fe6
+  source_file: original/scRNA-Seq/R_pipeline/cellphoneDB_data_and_figures.R
+  line_start: 333
+  line_end: 339
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id015 []
+  disease_or_project_terms: *id015
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: cellphonedb_data_and_figures__plotting__L382__522ab2cb
+  source_file: original/scRNA-Seq/R_pipeline/cellphoneDB_data_and_figures.R
+  line_start: 382
+  line_end: 388
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id016 []
+  disease_or_project_terms: *id016
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: cell_count_sfig1_plot__plotting__L105__7a9f161f
+  source_file: original/scRNA-Seq/R_pipeline/Cell_count_SFig1_plot.R
+  line_start: 105
+  line_end: 111
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id017 []
+  disease_or_project_terms: *id017
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: cell_count_sfig1_plot__plotting__L113__e3a4acc6
+  source_file: original/scRNA-Seq/R_pipeline/Cell_count_SFig1_plot.R
+  line_start: 113
+  line_end: 119
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id018
+  - Background
+  - Healthy
+  disease_or_project_terms: *id018
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Background: parameter_or_provenance_only
+      Healthy: parameter_or_provenance_only
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_intratumour__enrichment__L74__76db434d
+  source_file: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  line_start: 74
+  line_end: 80
+  language: r
+  method_family: enrichment
+  detected_calls:
+  - compareCluster
+  packages:
+  - clusterProfiler
+  inferred_inputs:
+  - ranked_gene_table
+  - gene_sets
+  - gene_universe
+  inferred_outputs:
+  - enrichment_table
+  - enrichment_plot
+  - database_provenance
+  hardcoded_terms: &id019 []
+  disease_or_project_terms: *id019
+  object_terms:
+  - data
+  - fun
+  - temp
+  - universe
+  parameterization_plan:
+    required_parameters:
+    - ranked_gene_table
+    - gene_sets
+    - gene_universe
+    - database_version
+    - fdr_threshold
+    hardcoded_term_policy: {}
+    object_term_review:
+      data: review_for_generalization
+      fun: review_for_generalization
+      temp: review_for_generalization
+      universe: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.fgsea_enrichment
+  reviewer_risk:
+  - enrichment depends on ranked statistic, gene universe, and database version
+  claim_boundary: Pathway enrichment is interpretive and depends on ranked genes,
+    universe, and database version.
+  status: requires_human_review
+- block_id: dea_intratumour__enrichment__L97__18af444b
+  source_file: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  line_start: 97
+  line_end: 103
+  language: r
+  method_family: enrichment
+  detected_calls:
+  - enricher
+  packages:
+  - clusterProfiler
+  inferred_inputs:
+  - ranked_gene_table
+  - gene_sets
+  - gene_universe
+  inferred_outputs:
+  - enrichment_table
+  - enrichment_plot
+  - database_provenance
+  hardcoded_terms: &id020 []
+  disease_or_project_terms: *id020
+  object_terms:
+  - gene
+  - pvalueCutoff
+  - temp
+  - universe
+  parameterization_plan:
+    required_parameters:
+    - ranked_gene_table
+    - gene_sets
+    - gene_universe
+    - database_version
+    - fdr_threshold
+    hardcoded_term_policy: {}
+    object_term_review:
+      gene: review_for_generalization
+      pvalueCutoff: review_for_generalization
+      temp: review_for_generalization
+      universe: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.fgsea_enrichment
+  reviewer_risk:
+  - enrichment depends on ranked statistic, gene universe, and database version
+  claim_boundary: Pathway enrichment is interpretive and depends on ranked genes,
+    universe, and database version.
+  status: requires_human_review
+- block_id: dea_intratumour__enrichment__L110__92eb2d94
+  source_file: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  line_start: 110
+  line_end: 116
+  language: r
+  method_family: enrichment
+  detected_calls:
+  - enricher
+  packages:
+  - clusterProfiler
+  inferred_inputs:
+  - ranked_gene_table
+  - gene_sets
+  - gene_universe
+  inferred_outputs:
+  - enrichment_table
+  - enrichment_plot
+  - database_provenance
+  hardcoded_terms: &id021 []
+  disease_or_project_terms: *id021
+  object_terms:
+  - gene
+  - pvalueCutoff
+  - temp
+  - universe
+  parameterization_plan:
+    required_parameters:
+    - ranked_gene_table
+    - gene_sets
+    - gene_universe
+    - database_version
+    - fdr_threshold
+    hardcoded_term_policy: {}
+    object_term_review:
+      gene: review_for_generalization
+      pvalueCutoff: review_for_generalization
+      temp: review_for_generalization
+      universe: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.fgsea_enrichment
+  reviewer_risk:
+  - enrichment depends on ranked statistic, gene universe, and database version
+  claim_boundary: Pathway enrichment is interpretive and depends on ranked genes,
+    universe, and database version.
+  status: requires_human_review
+- block_id: dea_intratumour__plotting__L143__d5370384
+  source_file: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  line_start: 143
+  line_end: 149
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id022 []
+  disease_or_project_terms: *id022
+  object_terms:
+  - plot_temp
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      plot_temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_intratumour__volcano_plot__L165__89b44aab
+  source_file: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  line_start: 165
+  line_end: 171
+  language: r
+  method_family: volcano_plot
+  detected_calls:
+  - EnhancedVolcano
+  packages:
+  - EnhancedVolcano
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id023 []
+  disease_or_project_terms: *id023
+  object_terms:
+  - lab
+  - selectLab
+  - title
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      lab: review_for_generalization
+      selectLab: review_for_generalization
+      title: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_intratumour__differential_expression_script__L1__0179f6ce
+  source_file: original/scRNA-Seq/R_pipeline/DEA_Intratumour.R
+  line_start: 1
+  line_end: 25
+  language: r
+  method_family: differential_expression_script
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - differential_expression_tables
+  - contrast_metadata
+  - expression_percent_tables
+  inferred_outputs:
+  - curated_differential_expression_table
+  - ranked_gene_table
+  - enrichment_inputs
+  - source_maps
+  hardcoded_terms: &id024 []
+  disease_or_project_terms: *id024
+  object_terms:
+  - all_data
+  - all_files
+  parameterization_plan:
+    required_parameters:
+    - differential_expression_tables
+    - contrast_metadata
+    - gene_column
+    - logfc_column
+    - adjusted_p_value_column
+    - expression_percent_tables
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      all_data: review_for_generalization
+      all_files: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.differential_expression_postprocess
+  reviewer_risk:
+  - imported differential-expression post-processing depends on upstream contrast
+    design, replicate unit, and FDR provenance
+  claim_boundary: Imported differential-expression summaries require upstream design
+    and replicate provenance before manuscript claims.
+  status: requires_human_review
+- block_id: dea_luad_vs_lusc__differential_expression_script__L1__abeff130
+  source_file: original/scRNA-Seq/R_pipeline/DEA_LUAD_vs_LUSC.R
+  line_start: 1
+  line_end: 25
+  language: r
+  method_family: differential_expression_script
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - differential_expression_tables
+  - contrast_metadata
+  - expression_percent_tables
+  inferred_outputs:
+  - curated_differential_expression_table
+  - ranked_gene_table
+  - enrichment_inputs
+  - source_maps
+  hardcoded_terms: &id025
+  - LUAD
+  - LUSC
+  disease_or_project_terms: *id025
+  object_terms:
+  - LUAD_pct
+  - all_data
+  - all_files
+  parameterization_plan:
+    required_parameters:
+    - differential_expression_tables
+    - contrast_metadata
+    - gene_column
+    - logfc_column
+    - adjusted_p_value_column
+    - expression_percent_tables
+    - output_dir
+    - run_id
+    hardcoded_term_policy:
+      LUAD: parameter_or_provenance_only
+      LUSC: parameter_or_provenance_only
+    object_term_review:
+      LUAD_pct: review_for_generalization
+      all_data: review_for_generalization
+      all_files: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.differential_expression_postprocess
+  reviewer_risk:
+  - imported differential-expression post-processing depends on upstream contrast
+    design, replicate unit, and FDR provenance
+  claim_boundary: Imported differential-expression summaries require upstream design
+    and replicate provenance before manuscript claims.
+  status: requires_human_review
+- block_id: dea_tvsbh__plotting__L151__b8b03954
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 151
+  line_end: 157
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id026 []
+  disease_or_project_terms: *id026
+  object_terms:
+  - comp_df3
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      comp_df3: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_tvsbh__plotting__L156__328d7c07
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 156
+  line_end: 162
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id027 []
+  disease_or_project_terms: *id027
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_tvsbh__enrichment__L184__d89777e4
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 184
+  line_end: 190
+  language: r
+  method_family: enrichment
+  detected_calls:
+  - compareCluster
+  packages:
+  - clusterProfiler
+  inferred_inputs:
+  - ranked_gene_table
+  - gene_sets
+  - gene_universe
+  inferred_outputs:
+  - enrichment_table
+  - enrichment_plot
+  - database_provenance
+  hardcoded_terms: &id028 []
+  disease_or_project_terms: *id028
+  object_terms:
+  - data
+  - fun
+  - temp
+  - universe
+  parameterization_plan:
+    required_parameters:
+    - ranked_gene_table
+    - gene_sets
+    - gene_universe
+    - database_version
+    - fdr_threshold
+    hardcoded_term_policy: {}
+    object_term_review:
+      data: review_for_generalization
+      fun: review_for_generalization
+      temp: review_for_generalization
+      universe: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.fgsea_enrichment
+  reviewer_risk:
+  - enrichment depends on ranked statistic, gene universe, and database version
+  claim_boundary: Pathway enrichment is interpretive and depends on ranked genes,
+    universe, and database version.
+  status: requires_human_review
+- block_id: dea_tvsbh__enrichment__L207__9b9de3bf
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 207
+  line_end: 213
+  language: r
+  method_family: enrichment
+  detected_calls:
+  - enricher
+  packages:
+  - clusterProfiler
+  inferred_inputs:
+  - ranked_gene_table
+  - gene_sets
+  - gene_universe
+  inferred_outputs:
+  - enrichment_table
+  - enrichment_plot
+  - database_provenance
+  hardcoded_terms: &id029 []
+  disease_or_project_terms: *id029
+  object_terms:
+  - gene
+  - pvalueCutoff
+  - temp
+  - universe
+  parameterization_plan:
+    required_parameters:
+    - ranked_gene_table
+    - gene_sets
+    - gene_universe
+    - database_version
+    - fdr_threshold
+    hardcoded_term_policy: {}
+    object_term_review:
+      gene: review_for_generalization
+      pvalueCutoff: review_for_generalization
+      temp: review_for_generalization
+      universe: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.fgsea_enrichment
+  reviewer_risk:
+  - enrichment depends on ranked statistic, gene universe, and database version
+  claim_boundary: Pathway enrichment is interpretive and depends on ranked genes,
+    universe, and database version.
+  status: requires_human_review
+- block_id: dea_tvsbh__enrichment__L220__4821e516
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 220
+  line_end: 226
+  language: r
+  method_family: enrichment
+  detected_calls:
+  - enricher
+  packages:
+  - clusterProfiler
+  inferred_inputs:
+  - ranked_gene_table
+  - gene_sets
+  - gene_universe
+  inferred_outputs:
+  - enrichment_table
+  - enrichment_plot
+  - database_provenance
+  hardcoded_terms: &id030 []
+  disease_or_project_terms: *id030
+  object_terms:
+  - gene
+  - pvalueCutoff
+  - temp
+  - universe
+  parameterization_plan:
+    required_parameters:
+    - ranked_gene_table
+    - gene_sets
+    - gene_universe
+    - database_version
+    - fdr_threshold
+    hardcoded_term_policy: {}
+    object_term_review:
+      gene: review_for_generalization
+      pvalueCutoff: review_for_generalization
+      temp: review_for_generalization
+      universe: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.fgsea_enrichment
+  reviewer_risk:
+  - enrichment depends on ranked statistic, gene universe, and database version
+  claim_boundary: Pathway enrichment is interpretive and depends on ranked genes,
+    universe, and database version.
+  status: requires_human_review
+- block_id: dea_tvsbh__plotting__L254__92e2505f
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 254
+  line_end: 260
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id031 []
+  disease_or_project_terms: *id031
+  object_terms:
+  - plot_temp
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      plot_temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_tvsbh__plotting__L292__0947cc86
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 292
+  line_end: 298
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id032 []
+  disease_or_project_terms: *id032
+  object_terms:
+  - plot_temp
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      plot_temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_tvsbh__volcano_plot__L313__b9e3ab04
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 313
+  line_end: 319
+  language: r
+  method_family: volcano_plot
+  detected_calls:
+  - EnhancedVolcano
+  packages:
+  - EnhancedVolcano
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id033 []
+  disease_or_project_terms: *id033
+  object_terms:
+  - lab
+  - selectLab
+  - title
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      lab: review_for_generalization
+      selectLab: review_for_generalization
+      title: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: dea_tvsbh__differential_expression_script__L1__e1476a90
+  source_file: original/scRNA-Seq/R_pipeline/DEA_TvsBH.R
+  line_start: 1
+  line_end: 25
+  language: r
+  method_family: differential_expression_script
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - differential_expression_tables
+  - contrast_metadata
+  - expression_percent_tables
+  inferred_outputs:
+  - curated_differential_expression_table
+  - ranked_gene_table
+  - enrichment_inputs
+  - source_maps
+  hardcoded_terms: &id034
+  - tumour
+  disease_or_project_terms: *id034
+  object_terms:
+  - all_data
+  - all_files
+  - bh_pct
+  - tumour_pct
+  parameterization_plan:
+    required_parameters:
+    - differential_expression_tables
+    - contrast_metadata
+    - gene_column
+    - logfc_column
+    - adjusted_p_value_column
+    - expression_percent_tables
+    - output_dir
+    - run_id
+    hardcoded_term_policy:
+      tumour: parameter_or_provenance_only
+    object_term_review:
+      all_data: review_for_generalization
+      all_files: review_for_generalization
+      bh_pct: review_for_generalization
+      tumour_pct: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.differential_expression_postprocess
+  reviewer_risk:
+  - imported differential-expression post-processing depends on upstream contrast
+    design, replicate unit, and FDR provenance
+  claim_boundary: Imported differential-expression summaries require upstream design
+    and replicate provenance before manuscript claims.
+  status: requires_human_review
+- block_id: downsampling_iteration__plotting__L4__a47bbb38
+  source_file: original/scRNA-Seq/R_pipeline/Downsampling_iteration.R
+  line_start: 4
+  line_end: 10
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id035 []
+  disease_or_project_terms: *id035
+  object_terms:
+  - marginal_distribution
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      marginal_distribution: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: downsampling_iteration__plotting__L46__c2b9a05d
+  source_file: original/scRNA-Seq/R_pipeline/Downsampling_iteration.R
+  line_start: 46
+  line_end: 52
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id036 []
+  disease_or_project_terms: *id036
+  object_terms:
+  - lfc_plot
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      lfc_plot: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: downsampling_iteration__plotting__L53__af69d1a9
+  source_file: original/scRNA-Seq/R_pipeline/Downsampling_iteration.R
+  line_start: 53
+  line_end: 59
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id037 []
+  disease_or_project_terms: *id037
+  object_terms:
+  - padj_plot
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      padj_plot: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__plotting__L37__787f6210
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 37
+  line_end: 43
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id038 []
+  disease_or_project_terms: *id038
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_feature_plot__L47__2b9acff9
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 47
+  line_end: 53
+  language: r
+  method_family: seurat_feature_plot
+  detected_calls:
+  - FeaturePlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id039 []
+  disease_or_project_terms: *id039
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_feature_plot__L51__f1fa2a76
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 51
+  line_end: 57
+  language: r
+  method_family: seurat_feature_plot
+  detected_calls:
+  - FeaturePlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id040 []
+  disease_or_project_terms: *id040
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L55__a8c72b64
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 55
+  line_end: 61
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id041 []
+  disease_or_project_terms: *id041
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L62__a536c3c6
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 62
+  line_end: 68
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id042 []
+  disease_or_project_terms: *id042
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L70__ec6cbb71
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 70
+  line_end: 76
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id043 []
+  disease_or_project_terms: *id043
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L77__beddfa3f
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 77
+  line_end: 83
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id044 []
+  disease_or_project_terms: *id044
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_qc_plot__L86__ff3d8fc2
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 86
+  line_end: 92
+  language: r
+  method_family: seurat_qc_plot
+  detected_calls:
+  - VlnPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id045 []
+  disease_or_project_terms: *id045
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_qc_plot__L93__29587089
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 93
+  line_end: 99
+  language: r
+  method_family: seurat_qc_plot
+  detected_calls:
+  - VlnPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id046 []
+  disease_or_project_terms: *id046
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_qc_plot__L118__fd039cf9
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 118
+  line_end: 124
+  language: r
+  method_family: seurat_qc_plot
+  detected_calls:
+  - VlnPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id047 []
+  disease_or_project_terms: *id047
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_qc_plot__L125__a8a992bb
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 125
+  line_end: 131
+  language: r
+  method_family: seurat_qc_plot
+  detected_calls:
+  - VlnPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id048 []
+  disease_or_project_terms: *id048
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L133__b4ed67a0
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 133
+  line_end: 139
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id049 []
+  disease_or_project_terms: *id049
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L140__74ab8e82
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 140
+  line_end: 146
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id050 []
+  disease_or_project_terms: *id050
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L148__71ce46d5
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 148
+  line_end: 154
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id051 []
+  disease_or_project_terms: *id051
+  object_terms:
+  - idents
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      idents: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: foetal_macs_signature__seurat_marker_plot__L156__59b9bf5e
+  source_file: original/scRNA-Seq/R_pipeline/Foetal_macs_signature.R
+  line_start: 156
+  line_end: 162
+  language: r
+  method_family: seurat_marker_plot
+  detected_calls:
+  - DotPlot
+  packages:
+  - Seurat
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id052 []
+  disease_or_project_terms: *id052
+  object_terms:
+  - idents
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      idents: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.marker_feature_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L101__d379fe93
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 101
+  line_end: 107
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id053 []
+  disease_or_project_terms: *id053
+  object_terms:
+  - main_proportions
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      main_proportions: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L171__e77ca31f
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 171
+  line_end: 177
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id054 []
+  disease_or_project_terms: *id054
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__percent_expression_summary__L236__fb2e09ca
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 236
+  line_end: 242
+  language: r
+  method_family: percent_expression_summary
+  detected_calls:
+  - wilcox.test
+  packages:
+  - stats
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id055 []
+  disease_or_project_terms: *id055
+  object_terms:
+  - cell
+  - temp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      cell: review_for_generalization
+      temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: pct_stats_new__percent_expression_summary__L311__cdae5c11
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 311
+  line_end: 317
+  language: r
+  method_family: percent_expression_summary
+  detected_calls:
+  - wilcox.test
+  packages:
+  - stats
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id056 []
+  disease_or_project_terms: *id056
+  object_terms:
+  - cell
+  - temp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      cell: review_for_generalization
+      temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: pct_stats_new__percent_expression_summary__L383__4561f245
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 383
+  line_end: 389
+  language: r
+  method_family: percent_expression_summary
+  detected_calls:
+  - wilcox.test
+  packages:
+  - stats
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id057 []
+  disease_or_project_terms: *id057
+  object_terms:
+  - cell
+  - temp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      cell: review_for_generalization
+      temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L479__0cc093ec
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 479
+  line_end: 485
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id058 []
+  disease_or_project_terms: *id058
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L487__2147f9dd
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 487
+  line_end: 493
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id059
+  - Background
+  - Healthy
+  disease_or_project_terms: *id059
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Background: parameter_or_provenance_only
+      Healthy: parameter_or_provenance_only
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__percent_expression_summary__L569__45bd7954
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 569
+  line_end: 575
+  language: r
+  method_family: percent_expression_summary
+  detected_calls:
+  - wilcox.test
+  packages:
+  - stats
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id060 []
+  disease_or_project_terms: *id060
+  object_terms:
+  - cell
+  - temp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      cell: review_for_generalization
+      temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L588__f6afc519
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 588
+  line_end: 594
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id061 []
+  disease_or_project_terms: *id061
+  object_terms: []
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review: {}
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__percent_expression_summary__L638__b07946e4
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 638
+  line_end: 644
+  language: r
+  method_family: percent_expression_summary
+  detected_calls:
+  - wilcox.test
+  packages:
+  - stats
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id062 []
+  disease_or_project_terms: *id062
+  object_terms:
+  - cell
+  - temp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      cell: review_for_generalization
+      temp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L658__831421f9
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 658
+  line_end: 664
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id063 []
+  disease_or_project_terms: *id063
+  object_terms:
+  - p1
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      p1: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L670__920f3d34
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 670
+  line_end: 676
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id064 []
+  disease_or_project_terms: *id064
+  object_terms:
+  - p2
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      p2: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L682__82c0f69b
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 682
+  line_end: 688
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id065 []
+  disease_or_project_terms: *id065
+  object_terms:
+  - p3
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      p3: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L694__a547a866
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 694
+  line_end: 700
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id066 []
+  disease_or_project_terms: *id066
+  object_terms:
+  - p4
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      p4: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: pct_stats_new__plotting__L706__ab6d67be
+  source_file: original/scRNA-Seq/R_pipeline/Pct_stats_new.R
+  line_start: 706
+  line_end: 712
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id067 []
+  disease_or_project_terms: *id067
+  object_terms:
+  - p5
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      p5: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: plot_clinical__plotting__L4__7fb486ec
+  source_file: original/scRNA-Seq/R_pipeline/Plot_clinical.R
+  line_start: 4
+  line_end: 10
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id068 []
+  disease_or_project_terms: *id068
+  object_terms:
+  - jitter
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      jitter: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: plot_clinical__clinical_plot__L1__a105e1db
+  source_file: original/scRNA-Seq/R_pipeline/Plot_clinical.R
+  line_start: 1
+  line_end: 25
+  language: r
+  method_family: clinical_plot
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id069 []
+  disease_or_project_terms: *id069
+  object_terms:
+  - clinical
+  - jitter
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      clinical: review_for_generalization
+      jitter: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.clinical_plot
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: a3_plot_pagafle__plotting__L1__531df3a5
+  source_file: original/scRNA-Seq/PythonPipeline/06_trajectory_analysis/a3_plot_pagafle.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id070 []
+  disease_or_project_terms: *id070
+  object_terms:
+  - CTYPE_DIC
+  - IN_DIR
+  - OUT_DIR
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      CTYPE_DIC: review_for_generalization
+      IN_DIR: review_for_generalization
+      OUT_DIR: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: a1_plot_contour_violinbox__plotting__L1__d71e0b63
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/a1_plot_contour_violinbox.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id071
+  - NSCLC
+  disease_or_project_terms: *id071
+  object_terms:
+  - CELLTYPES_2_CHECK
+  - IN_DIR
+  - OUT_DIR
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      NSCLC: parameter_or_provenance_only
+    object_term_review:
+      CELLTYPES_2_CHECK: review_for_generalization
+      IN_DIR: review_for_generalization
+      OUT_DIR: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: a2_subclustering_plot_umap_violinbox__plotting__L1__1dfdc5bb
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/a2_subclustering_plot_umap_violinbox.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id072 []
+  disease_or_project_terms: *id072
+  object_terms:
+  - GENES
+  - IN_DIR
+  - OUT_DIR
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      GENES: review_for_generalization
+      IN_DIR: review_for_generalization
+      OUT_DIR: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: e2_deseq2_on_pseudo__deseq2_de__L15__2398ac06
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/e2_DESeq2_on_pseudo.R
+  line_start: 15
+  line_end: 21
+  language: r
+  method_family: deseq2_de
+  detected_calls:
+  - DESeqDataSetFromMatrix
+  packages:
+  - DESeq2
+  inferred_inputs:
+  - count_matrix
+  - sample_metadata
+  - design_formula
+  - contrast
+  inferred_outputs:
+  - differential_expression_table
+  - ranked_gene_statistic
+  - volcano_plot
+  - source_maps
+  hardcoded_terms: &id073 []
+  disease_or_project_terms: *id073
+  object_terms:
+  - colData
+  - dds
+  - design
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - metadata
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      colData: review_for_generalization
+      dds: review_for_generalization
+      design: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.deseq2_de
+  reviewer_risk:
+  - sample metadata, contrast coding, covariates, and replicate units require human
+    review
+  claim_boundary: Differential expression is association evidence only and depends
+    on valid sample-level design.
+  status: requires_human_review
+- block_id: e2_deseq2_on_pseudo__deseq2_de__L18__06edd8e0
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/e2_DESeq2_on_pseudo.R
+  line_start: 18
+  line_end: 24
+  language: r
+  method_family: deseq2_de
+  detected_calls:
+  - DESeq
+  packages:
+  - DESeq2
+  inferred_inputs:
+  - count_matrix
+  - sample_metadata
+  - design_formula
+  - contrast
+  inferred_outputs:
+  - differential_expression_table
+  - ranked_gene_statistic
+  - volcano_plot
+  - source_maps
+  hardcoded_terms: &id074 []
+  disease_or_project_terms: *id074
+  object_terms:
+  - colData
+  - dds
+  - design
+  - res
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - metadata
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      colData: review_for_generalization
+      dds: review_for_generalization
+      design: review_for_generalization
+      res: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.deseq2_de
+  reviewer_risk:
+  - sample metadata, contrast coding, covariates, and replicate units require human
+    review
+  claim_boundary: Differential expression is association evidence only and depends
+    on valid sample-level design.
+  status: requires_human_review
+- block_id: e2_deseq2_on_pseudo__deseq2_de__L20__7b72a508
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/e2_DESeq2_on_pseudo.R
+  line_start: 20
+  line_end: 26
+  language: r
+  method_family: deseq2_de
+  detected_calls:
+  - results
+  packages:
+  - DESeq2
+  inferred_inputs:
+  - count_matrix
+  - sample_metadata
+  - design_formula
+  - contrast
+  inferred_outputs:
+  - differential_expression_table
+  - ranked_gene_statistic
+  - volcano_plot
+  - source_maps
+  hardcoded_terms: &id075 []
+  disease_or_project_terms: *id075
+  object_terms:
+  - dds
+  - design
+  - res
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - metadata
+    - output_dir
+    - run_id
+    hardcoded_term_policy: {}
+    object_term_review:
+      dds: review_for_generalization
+      design: review_for_generalization
+      res: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: bulk_rnaseq.deseq2_de
+  reviewer_risk:
+  - sample metadata, contrast coding, covariates, and replicate units require human
+    review
+  claim_boundary: Differential expression is association evidence only and depends
+    on valid sample-level design.
+  status: requires_human_review
+- block_id: e2_deseq2_on_pseudo__plotting__L34__80a557bb
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/CheckCAMLs/e2_DESeq2_on_pseudo.R
+  line_start: 34
+  line_end: 40
+  language: r
+  method_family: plotting
+  detected_calls:
+  - ggplot
+  packages:
+  - ggplot2
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id076 []
+  disease_or_project_terms: *id076
+  object_terms:
+  - min.segment.length
+  - plt
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      min.segment.length: review_for_generalization
+      plt: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: c1_genes_above_30pct__percent_expression_summary__L1__6fd24c3e
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/ComputeCellProportion/c1_genes_above_30pct.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: percent_expression_summary
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id077
+  - Tumour
+  disease_or_project_terms: *id077
+  object_terms:
+  - a
+  - adata
+  - col_name
+  - gene_exp
+  - gene_exp_sub
+  - genes
+  - genes_exp_pct
+  - inplace
+  - max_num
+  - n_cells_grp
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy:
+      Tumour: parameter_or_provenance_only
+    object_term_review:
+      a: review_for_generalization
+      adata: review_for_generalization
+      col_name: review_for_generalization
+      gene_exp: review_for_generalization
+      gene_exp_sub: review_for_generalization
+      genes: review_for_generalization
+      genes_exp_pct: review_for_generalization
+      inplace: review_for_generalization
+      max_num: review_for_generalization
+      n_cells_grp: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: c2_genes_above_30pct_tumour__percent_expression_summary__L1__4930977f
+  source_file: original/scRNA-Seq/PythonPipeline/09_small_issues/ComputeCellProportion/c2_genes_above_30pct_tumour.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: percent_expression_summary
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - cell_metadata
+  - sample_metadata
+  - group_column
+  - cell_type_column
+  inferred_outputs:
+  - composition_summary_table
+  - composition_statistical_test_table
+  - composition_plot
+  hardcoded_terms: &id078
+  - LUAD
+  - LUSC
+  disease_or_project_terms: *id078
+  object_terms:
+  - SMP_DICT
+  - a
+  - adata
+  - adata_dset
+  - col_name
+  - gene_exp
+  - genes
+  - genes_exp_pct
+  - max_num
+  parameterization_plan:
+    required_parameters:
+    - cell_metadata
+    - sample_metadata
+    - group_column
+    - sample_id_column
+    - cell_type_column
+    - percent_column
+    - statistical_test
+    - output_dir
+    - run_id
+    hardcoded_term_policy:
+      LUAD: parameter_or_provenance_only
+      LUSC: parameter_or_provenance_only
+    object_term_review:
+      SMP_DICT: review_for_generalization
+      a: review_for_generalization
+      adata: review_for_generalization
+      adata_dset: review_for_generalization
+      col_name: review_for_generalization
+      gene_exp: review_for_generalization
+      genes: review_for_generalization
+      genes_exp_pct: review_for_generalization
+      max_num: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: single_cell.percent_composition_stats
+  reviewer_risk:
+  - cell-composition percentages require sample-level grouping and should not treat
+    cells as independent patients
+  claim_boundary: Cell-composition summaries are descriptive unless sample-level statistical
+    design is documented.
+  status: requires_human_review
+- block_id: a1_plotdots_sharedlr__plotting__L1__941ef52e
+  source_file: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/LRdotplots/a1_plotdots_sharedLR.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id079 []
+  disease_or_project_terms: *id079
+  object_terms:
+  - CELLTYPES
+  - GENES
+  - LUAD_SAMPLES
+  - LUSC_SAMPLES
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      CELLTYPES: review_for_generalization
+      GENES: review_for_generalization
+      LUAD_SAMPLES: review_for_generalization
+      LUSC_SAMPLES: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: a2_plotdots_lr__plotting__L1__b2be7169
+  source_file: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/LRdotplots/a2_plotdots_LR.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id080 []
+  disease_or_project_terms: *id080
+  object_terms:
+  - CELLTYPES
+  - GENES
+  - LUAD_SAMPLES
+  - LUSC_SAMPLES
+  - a
+  - max_num
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      CELLTYPES: review_for_generalization
+      GENES: review_for_generalization
+      LUAD_SAMPLES: review_for_generalization
+      LUSC_SAMPLES: review_for_generalization
+      a: review_for_generalization
+      max_num: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: make_proportion_plots__plotting__L1__d13cd046
+  source_file: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/make_proportion_plots.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id081
+  - Background
+  - Healthy
+  - Tumour
+  disease_or_project_terms: *id081
+  object_terms:
+  - df
+  - environment
+  - groups
+  - name
+  - out_dir
+  - pdf
+  - pdf_w
+  - types
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy:
+      Background: parameter_or_provenance_only
+      Healthy: parameter_or_provenance_only
+      Tumour: parameter_or_provenance_only
+    object_term_review:
+      df: review_for_generalization
+      environment: review_for_generalization
+      groups: review_for_generalization
+      name: review_for_generalization
+      out_dir: review_for_generalization
+      pdf: review_for_generalization
+      pdf_w: review_for_generalization
+      types: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review
+- block_id: plot__plotting__L1__19b4a4b4
+  source_file: original/scRNA-Seq/PythonPipeline/04_cell2cell_interaction/CellPhoneDB/deprecated/plot.py
+  line_start: 1
+  line_end: 25
+  language: python
+  method_family: plotting
+  detected_calls: []
+  packages: []
+  inferred_inputs:
+  - input_object
+  - features_or_grouping
+  - plot_parameters
+  inferred_outputs:
+  - figure
+  - figure_source_map
+  hardcoded_terms: &id082 []
+  disease_or_project_terms: *id082
+  object_terms:
+  - g1
+  parameterization_plan:
+    required_parameters:
+    - input_object
+    - feature_list
+    - group_column
+    - output_dir
+    - plot_theme
+    hardcoded_term_policy: {}
+    object_term_review:
+      g1: review_for_generalization
+    generalization_rule: Do not copy disease/project/sample labels into reusable function
+      logic.
+    review_required: true
+  candidate_module_family: general.plotting
+  reviewer_risk:
+  - external literature code requires license, provenance, and parameter review before
+    adaptation
+  claim_boundary: Reviewed external code block; no manuscript claim until adapted
+    module tests and provenance review pass.
+  status: requires_human_review

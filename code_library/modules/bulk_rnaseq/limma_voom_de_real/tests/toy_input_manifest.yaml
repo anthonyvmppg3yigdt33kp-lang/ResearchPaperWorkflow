@@ -1,0 +1,9 @@
+inputs:
+  - name: dry_run_count_matrix
+    type: generated
+    publication_evidence: false
+  - name: dry_run_sample_metadata
+    type: generated
+    publication_evidence: false
+sample_mapping:
+  status: dry_run_fixture

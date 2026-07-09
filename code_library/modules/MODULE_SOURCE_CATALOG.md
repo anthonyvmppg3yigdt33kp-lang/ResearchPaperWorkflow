@@ -55,6 +55,19 @@ Each entry identifies the script a researcher can inspect, delegated common wrap
 - Maturity/validation: validated_publication_oriented_wrapper / publication_oriented_dry_run_verified
 - Claim boundary: Publication-oriented association testing; design matrix and covariates must be reviewed.
 
+## bulk_rnaseq.limma_voom_de_real.v1
+
+- Name: Real limma-voom differential expression
+- Purpose/use: bulk RNA-seq sample-level group contrast
+- Modality/step/language: bulk_rnaseq / limma_voom_de_real / r
+- Primary script: `code_library/modules/bulk_rnaseq/limma_voom_de_real/main.R`
+- Auditable scripts: `code_library/modules/bulk_rnaseq/limma_voom_de_real/main.R`, `code_library/modules/bulk_rnaseq/common/bulk_module_wrapper.R`
+- Functions in primary script: delegated or script-level workflow
+- Execution type: rscript
+- Environment lock: `code_library/env_locks/r_bulk_rnaseq.lock.yaml` status=True
+- Maturity/validation: validated_parameterized_wrapper / dry_run_verified_real_execution_ready
+- Claim boundary: Differential expression is association evidence only and depends on valid sample-level design.
+
 ## bulk_rnaseq.python_builtin_pilot.v1
 
 - Name: Built-in bulk RNA-seq pilot adapter
@@ -171,6 +184,19 @@ Each entry identifies the script a researcher can inspect, delegated common wrap
 - Environment lock: `code_library/env_locks/r_seurat_v5.lock.yaml` status=True
 - Maturity/validation: thin_wrapper / dry_run_verified
 - Claim boundary: Cluster visualization is exploratory and requires annotation/validation before inference.
+
+## single_cell.seurat_findmarkers_group_de.v1
+
+- Name: Seurat FindMarkers group differential expression
+- Purpose/use: cell-level marker screening; exploratory group comparison
+- Modality/step/language: single_cell / seurat_findmarkers_group_de / r
+- Primary script: `code_library/modules/single_cell/seurat_findmarkers_group_de/main.R`
+- Auditable scripts: `code_library/modules/single_cell/seurat_findmarkers_group_de/main.R`, `code_library/modules/single_cell/common/sc_module_wrapper.R`
+- Functions in primary script: delegated or script-level workflow
+- Execution type: rscript
+- Environment lock: `code_library/env_locks/r_seurat_v5.lock.yaml` status=True
+- Maturity/validation: validated_parameterized_wrapper / dry_run_verified_real_execution_ready
+- Claim boundary: Cell-level marker/differential expression is exploratory unless biological replicate-aware inference is documented.
 
 ## single_cell.seurat_integration_harmony.v1
 

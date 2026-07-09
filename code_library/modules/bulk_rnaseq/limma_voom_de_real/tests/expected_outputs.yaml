@@ -1,0 +1,11 @@
+required_outputs:
+  - outputs_manifest.yaml
+  - node_manifest.yaml
+  - tables/limma_voom_results.csv
+  - qc/design_summary.csv
+  - figures/limma_voom_volcano.png
+  - objects/limma_voom_parameters.rds
+  - logs/sessionInfo.txt
+  - figure_source_map.yaml
+  - table_source_map.yaml
+publication_grade: false

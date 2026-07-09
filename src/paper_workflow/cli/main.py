@@ -17,6 +17,7 @@ from paper_workflow.analysis import AnalysisDesign, run_analysis_adapter
 from paper_workflow.api import WorkflowAPI
 from paper_workflow.bioinformatics.code_source_importer import CodeSourceImporter
 from paper_workflow.bioinformatics.environment_registry import EnvironmentRegistry
+from paper_workflow.bioinformatics.method_adapter import adapt_method_block
 from paper_workflow.bioinformatics.method_asset_audit import MethodAssetAuditor
 from paper_workflow.bioinformatics.module_feedback import ModuleFeedbackManager
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
@@ -666,6 +667,30 @@ def cmd_review_code_source(args):
         print("     Registry update allowed: false")
 
 
+def cmd_adapt_method_block(args):
+    try:
+        result = adapt_method_block(
+            project_root=get_root(),
+            source_id=args.source_id,
+            block_id=args.block_id,
+            module_id=args.module_id,
+            family=args.family,
+            approved_review=args.approved_review,
+            register=args.register,
+        )
+    except (ValueError, FileNotFoundError, PermissionError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"[OK] Adapted module scaffold: {result['module_id']}")
+        print(f"     Directory: {result['module_dir']}")
+        print("     Registry update: not performed")
+        if result.get("registry_patch"):
+            print(f"     Registry patch: {result['registry_patch']}")
+
+
 def cmd_register_figure_style(args):
     importer = CodeSourceImporter(get_root())
     try:
@@ -983,6 +1008,15 @@ def main():
     p.add_argument("--source-id", required=True)
     p.add_argument("--json", action="store_true")
 
+    p = sub.add_parser("adapt-method-block")
+    p.add_argument("--source-id", required=True)
+    p.add_argument("--block-id", required=True)
+    p.add_argument("--module-id", required=True)
+    p.add_argument("--family", required=True)
+    p.add_argument("--approved-review", action="store_true")
+    p.add_argument("--register", action="store_true")
+    p.add_argument("--json", action="store_true")
+
     p = sub.add_parser("register-figure-style")
     p.add_argument("--source-id", required=True)
     p.add_argument("--style-id")
@@ -1073,10 +1107,11 @@ def main():
      "plan-analysis": cmd_plan_analysis, "run-analysis": cmd_run_analysis,
      "list-modules": cmd_list_modules, "inspect-module": cmd_inspect_module,
      "list-capabilities": cmd_list_capabilities,
-     "audit-method-assets": cmd_audit_method_assets,
-     "import-code-source": cmd_import_code_source,
-     "review-code-source": cmd_review_code_source,
-     "register-figure-style": cmd_register_figure_style,
+      "audit-method-assets": cmd_audit_method_assets,
+      "import-code-source": cmd_import_code_source,
+      "review-code-source": cmd_review_code_source,
+      "adapt-method-block": cmd_adapt_method_block,
+      "register-figure-style": cmd_register_figure_style,
      "list-figure-styles": cmd_list_figure_styles,
      "summarize-module-usage": cmd_summarize_module_usage,
      "propose-module-improvement": cmd_propose_module_improvement,
