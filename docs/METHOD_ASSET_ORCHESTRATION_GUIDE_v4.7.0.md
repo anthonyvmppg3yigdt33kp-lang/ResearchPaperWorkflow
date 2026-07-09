@@ -129,4 +129,5 @@ PYTHONPATH=src python -m pytest -q
 ```
 
 On GitHub, verify that the CI run for the release commit passes, including the
-mandatory R method contract job.
+mandatory R method contract job that installs an R runner and dry-runs wrapper
+contracts.

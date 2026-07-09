@@ -60,7 +60,7 @@ pytest: 128 passed
 ci_cli_smoke.py: pass
 ci_graph_dry_run.py: pass
 doctor --json: degraded only because fast-context is unavailable in the current agent session
-local Rscript: unavailable; GitHub CI setup-r job owns the mandatory R method contract check
+local Rscript: unavailable; GitHub CI installs R and owns the mandatory R method contract check
 ```
 
 GitHub Actions must pass on the release commit before the release is treated as
