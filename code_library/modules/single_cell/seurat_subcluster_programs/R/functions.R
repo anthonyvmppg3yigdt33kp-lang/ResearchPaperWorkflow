@@ -248,7 +248,7 @@ run_seurat_subcluster_programs <- function(
     if (length(present_markers) == 0) {
       stop("none of the subset markers are present in the Seurat object")
     }
-    expr <- Seurat::GetAssayData(obj, slot = "data")[present_markers, , drop = FALSE]
+    expr <- Seurat::GetAssayData(obj, layer = "data")[present_markers, , drop = FALSE]
     keep <- colnames(obj)[Matrix::colSums(expr > 0) > 0]
   }
   if (length(keep) == 0) {

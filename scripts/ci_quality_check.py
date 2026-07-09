@@ -96,6 +96,7 @@ EXCLUDED_DIRS = {
     ".pytest_cache",
     "__pycache__",
     "papers",
+    "data",
     "results",
     "tmp",
     "output",
@@ -115,7 +116,7 @@ def load_yaml(path: Path) -> Any:
 def is_excluded(path: Path, root: Path) -> bool:
     rel = path.relative_to(root).as_posix()
     parts = set(path.relative_to(root).parts)
-    if parts & {".git", ".pytest_cache", "__pycache__", "papers", "tmp", "output", "outputs", "logs", "node_modules"}:
+    if parts & {".git", ".pytest_cache", "__pycache__", "papers", "data", "tmp", "output", "outputs", "logs", "node_modules"}:
         return True
     return any(rel == item or rel.startswith(item + "/") for item in EXCLUDED_DIRS)
 

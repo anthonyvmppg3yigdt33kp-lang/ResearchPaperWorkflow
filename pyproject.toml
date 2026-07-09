@@ -68,6 +68,7 @@ norecursedirs = [
     "code_library/external_repos",
     "code_library/external_skill_sources",
     "papers",
+    "data",
     "tmp",
     "output",
     "outputs",

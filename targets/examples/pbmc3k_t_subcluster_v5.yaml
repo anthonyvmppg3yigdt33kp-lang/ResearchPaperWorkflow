@@ -9,7 +9,7 @@ data:
   dataset_id: seurat_official_pbmc3k
   modality: single_cell
   format: 10x_mtx
-  input_path: data/raw/pbmc3k/pbmc3k_filtered_gene_bc_matrices
+  input_path: data/raw/pbmc3k/filtered_gene_bc_matrices/hg19
   role: tutorial_fixture
   immutable: true
   source_url: https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
