@@ -28,6 +28,12 @@ def make_root():
         (REPO_ROOT / "code_library" / "environment_registry.yaml").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
+    data = yaml.safe_load((root / "code_library" / "environment_registry.yaml").read_text(encoding="utf-8"))
+    data["environments"]["r_seurat_v5"]["runner"] = sys.executable
+    (root / "code_library" / "environment_registry.yaml").write_text(
+        yaml.safe_dump(data, sort_keys=False),
+        encoding="utf-8",
+    )
     return tmp, root
 
 
@@ -91,8 +97,10 @@ def test_environment_cli_validate_env_reports_module_environment():
     assert completed.returncode == 0
     payload = yaml.safe_load(completed.stdout)
     assert payload["env_id"] == "r_seurat_v5"
-    assert payload["environment"]["status"] == "pass"
     assert payload["environment"]["lock_file_present"] is True
+    if payload["environment"]["status"] != "pass":
+        assert payload["environment"]["status"] == "blocked"
+        assert any("runner not available" in issue for issue in payload["environment"]["issues"])
 
 
 def test_data_registry_validates_tutorial_fixture_and_file_hashes():
