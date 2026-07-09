@@ -1,0 +1,117 @@
+id: single_cell.seurat_subcluster_programs.v1
+name: Seurat T-cell-like subcluster and program scoring workflow
+modality: single_cell
+step: seurat_subcluster_programs
+language: r
+production_capability_grade: production_capable_real_wrapper
+execution_evidence_level: official_tutorial_validated
+strategy_visibility: exploratory_candidate
+claim_permission: exploratory_only
+current_environment_status: pass
+capability_tags:
+  - single-cell
+  - seurat
+  - pbmc3k
+  - subcluster
+  - marker
+  - program-score
+  - real-wrapper
+source:
+  type: local_wrapper
+  path: code_library/modules/single_cell/seurat_subcluster_programs/main.R
+  origin: workflow_builtin_pbmc3k_validation_asset
+  origin_url: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html
+  license: MIT
+environment:
+  env_id: r_seurat_v5
+  required_packages: [Seurat, Matrix, ggplot2]
+execution:
+  type: rscript
+  script: code_library/modules/single_cell/seurat_subcluster_programs/main.R
+  timeout_seconds: 2400
+  args:
+    - "--input"
+    - "{seurat_rds}"
+    - "--out"
+    - "{node_dir}"
+    - "--run-id"
+    - "{run_id}"
+    - "--subset-markers"
+    - "{subset_markers}"
+    - "--resolutions"
+    - "{resolutions}"
+    - "--npcs"
+    - "{npcs}"
+    - "--marker-method"
+    - "{marker_method}"
+    - "--only-pos"
+    - "{only_pos}"
+    - "--min-pct"
+    - "{min_pct}"
+    - "--logfc-threshold"
+    - "{logfc_threshold}"
+default_parameters:
+  subset_markers: CD3D,CD3E,IL7R,CCR7,S100A4,CD8A,NKG7,GNLY
+  resolutions: 0.2,0.4,0.6,0.8
+  npcs: 10
+  marker_method: wilcox
+  only_pos: "true"
+  min_pct: 0.1
+  logfc_threshold: 0.25
+input_schema:
+  required:
+    - {name: seurat_rds, type: seurat_rds}
+  optional:
+    - {name: subset_markers, type: comma_separated_gene_symbols}
+    - {name: resolutions, type: comma_separated_numbers}
+output_schema:
+  artifacts:
+    - objects/subcluster_seurat.rds
+    - tables/subcluster_cell_counts.csv
+    - tables/resolution_summary.csv
+    - tables/subcluster_markers.csv
+    - tables/program_score_summary.csv
+    - tables/marker_program_mapping.csv
+    - figures/tcell_subset_umap.png
+    - figures/resolution_grid_umap.png
+    - figures/subcluster_marker_heatmap.png
+    - figures/program_score_violin.png
+    - figures/program_score_dotplot.png
+    - qc/subcluster_quality_report.yaml
+    - logs/sessionInfo.txt
+  source_maps:
+    - figure_source_map.yaml
+    - table_source_map.yaml
+output_bindings:
+  seurat_rds: objects/subcluster_seurat.rds
+  marker_table: tables/subcluster_markers.csv
+  ranked_gene_statistic: tables/subcluster_markers.csv
+  program_score_summary: tables/program_score_summary.csv
+reviewer_value:
+  - validates TargetTask execution on an official tutorial fixture
+  - records subcluster stability, marker columns, program scores, and source maps
+  - separates exploratory cell-level evidence from disease inference
+reviewer_risk:
+  - PBMC3K is a workflow-test fixture
+  - cell-level markers are exploratory
+  - UMAP and subclusters are parameter-sensitive
+claim_boundary: "PBMC3K workflow-test exploratory T-cell-like subcluster program only; no disease, clinical, or causal claim."
+validation_status: official_tutorial_validated
+method_maturity: real_wrapper
+compatible_upstream_modules:
+  - single_cell.seurat_pbmc3k_basic.v1
+compatible_downstream_modules:
+  - bulk_rnaseq.fgsea_enrichment.v1
+figure_outputs:
+  - tcell_subset_umap
+  - resolution_grid_umap
+  - subcluster_marker_heatmap
+  - program_score_violin
+  - program_score_dotplot
+table_outputs:
+  - subcluster_cell_counts
+  - resolution_summary
+  - subcluster_markers
+  - program_score_summary
+compute_cost: medium
+token_cost: low

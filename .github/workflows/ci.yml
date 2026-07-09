@@ -59,6 +59,12 @@ jobs:
       - name: Validate configs and repository guardrails
         run: python scripts/ci_quality_check.py
 
+      - name: Audit v5 module production grades
+        run: python scripts/ci_module_grade_audit.py --strict
+
+      - name: Exercise fail-closed supervision cases
+        run: python scripts/ci_supervision_failure_cases.py
+
       - name: Validate workflow contract
         run: python -m paper_workflow.cli.main validate-contract --strict
 
@@ -135,6 +141,42 @@ jobs:
             .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/figure_source_map.yaml
             .ci_artifacts/graph_dry_run/papers/test_paper/results/runs/pbmc3k_demo_20260708_v1/table_source_map.yaml
 
+  target-task-pbmc3k:
+    name: TargetTask PBMC3K
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run PBMC3K TargetTask smoke
+        run: python scripts/ci_pbmc3k_target_task.py --output-root .ci_artifacts/pbmc3k_target --json
+
+      - name: Check v5 performance budget
+        run: python scripts/ci_performance_budget.py --json
+
+      - name: Upload TargetTask artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pbmc3k-target-task
+          path: |
+            .ci_artifacts/pbmc3k_target/papers/pbmc3k_t_subcluster/results/runs/pbmc3k_t_subcluster_20260709_v1/run_manifest.yaml
+            .ci_artifacts/pbmc3k_target/papers/pbmc3k_t_subcluster/results/runs/pbmc3k_t_subcluster_20260709_v1/analysis_graph.yaml
+            .ci_artifacts/pbmc3k_target/papers/pbmc3k_t_subcluster/results/runs/pbmc3k_t_subcluster_20260709_v1/evaluation_report.yaml
+            .ci_artifacts/pbmc3k_target/papers/pbmc3k_t_subcluster/results/runs/pbmc3k_t_subcluster_20260709_v1/qc/fail_closed_decision.yaml
+            .ci_artifacts/pbmc3k_target/papers/pbmc3k_t_subcluster/results/runs/pbmc3k_t_subcluster_20260709_v1/manuscript/results_skeleton.md
+
   r-method-contract:
     name: R Method Contract
     runs-on: ubuntu-latest
@@ -150,6 +192,9 @@ jobs:
 
       - name: Parse and dry-run R method wrappers
         run: Rscript scripts/ci_r_method_contract.R
+
+      - name: Dry-run Seurat subcluster wrapper without Seurat data
+        run: Rscript scripts/ci_seurat_subcluster_smoke.R
 
   security-light:
     name: Security Light

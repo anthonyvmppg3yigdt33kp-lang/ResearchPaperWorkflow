@@ -236,12 +236,19 @@ class EnvironmentRegistry:
             "status": status,
             "runner": runner_status.get("runner", ""),
             "runner_available": runner_status["runner_available"],
+            "required_packages_available": package_status["packages_available"],
             "lock_file": lock_status["lock_file"],
             "lock_file_present": lock_status["lock_file_present"],
             "package_check_status": package_status["status"],
             "packages_available": package_status["packages_available"],
             "declared_packages": self._required_packages(env),
+            "required_packages": self._required_packages(env),
+            "optional_packages": list(env.get("optional_packages", []) or []),
             "missing_packages": package_status["missing_packages"],
+            "install_hint": self._install_hint(env_id, env, package_status["missing_packages"]),
+            "estimated_install_complexity": str(env.get("estimated_install_complexity", self._install_complexity(env, package_status["missing_packages"]))),
+            "compatible_modules": list(env.get("compatible_modules", []) or []),
+            "blocked_modules": list(env.get("compatible_modules", []) or []) if status == "blocked" else [],
             "session_info_required": bool(env.get("session_info_required", (env.get("reproducibility") or {}).get("session_info_per_node") == "required")),
             "seed_policy": env.get("seed_policy", (env.get("reproducibility") or {}).get("seed_policy", "")),
             "reproducibility_grade": reproducibility_grade,
@@ -257,3 +264,30 @@ class EnvironmentRegistry:
         report["environment_registry_hash"] = self.content_hash()
         _write_yaml(path, report)
         return report
+
+    @staticmethod
+    def _install_complexity(env: dict[str, Any], missing: list[str]) -> str:
+        manager = str(env.get("manager", "")).lower()
+        packages = {pkg.lower() for pkg in missing}
+        if not missing:
+            return "none"
+        if "bioc" in manager or packages & {"deseq2", "edger", "wgcna", "fgsea", "clusterprofiler", "gsva"}:
+            return "high"
+        if len(missing) > 3:
+            return "medium"
+        return "low"
+
+    @staticmethod
+    def _install_hint(env_id: str, env: dict[str, Any], missing: list[str]) -> str:
+        if not missing:
+            return "Environment is ready; no package install required."
+        language = str(env.get("language", "")).lower()
+        packages = ", ".join(missing)
+        if language == "r":
+            return (
+                f"Install missing R packages for {env_id}: {packages}. "
+                "Use BiocManager for Bioconductor packages such as DESeq2, edgeR, fgsea, clusterProfiler, and GSVA."
+            )
+        if language == "python":
+            return f"Install missing Python packages for {env_id}: {packages}."
+        return f"Install missing packages for {env_id}: {packages}."

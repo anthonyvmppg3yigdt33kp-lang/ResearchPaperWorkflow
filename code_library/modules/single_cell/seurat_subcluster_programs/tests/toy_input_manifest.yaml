@@ -1,0 +1,6 @@
+schema_version: toy_input_manifest.v1
+mode: dry_run
+inputs:
+  - role: seurat_rds
+    status: synthetic_in_dry_run
+claim_boundary: PBMC3K workflow-test only; no biological claim.

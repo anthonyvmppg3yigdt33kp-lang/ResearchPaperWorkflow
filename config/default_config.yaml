@@ -1,5 +1,5 @@
 # =============================================================================
-# Research Paper Workflow v4.8 -- Default Configuration
+# Research Paper Workflow v5.0 -- Default Configuration
 # =============================================================================
 # This file defines the complete pipeline, quality gates, writing standards,
 # research domains, skills dispatching, agent routing, supervision, code library,
@@ -7,14 +7,14 @@
 # academic paper writing workflow.
 # =============================================================================
 
-version: "4.8.0"
+version: "5.0.0"
 
 # =============================================================================
 # 1. PIPELINE STAGES (20 stages)
 # =============================================================================
 pipeline:
-  version: "4.8.0"
-  description: "End-to-end academic research paper writing pipeline -- 20 stages with medical evidence/AIGC gates, truth layer, model-facing AI harness, collaboration modes, run-scoped results, production method-asset analysis graph orchestration, method-block extraction/adaptation, output-to-input artifact binding, bioinformatics QA, evidence graph synthesis, external code intake, and feedback ledger routing (v4.8)"
+  version: "5.0.0"
+  description: "End-to-end academic research paper writing pipeline with v5 production-kernel gates: TargetTask entry, fail-closed run evaluation, explicit method-asset production grading, environment-aware graph execution, PBMC3K Seurat validation fixture, evidence-bound manuscript packets, and release-grade CI."
   stages:
     # --- STAGE 1: select_topic ---
     - id: select_topic
@@ -635,6 +635,9 @@ ai_harness:
     evaluate_run:
       cli_command: "evaluate-run"
       description: "Evaluate result-run completeness, source maps, environment/data status, and reviewer-risk fields."
+    target_task:
+      cli_command: "target"
+      description: "Run v5 TargetTask validate, plan, run, evaluate, and package subcommands with fail-closed evidence gates."
   scenario_routes:
     not_started:
       user_situation: "User has not started and only has a broad clinical or biological idea."

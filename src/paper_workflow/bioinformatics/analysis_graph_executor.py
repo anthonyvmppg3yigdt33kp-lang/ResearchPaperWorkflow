@@ -219,6 +219,17 @@ class AnalysisGraphExecutor:
             self._write_node_manifest(node_dir, paper_dir, record)
             return record
 
+        production_gate = self.modules.production_gate(module)
+        record["production_gate"] = production_gate
+        if not production_gate["allowed"]:
+            message = "module is not allowed in an executable production graph: " + ", ".join(production_gate["reasons"])
+            if execute:
+                record["status"] = "blocked"
+                record["errors"].append(message)
+                self._write_node_manifest(node_dir, paper_dir, record)
+                return record
+            record["warnings"].append(message)
+
         parameters = self._node_parameters(graph, node, module, paper_dir, run_dir)
         input_contract = build_node_input_contract(module, parameters, graph.data_bindings)
         record["input_contract"] = input_contract
@@ -320,6 +331,8 @@ class AnalysisGraphExecutor:
             command,
             cwd=str(self.project_root),
             text=True,
+            encoding="utf-8",
+            errors="replace",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,

@@ -7,8 +7,8 @@ import subprocess
 from pathlib import Path
 from markdown_it import MarkdownIt
 
-PROJECT = Path(r"C:\Users\HP\Desktop\ResearchPaperWorkflow_v2")
-OUTPUT = Path(r"C:\Users\HP\Desktop\ResearchPaperWorkflow_v2_Complete_Documentation.pdf")
+PROJECT = Path(r"%USERPROFILE%\Desktop\ResearchPaperWorkflow_v2")
+OUTPUT = Path(r"%USERPROFILE%\Desktop\ResearchPaperWorkflow_v2_Complete_Documentation.pdf")
 HTML_PATH = PROJECT / "MERGED_FULL.html"
 EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
 

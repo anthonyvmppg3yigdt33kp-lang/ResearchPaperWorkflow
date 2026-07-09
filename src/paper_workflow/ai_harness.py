@@ -2,7 +2,7 @@
 
 The harness is intentionally thin: it routes a user's natural-language request
 to the existing WorkflowAPI and records which command a model executed. It does
-not replace the V4 truth layer, stage verification, quality gates, or human
+not replace v5 TargetTask gates, stage verification, quality gates, or human
 checkpoints.
 """
 from __future__ import annotations
@@ -52,6 +52,7 @@ class AIWorkflowHarness:
         "plan_analysis",
         "run_analysis",
         "evaluate_run",
+        "target_task",
     }
 
     INTENT_COMMANDS = {
@@ -75,6 +76,7 @@ class AIWorkflowHarness:
         "plan_analysis": "plan-analysis",
         "run_analysis": "run-analysis",
         "evaluate_run": "evaluate-run",
+        "target_task": "target",
     }
 
     STAGE_IDS = (

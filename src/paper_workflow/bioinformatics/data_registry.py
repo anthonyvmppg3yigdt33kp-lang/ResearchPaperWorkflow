@@ -115,10 +115,10 @@ class DataRegistry:
                     rows.append(self._file_row(path, rel, dataset))
                 continue
             if dataset_path.is_file():
-                rows.append(self._file_row(dataset_path, str(dataset_path.relative_to(self.paper_dir)), dataset))
+                rows.append(self._file_row(dataset_path, self._safe_relative_path(dataset_path), dataset))
             elif dataset_path.is_dir():
                 for path in sorted(p for p in dataset_path.rglob("*") if p.is_file()):
-                    rows.append(self._file_row(path, str(path.relative_to(self.paper_dir)), dataset))
+                    rows.append(self._file_row(path, self._safe_relative_path(path), dataset))
         return rows
 
     def write_file_manifest(self) -> list[dict[str, Any]]:
@@ -207,6 +207,15 @@ class DataRegistry:
             for chunk in iter(lambda: fh.read(1024 * 1024), b""):
                 h.update(chunk)
         return h.hexdigest()
+
+    def _safe_relative_path(self, path: Path) -> str:
+        try:
+            return str(path.relative_to(self.paper_dir)).replace("\\", "/")
+        except ValueError:
+            try:
+                return str(path.resolve().relative_to(self.paper_dir.parent.parent.resolve())).replace("\\", "/")
+            except ValueError:
+                return str(Path("external_data") / path.name).replace("\\", "/")
 
     @staticmethod
     def _group_inference_requested(graph: Any) -> bool:

@@ -1,0 +1,10 @@
+env_id: r_seurat_v5
+language: R
+runner: Rscript
+required_packages:
+  - Seurat
+  - Matrix
+  - ggplot2
+session_info_required: true
+seed_policy: required
+claim_boundary: Environment declaration only; package availability must be checked by doctor-env before real execution.

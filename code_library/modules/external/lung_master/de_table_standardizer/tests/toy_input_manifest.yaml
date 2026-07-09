@@ -1,0 +1,5 @@
+schema_version: toy_input_manifest.v1
+mode: dry_run
+input_shape:
+  columns: [gene, logFC, P.Value, adj.P.Val]
+claim_boundary: Post-processing only; no upstream DE claim.

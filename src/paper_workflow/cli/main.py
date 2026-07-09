@@ -26,6 +26,7 @@ from paper_workflow.outputs.result_run_manager import ResultRunManager
 from paper_workflow.routing.mode_resolver import ModeResolver
 from paper_workflow.routing.tool_doctor import ToolDoctor, format_doctor_report
 from paper_workflow.strategy.research_strategy import ResearchStrategyManager
+from paper_workflow.target_task import TargetTaskOrchestrator
 from paper_workflow.utils.skill_installer import (
     ensure_skills_available,
     format_skill_report,
@@ -595,10 +596,45 @@ def cmd_inspect_module(args):
 def cmd_list_capabilities(args):
     selector = MethodSelector(project_root=get_root(), paper_dir=get_paper_dir(args, must_exist=bool(args.paper)) if args.paper else None)
     selected = selector.select(goal=args.question, modalities=args.modality or [], max_modules=args.limit)
+    decision = {
+        "recommended_now": [],
+        "deferred_until_environment_ready": [],
+        "planning_only": [],
+        "blocked_by_environment": [],
+        "blocked_by_grade": [],
+        "forbidden_as_primary": [],
+        "downstream_allowed": [],
+    }
+    for module in selected:
+        module_id = module.get("id") or module.get("module_id")
+        score = module.get("method_selection_score", {})
+        gate = module.get("production_gate") or score.get("production_gate") or {}
+        item = {
+            "module": module_id,
+            "score": score.get("total"),
+            "grade": module.get("production_capability_grade") or score.get("production_capability_grade"),
+            "claim_permission": module.get("claim_permission") or score.get("claim_permission"),
+            "environment_status": module.get("current_environment_status") or score.get("current_environment_status"),
+            "reason": (module.get("strategy_evaluation") or {}).get("decision", ""),
+        }
+        if gate.get("allowed"):
+            decision["recommended_now"].append(item)
+        if item["environment_status"] == "blocked":
+            decision["blocked_by_environment"].append(item)
+            decision["deferred_until_environment_ready"].append(item)
+        if not gate.get("allowed"):
+            decision["blocked_by_grade"].append({**item, "blockers": gate.get("reasons", [])})
+        if item["grade"] in {"dry_run_contract", "adapter_contract", "planning_contract", "scaffold_only"}:
+            decision["planning_only"].append(item)
+        if module_id == "bulk_rnaseq.wgcna.v1":
+            decision["forbidden_as_primary"].append({**item, "reason": "WGCNA does not replace primary differential expression"})
+        if "fgsea" in str(module_id):
+            decision["downstream_allowed"].append({**item, "prerequisite": "ranked_gene_statistic exists"})
     payload = {
         "question": args.question,
         "modalities": args.modality or [],
         "selected_modules": selected,
+        **decision,
     }
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -842,6 +878,41 @@ def cmd_validate_env(args):
         sys.exit(1)
 
 
+def cmd_target(args):
+    orchestrator = TargetTaskOrchestrator(get_root())
+    try:
+        if args.target_command == "validate":
+            payload = orchestrator.validate(args.target, require_packages=args.require_packages)
+        elif args.target_command == "plan":
+            payload = orchestrator.plan(args.target)
+        elif args.target_command == "run":
+            payload = orchestrator.run(args.target, approved=args.approved, execute=args.execute)
+        elif args.target_command == "evaluate":
+            payload = orchestrator.evaluate(args.target, fail_closed=args.fail_closed)
+        elif args.target_command == "package":
+            payload = orchestrator.package(args.target)
+        else:
+            raise ValueError("target subcommand is required")
+    except (ValueError, FileNotFoundError, PermissionError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        print(f"Target command: {args.target_command}")
+        print(f"Status: {payload.get('status', payload.get('environment_status', 'unknown'))}")
+        if payload.get("target_id"):
+            print(f"Target: {payload['target_id']}")
+        if payload.get("run_id"):
+            print(f"Run: {payload['run_id']}")
+        if payload.get("run_dir"):
+            print(f"Run dir: {payload['run_dir']}")
+    if args.target_command in {"evaluate", "run", "package"}:
+        final_status = payload.get("status") or payload.get("final_status") or (payload.get("evaluation") or {}).get("status")
+        if getattr(args, "strict", False) and final_status not in {"pass", "workflow_test_pass"}:
+            sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Paper Workflow CLI")
     sub = parser.add_subparsers(dest="command")
@@ -1061,6 +1132,21 @@ def main():
     p.add_argument("--json", action="store_true")
     p.add_argument("--strict", action="store_true")
 
+    p = sub.add_parser("target")
+    target_sub = p.add_subparsers(dest="target_command")
+    for name in ["validate", "plan", "run", "evaluate", "package"]:
+        sp = target_sub.add_parser(name)
+        sp.add_argument("--target", required=True)
+        sp.add_argument("--json", action="store_true")
+        sp.add_argument("--strict", action="store_true")
+        if name == "validate":
+            sp.add_argument("--require-packages", action="store_true")
+        if name == "run":
+            sp.add_argument("--approved", action="store_true")
+            sp.add_argument("--execute", action="store_true")
+        if name == "evaluate":
+            sp.add_argument("--fail-closed", action="store_true")
+
     p = sub.add_parser(
         "ai",
         aliases=["ai-harness"],
@@ -1118,6 +1204,7 @@ def main():
      "apply-module-improvement": cmd_apply_module_improvement,
      "list-envs": cmd_list_envs, "inspect-env": cmd_inspect_env,
      "doctor-env": cmd_doctor_env, "validate-env": cmd_validate_env,
+     "target": cmd_target,
      "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
 
 

@@ -1,0 +1,14 @@
+schema_version: tuning_lessons.v1
+lessons:
+  - id: do_not_promote_external_scaffold
+    lesson: External code intake must remain planning or post-processing until a real executable wrapper and source maps exist.
+    enforced_by:
+      - production_capability_grade
+      - strategy_visibility
+      - claim_permission
+  - id: target_task_short_path
+    lesson: A researcher-facing workflow should start from one TargetTask file and fail closed before producing manuscript claims.
+    enforced_by:
+      - paper-workflow target validate
+      - paper-workflow target run
+      - paper-workflow target evaluate

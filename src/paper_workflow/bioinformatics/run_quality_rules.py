@@ -13,6 +13,13 @@ import yaml
 WINDOWS_PERSONAL_PATH_RE = re.compile(r"[A-Za-z]:[\\/](?:Users|Documents and Settings)[\\/][^\\/\s]+", re.IGNORECASE)
 PROJECT_TERM_RE = re.compile(r"\b(?:LUAD|LUSC|NSCLC|Tumou?r|BH)\b")
 
+QUALITY_STATUS_RANK = {
+    "pass": 0,
+    "needs_review": 1,
+    "needs_fix": 2,
+    "blocked": 3,
+}
+
 
 def read_yaml(path: Path) -> dict[str, Any]:
     if not path.exists():
@@ -63,17 +70,23 @@ class BioinformaticsRunQualityRules:
         checks.extend(self._check_source_maps(next_plan))
         checks.extend(self._check_text_leaks(next_plan))
         if not manifest.get("data_registry_hash"):
-            checks.append(self._check("data_registry_hash", False, "run_manifest.yaml missing data_registry_hash"))
+            checks.append(self._check("data_registry_hash", False, "run_manifest.yaml missing data_registry_hash", "needs_fix"))
             next_plan["human_review_items"].append("declare and validate paper-scoped data registry before production execution")
-        status = "pass" if all(item["status"] == "pass" for item in checks) else "needs_review"
+        status = self._overall_status(checks)
+        fail_closed = self._fail_closed_decision(status, checks)
         report = {
             "schema_version": "bioinformatics_quality_report.v1",
             "run_id": self.run_dir.name,
             "status": status,
+            "final_status_allowed": status == "pass",
+            "fail_closed_reasons": fail_closed["reasons"],
             "checks": checks,
             "summary": {
                 "pass_count": len([item for item in checks if item["status"] == "pass"]),
                 "issue_count": len([item for item in checks if item["status"] != "pass"]),
+                "blocked_count": len([item for item in checks if item["status"] == "blocked"]),
+                "needs_fix_count": len([item for item in checks if item["status"] == "needs_fix"]),
+                "needs_review_count": len([item for item in checks if item["status"] == "needs_review"]),
             },
         }
         if status != "pass":
@@ -81,6 +94,7 @@ class BioinformaticsRunQualityRules:
         if write_outputs:
             write_yaml(self.run_dir / "qc" / "bioinformatics_quality_report.yaml", report)
             write_yaml(self.run_dir / "qc" / "next_analysis_plan.yaml", next_plan)
+            write_yaml(self.run_dir / "qc" / "fail_closed_decision.yaml", fail_closed)
         return {"report": report, "next_analysis_plan": next_plan}
 
     def _check_node_artifacts(self, manifest: dict[str, Any], next_plan: dict[str, Any]) -> list[dict[str, Any]]:
@@ -103,32 +117,32 @@ class BioinformaticsRunQualityRules:
     def _check_findmarkers_node(self, node_id: str, artifacts: list[Path], next_plan: dict[str, Any]) -> list[dict[str, Any]]:
         checks = []
         results = self._artifact_path(artifacts, "tables/findmarkers_results.csv")
-        checks.append(self._check(f"{node_id}.findmarkers_results_exists", bool(results and results.exists()), "missing tables/findmarkers_results.csv"))
+        checks.append(self._check(f"{node_id}.findmarkers_results_exists", bool(results and results.exists()), "missing tables/findmarkers_results.csv", "needs_fix"))
         if results and results.exists():
             rows, columns = self._read_csv(results)
-            checks.append(self._check(f"{node_id}.findmarkers_results_nonempty", len(rows) > 0, "findmarkers_results.csv is empty"))
+            checks.append(self._check(f"{node_id}.findmarkers_results_nonempty", len(rows) > 0, "findmarkers_results.csv is empty", "needs_fix"))
             missing = sorted(self.REQUIRED_FINDMARKERS_COLUMNS - set(columns))
-            checks.append(self._check(f"{node_id}.findmarkers_required_columns", not missing, f"missing columns: {', '.join(missing)}"))
+            checks.append(self._check(f"{node_id}.findmarkers_required_columns", not missing, f"missing columns: {', '.join(missing)}", "needs_fix"))
             if "p_val_adj" in columns:
                 valid = all(self._is_fdr(row.get("p_val_adj", "")) for row in rows if row.get("p_val_adj", "") != "")
-                checks.append(self._check(f"{node_id}.findmarkers_p_val_adj_range", valid, "p_val_adj values must be numeric between 0 and 1"))
+                checks.append(self._check(f"{node_id}.findmarkers_p_val_adj_range", valid, "p_val_adj values must be numeric between 0 and 1", "needs_fix"))
             if "avg_log2FC" in columns:
                 non_na = any(str(row.get("avg_log2FC", "")).lower() not in {"", "na", "nan"} for row in rows)
-                checks.append(self._check(f"{node_id}.findmarkers_avg_log2fc_non_na", non_na, "avg_log2FC is entirely missing/NA"))
-        checks.append(self._check(f"{node_id}.session_info_exists", bool(self._artifact_path(artifacts, "logs/sessionInfo.txt")), "missing logs/sessionInfo.txt"))
-        checks.append(self._check(f"{node_id}.group_size_report_exists", bool(self._artifact_path(artifacts, "qc/group_size_sample_mapping.csv")), "missing group size/sample mapping report"))
+                checks.append(self._check(f"{node_id}.findmarkers_avg_log2fc_non_na", non_na, "avg_log2FC is entirely missing/NA", "needs_fix"))
+        checks.append(self._check(f"{node_id}.session_info_exists", bool(self._artifact_path(artifacts, "logs/sessionInfo.txt")), "missing logs/sessionInfo.txt", "needs_fix"))
+        checks.append(self._check(f"{node_id}.group_size_report_exists", bool(self._artifact_path(artifacts, "qc/group_size_sample_mapping.csv")), "missing group size/sample mapping report", "needs_review"))
         next_plan["recommended_next_modules"].append("replicate-aware pseudobulk DE if sample_id mapping is available")
         return checks
 
     def _check_limma_node(self, node_id: str, artifacts: list[Path], next_plan: dict[str, Any]) -> list[dict[str, Any]]:
         checks = []
         results = self._artifact_path(artifacts, "tables/limma_voom_results.csv")
-        checks.append(self._check(f"{node_id}.limma_results_exists", bool(results and results.exists()), "missing tables/limma_voom_results.csv"))
+        checks.append(self._check(f"{node_id}.limma_results_exists", bool(results and results.exists()), "missing tables/limma_voom_results.csv", "needs_fix"))
         if results and results.exists():
             rows, columns = self._read_csv(results)
-            checks.append(self._check(f"{node_id}.limma_results_nonempty", len(rows) > 0, "limma_voom_results.csv is empty"))
-            checks.append(self._check(f"{node_id}.limma_adj_p_present", "adj.P.Val" in columns, "missing adj.P.Val column"))
-        checks.append(self._check(f"{node_id}.design_summary_exists", bool(self._artifact_path(artifacts, "qc/design_summary.csv")), "missing qc/design_summary.csv"))
+            checks.append(self._check(f"{node_id}.limma_results_nonempty", len(rows) > 0, "limma_voom_results.csv is empty", "needs_fix"))
+            checks.append(self._check(f"{node_id}.limma_adj_p_present", "adj.P.Val" in columns, "missing adj.P.Val column", "needs_fix"))
+        checks.append(self._check(f"{node_id}.design_summary_exists", bool(self._artifact_path(artifacts, "qc/design_summary.csv")), "missing qc/design_summary.csv", "needs_fix"))
         next_plan["recommended_next_modules"].append("ranked-gene enrichment after DE table review")
         return checks
 
@@ -136,9 +150,13 @@ class BioinformaticsRunQualityRules:
         checks = []
         for name, key in [("figure_source_map.yaml", "figures"), ("table_source_map.yaml", "tables")]:
             data = read_yaml(self.run_dir / name)
+            if not data:
+                checks.append(self._check(f"{name}.exists", False, f"missing {name}", "needs_fix"))
+                next_plan["human_review_items"].append(f"create {name} before evidence synthesis")
+                continue
             items = data.get(key, []) if isinstance(data, dict) else []
             missing = [idx for idx, item in enumerate(items or []) if isinstance(item, dict) and not item.get("claim_boundary")]
-            checks.append(self._check(f"{name}.claim_boundary_complete", not missing, f"{name} entries missing claim_boundary: {missing}"))
+            checks.append(self._check(f"{name}.claim_boundary_complete", not missing, f"{name} entries missing claim_boundary: {missing}", "needs_fix"))
             if missing:
                 next_plan["human_review_items"].append(f"complete claim_boundary fields in {name}")
         return checks
@@ -161,8 +179,8 @@ class BioinformaticsRunQualityRules:
         if project_terms:
             next_plan["human_review_items"].append("review adapted external module artifacts for project-specific disease terms")
         return [
-            self._check("no_windows_personal_path_leak", not leaked_paths, f"path leaks: {', '.join(leaked_paths)}"),
-            self._check("adapted_external_module_no_hardcoded_disease_terms", not project_terms, f"project terms in external artifacts: {', '.join(project_terms)}"),
+            self._check("no_windows_personal_path_leak", not leaked_paths, f"path leaks: {', '.join(leaked_paths)}", "blocked"),
+            self._check("adapted_external_module_no_hardcoded_disease_terms", not project_terms, f"project terms in external artifacts: {', '.join(project_terms)}", "needs_review"),
         ]
 
     def _artifact_path(self, artifacts: list[Path], suffix: str) -> Path | None:
@@ -193,5 +211,33 @@ class BioinformaticsRunQualityRules:
         return 0 <= parsed <= 1
 
     @staticmethod
-    def _check(name: str, passed: bool, message: str) -> dict[str, Any]:
-        return {"name": name, "status": "pass" if passed else "needs_review", "message": "" if passed else message}
+    def _overall_status(checks: list[dict[str, Any]]) -> str:
+        status = "pass"
+        for item in checks:
+            current = str(item.get("status", "pass"))
+            if QUALITY_STATUS_RANK.get(current, 0) > QUALITY_STATUS_RANK[status]:
+                status = current
+        return status
+
+    def _fail_closed_decision(self, status: str, checks: list[dict[str, Any]]) -> dict[str, Any]:
+        reasons = [
+            {
+                "check": item.get("name", ""),
+                "status": item.get("status", ""),
+                "message": item.get("message", ""),
+            }
+            for item in checks
+            if item.get("status") != "pass"
+        ]
+        return {
+            "schema_version": "fail_closed_decision.v1",
+            "run_id": self.run_dir.name,
+            "bioinformatics_quality_status": status,
+            "final_status_must_not_be_pass": status != "pass",
+            "reasons": reasons,
+        }
+
+    @staticmethod
+    def _check(name: str, passed: bool, message: str, fail_status: str = "needs_review") -> dict[str, Any]:
+        status = "pass" if passed else fail_status
+        return {"name": name, "status": status, "message": "" if passed else message}

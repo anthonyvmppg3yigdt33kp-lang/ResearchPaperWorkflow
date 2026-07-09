@@ -1,328 +1,111 @@
-# Research Paper Workflow Framework v4.8.0
+# ResearchPaperWorkflow v5.0.0
 
-Agent-operated research paper workflow for bioinformatics, clinical research,
-and reproducible manuscript production. The current release upgrades the
-method-asset layer from script intake and proposal review into a sustainable
-bioinformatics method asset library: method-block extraction, depersonalized
-adaptation scaffolds, executable Seurat/limma wrappers, graph output-to-input
-artifact binding, strategy guidance, bioinformatics-specific run QA, source-map
-boundaries, and CI preflight.
+ResearchPaperWorkflow v5.0.0 is a fail-closed research production workflow kernel. It keeps paper writing, omics analysis, evidence synthesis, and release work in one auditable system, but it does not treat a plan, scaffold, dry-run wrapper, or attractive draft as current scientific truth.
 
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-CI%20preflight-brightgreen.svg)](tests/)
-[![Version](https://img.shields.io/badge/Version-4.8.0-orange.svg)]()
+[![Version](https://img.shields.io/badge/Version-5.0.0-blue.svg)]()
+[![Kernel](https://img.shields.io/badge/TargetTask-fail--closed-green.svg)]()
 
-## What V4.8 Is
+## What Changed In v5
 
-ResearchPaperWorkflow is not a prompt pack that asks an AI to write a paper in
-one pass. It is an auditable workflow kernel where Claude, Codex, or another
-tool-using AI agent can operate a research pipeline while the user supplies
-scientific judgment, data, references, and approvals.
-
-The current invariant is:
-
-```text
-completed = real execution + verified outputs + concrete gate results + checkpoint consistency
-```
-
-## V4.8 Additions
-
-- Lightweight collaboration modes:
-  `exploration_mode`, `analysis_design_mode`, `execution_mode`,
-  `closeout_audit_mode`, `ppt_briefing_mode`, and `retrospective_mode`.
-- Run-scoped output layout under `results/runs/<run_id>/` with
-  `results/current_run.yaml` and `results/current/RUN_POINTER.txt`.
-- Analysis-design-first CLI flow: `new-run`, `set-current-run`,
-  `plan-analysis`, `run-analysis`, `brief-status`, and `evaluate-run`.
-- Method-asset code library:
-  `code_library/module_registry.yaml`, `code_library/environment_registry.yaml`,
-  and module-level `module.yaml` / `env_profile.yaml` contracts.
-- Strategy-evaluated planning through `list-capabilities` and
-  `plan-analysis --from-code-library`, producing `analysis_graph.yaml`,
-  node-level `inputs`, and `method_selection_report.md`; use `--module-limit`
-  when a validation or upstream-data run should execute only bounded assets.
-  The strategy evaluator records method-family decisions such as pseudobulk DE
-  versus WGCNA, spatial deconvolution prerequisites, figure role, sample-size
-  risk, and reviewer-facing requirements.
-- Analysis graph execution through `analysis_graph_executor`, with per-node
-  manifests, stdout/stderr logs, session information, source maps, run
-  evaluation, strict node input-contract validation, and support for Rscript,
-  Python, shell, and Jupyter method assets.
-- Real method-asset execution is approval-gated and contract-gated: graph runs
-  check `DataRegistry`, `EnvironmentRegistry`, lock/package policy, and
-  node-level source maps before treating artifacts as analysis evidence. Use
-  `list-envs`, `inspect-env`, `doctor-env`, and `validate-env --module
-  <module_id>` to audit execution environments.
-- Evidence graph synthesis writes `tables/evidence_matrix.tsv`,
-  `review/reviewer_risk_report.md`, `brief/FIGURE_STORYLINE.md`, and
-  `claims/claim_ledger.jsonl` when `evaluate-run --write-report` is used.
-- External method sources can be imported, cloned, parsed, proposed, and
-  reviewed without silent registry mutation through `import-code-source
-  --clone`, `review-code-source`, `adapt-method-block`, `register-figure-style`,
-  and `list-figure-styles`. Intake now writes `method_blocks.yaml` with source
-  file, line range, detected calls, project-specific terms, parameterization
-  plan, candidate module family, reviewer risk, and claim boundary.
-- `adapt-method-block` generates external adapted module scaffolds only after
-  explicit review approval; `--register` can produce a `registry_patch.yaml`
-  after license approval, but never mutates `module_registry.yaml` silently.
-- Reusable executable method assets now include
-  `single_cell.seurat_findmarkers_group_de.v1` and
-  `bulk_rnaseq.limma_voom_de_real.v1`, with dry-run contract outputs and
-  fail-closed real execution when required R packages or inputs are missing.
-- Analysis graph planning understands module `output_bindings`, so downstream
-  nodes can bind upstream artifacts such as `seurat_rds` and
-  `ranked_gene_statistic` instead of rereading only the original input.
-- `evaluate-run --write-report` writes `qc/bioinformatics_quality_report.yaml`
-  and `qc/next_analysis_plan.yaml` for method-specific table, source-map,
-  session-info, data-registry, leakage, and next-step checks.
-- `code_library/modules/MODULE_SOURCE_CATALOG.md` lists every registered method
-  asset with purpose, primary script, delegated wrappers, functions, execution
-  type, environment lock, maturity, validation status, and claim boundary.
-- Module usage feedback is recorded in `code_library/module_usage_ledger.jsonl`;
-  improvement proposals are explicit review artifacts and never auto-edit the
-  module registry.
-- Production CI is split into Python tests, method-asset schema checks,
-  `audit-method-assets --strict`, CLI bulk smoke, graph dry-run, mandatory R
-  method contract parsing/dry-run, and light security guards.
-- Official Seurat PBMC3K tutorial wrapper under
-  `code_library/modules/single_cell/seurat_pbmc3k_basic/`, validated locally
-  as a single-cell method-asset smoke path.
-- Built-in bulk RNA-seq pilot backend for workflow smoke execution, source-map
-  generation, QC reports, and preview figures without external bioinformatics
-  package installation.
-- Contract files for result writing, visualization, bioinformatics methods,
-  reporting, workflow modes, data governance, environments, module registries,
-  analysis graphs, and curated code-library routing.
-- CI preflight for YAML/config validation, large-file guards, CLI smoke, and
-  pytest.
-
-## Current Operating Guarantees
-
-- `route-task` resolves natural-language requests into mode, profile, active
-  stages, deferred stages, forbidden actions, and journal timing policy before
-  execution.
-- `doctor` checks local tools, fast-context fallback state, bundled skills,
-  `.agents/skills` mirrors, and configured `.claude/agents`.
-- Exploratory projects can record `candidate_journal_class` and defer a final
-  `target_journal` until evidence maturation or submission closeout.
-- `workflow_contract.yaml` preserves legacy `results/run_manifest.yaml`
-  compatibility while declaring the `results/current_run.yaml` ->
-  `results/runs/<run_id>/run_manifest.yaml` resolver.
-- `doctor` reports method-asset registry health in addition to tools, skills,
-  and configured agents.
-- Real graph execution fails closed when approval, data registry, environment
-  lock, package availability, or source-map requirements are not satisfied.
-- PBMC3K validation is treated as `workflow_test` evidence only; tutorial
-  fixture outputs do not become disease, diagnostic, or mechanism claims.
-
-## Highlights
-
-- 20-stage V4 paper loop from topic design to final submission package.
-- Machine-readable truth contract in `workflow_contract.yaml`.
-- Fail-closed stage verification: templates, pending harness records, empty
-  files, and missing quality-gate results cannot become completed stages.
-- Shared `WorkflowAPI` service boundary for CLI, AI harness, Python callers,
-  and non-dry-run E2E compatibility.
-- Model-facing AI harness for natural-language Claude/Codex operation.
-- Unified `StageResult` files under `stage_results/` for audit and resume.
-- Passport and ledger supervision: artifact hashes, checkpoints, integrity
-  events, pending harness records, and stale propagation.
-- 13-agent routing model covering strategy, literature, statistics, data,
-  figures, analysis, writing, AIGC hygiene, integrity, and review.
-- Biomedical safeguards for SAP freeze, patient-level independence,
-  pseudoreplication, claim-evidence binding, conservative interpretation, data
-  availability, code availability, and responsible AIGC text hygiene.
-
-## Claude/Codex First Workflow
-
-Most research users should interact with the workflow through natural language.
-The model calls the harness and reports the result.
-
-Example user request:
-
-```text
-I have not started yet. I want to design a clinical bioinformatics project about
-diabetes and clear cell renal cell carcinoma using single-cell or spatial
-transcriptomics. Target journal: Genome Biology. Create the workflow project,
-advance only to the first checkpoint, and tell me what scientific decision I
-need to approve.
-```
-
-Example continuation request:
-
-```text
-Continue this paper by one safe workflow step. Stop if there is a checkpoint,
-quality-gate failure, pending harness task, missing artifact, or stale
-downstream stage. Report the paper_id, current stage truth, missing inputs, and
-next safest action.
-```
-
-Example validation request:
-
-```text
-Audit the current workflow state. Check whether completed stages have real
-stage results, non-empty required outputs, concrete quality-gate results,
-checkpoint approval where required, and no unpropagated artifact drift.
-```
-
-For detailed Chinese natural-language prompt patterns, see
-[V4.3 Chinese operation guide](docs/OPERATION_GUIDE_ZH.md).
-
-## Maintainer CLI
-
-The CLI remains available for maintainers, tests, and automation. The important
-rule is that all supported entrypoints use the same truth path:
-
-```text
-AIWorkflowHarness -> WorkflowAPI -> PaperLoopEngine -> verify_stage -> passport/ledger/stage_results
-```
-
-Core commands:
-
-```text
-ai
-ai-harness
-create-project
-status
-run-pipeline
-checkpoint
-run-integrity-gate
-diagnose-gate-failures
-detect-artifact-drift
-sync-artifact-stale
-validate-workflow
-validate-contract
-list-harness-invocations
-complete-harness-invocation
-list-papers
-strategy
-install-skills
-run-aigc-humanizer
-route-task
-doctor
-new-run
-set-current-run
-plan-analysis
-run-analysis
-list-modules
-inspect-module
-list-capabilities
-brief-status
-evaluate-run
-import-code-source
-review-code-source
-register-figure-style
-list-figure-styles
-summarize-module-usage
-propose-module-improvement
-apply-module-improvement
-```
-
-Example method-asset planning and execution:
+v5 replaces the previous "complex framework with many components" posture with a concrete TargetTask execution path:
 
 ```bash
-paper-workflow list-capabilities --question "Seurat PBMC3K QC UMAP markers" --modality scrna
-paper-workflow plan-analysis --paper <paper_id> --run-id pbmc3k_seurat_20260709_v1 \
-  --goal "Use the official Seurat PBMC3K workflow for QC, PCA, clustering, UMAP, and marker plots." \
-  --modality scrna --input data/raw/pbmc3k/filtered_gene_bc_matrices/hg19 \
-  --primary-contrast "tutorial fixture; no disease contrast" --from-code-library --module-limit 1 --set-current
-paper-workflow run-analysis --paper <paper_id> --run-id pbmc3k_seurat_20260709_v1 --approved --execute --set-current
+paper-workflow target validate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target plan --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target run --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target evaluate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target package --target targets/examples/pbmc3k_t_subcluster_v5.yaml
 ```
 
-## 20-Stage Pipeline
+The v5 production kernel adds:
 
-```mermaid
-flowchart LR
-    A["1-5 Research design"] --> B["6-9 Data, figures, analysis, methods verification"]
-    B --> C["10-14 Manuscript writing and assembly"]
-    C --> D["15-20 AIGC hygiene, integrity, review, revision, finalization"]
+- fail-closed evaluation through `qc/fail_closed_decision.yaml`;
+- explicit module grades: `production_capable_real_wrapper`, `validated_workflow_pilot`, `dry_run_contract`, `adapter_contract`, `scaffold_only`, `planning_contract`, `blocked_environment`, `retired`;
+- environment-aware graph execution so blocked R/Bioconductor modules do not enter production-visible plans;
+- a PBMC3K Seurat TargetTask fixture that validates the workflow mechanics on official tutorial data without making disease or clinical claims;
+- a real Seurat subcluster/program wrapper and a real external DE-table standardizer;
+- evidence-bound manuscript packet generation: methods draft, results skeleton, figure storyline, evidence matrix, claim ledger, reviewer risk report;
+- CI gates for module grading, fail-closed supervision cases, TargetTask smoke, and productivity budget.
+
+## Current Claim Boundary
+
+The included PBMC3K workflow is a tutorial-fixture validation project. It can support workflow validation and exploratory tutorial subcluster structure. It cannot support disease mechanism, clinical biomarker, treatment response, or causal immune-state claims.
+
+If Seurat, Rscript, PBMC3K data, source maps, session info, data registry hash, or claim boundaries are missing, v5 must report `blocked` or `needs_fix`; it must not produce a final pass or manuscript conclusion paragraph.
+
+## Install
+
+```bash
+python -m pip install -e ".[dev]"
 ```
 
-Stages:
+Optional R checks:
 
-1. `select_topic`
-2. `target_journal`
-3. `literature_search`
-4. `formulate_hypotheses`
-5. `design_analysis_plan`
-6. `data_audit`
-7. `figure_planning`
-8. `run_analysis`
-9. `verify_methods`
-10. `write_methods`
-11. `write_results`
-12. `write_introduction`
-13. `write_discussion`
-14. `assemble_manuscript`
-15. `aigc_humanizer_review`
-16. `integrity_check`
-17. `internal_review`
-18. `apply_revision`
-19. `re_review`
-20. `finalize`
+```bash
+Rscript scripts/check_r_environment.R --json
+Rscript scripts/check_r_bioc_environment.R --json
+```
 
-## Project Truth Files
+The bootstrap scripts print approved install plans; they do not silently mutate the machine environment:
 
-Generated paper projects store recoverable state under `papers/<paper_id>/`:
+```bash
+Rscript scripts/bootstrap_r_seurat_env.R
+Rscript scripts/bootstrap_r_bulk_env.R
+Rscript scripts/bootstrap_r_pseudobulk_env.R
+```
 
-- `project_passport.yaml`: project identity and stage snapshot.
-- `stage_results/*_result.json`: normalized result for each stage.
-- `artifact_ledger.jsonl`: append-only artifact hashes.
-- `checkpoint_ledger.jsonl`: human approvals and revision decisions.
-- `integrity_ledger.jsonl`: quality-gate events.
-- `workflow_state/pending_invocations/*.json`: external or human work required
-  before a stage can complete.
+## PBMC3K TargetTask
+
+Download the public tutorial data only when you intend to execute the real Seurat path:
+
+```bash
+Rscript scripts/download_pbmc3k_data.R data/raw/pbmc3k
+```
+
+Then run the v5 TargetTask:
+
+```bash
+paper-workflow target validate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target plan --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target run --target targets/examples/pbmc3k_t_subcluster_v5.yaml --approved --execute
+paper-workflow target evaluate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target package --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+```
+
+Without `--execute`, `target run` performs graph dry-run packaging. With `--execute`, missing runtime packages or data block the run instead of creating fake success artifacts.
+
+## Production Gates
+
+Run these before opening a release PR or publishing a tag:
+
+```bash
+python -m compileall -q src scripts tests
+python scripts/ci_quality_check.py --json
+python scripts/ci_module_grade_audit.py --strict --json
+python scripts/ci_supervision_failure_cases.py --json
+python scripts/ci_graph_dry_run.py --json
+python scripts/ci_pbmc3k_target_task.py --json
+python scripts/ci_performance_budget.py --json
+python -m pytest -q
+```
+
+R-dependent checks are separate because they depend on local R availability:
+
+```bash
+Rscript scripts/ci_seurat_subcluster_smoke.R
+Rscript scripts/ci_pbmc3k_target_task.R
+```
 
 ## Documentation
 
-- [V4.8 architecture](docs/METHOD_ASSET_ARCHITECTURE_v4.8.0.md)
-- [V4.8 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.8.0.md)
-- [V4.7 architecture archive](docs/METHOD_ASSET_ARCHITECTURE_v4.7.0.md)
-- [V4.7 method-asset orchestration guide archive](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.7.0.md)
-- [V4.6 architecture archive](ARCHITECTURE.md)
-- [V4.6 user guide archive](USER_GUIDE.md)
-- [V4.6 method-asset orchestration guide](docs/METHOD_ASSET_ORCHESTRATION_GUIDE_v4.6.0.md)
-- [V4.6 method-asset architecture](docs/METHOD_ASSET_ARCHITECTURE_v4.6.0.md)
-- [V4.3 Chinese operation guide](docs/OPERATION_GUIDE_ZH.md)
-- [V4.4 clinical research Codex workflow guide](docs/CLINICAL_RESEARCH_CODEX_WORKFLOW_GUIDE.md)
-- [V4.4 Codex collaboration system](docs/CODEX_COLLABORATION_SYSTEM.md)
-- [Codex mode interaction guide](docs/CODEX_MODE_INTERACTION_GUIDE_ZH.md)
-- [V4.4 optimization master plan](docs/WORKFLOW_OPTIMIZATION_MASTER_PLAN_2026-07-07.md)
-- [Release notes v4.8.0](docs/RELEASE_NOTES_v4.8.0.md)
-- [Release notes v4.7.0](docs/RELEASE_NOTES_v4.7.0.md)
-- [Release notes v4.6.0](docs/RELEASE_NOTES_v4.6.0.md)
-- [Release notes v4.5.0](docs/RELEASE_NOTES_v4.5.0.md)
-- [Release notes v4.4.0](docs/RELEASE_NOTES_v4.4.0.md)
-- [Next-generation truth-layer guide](docs/NEXT_GEN_V4_TRUTH_LAYER.md)
-- [Next-generation completion audit](docs/NEXT_GEN_COMPLETION_AUDIT.md)
-- [Release notes v4.3.0](docs/RELEASE_NOTES_v4.3.0.md)
-- [Release notes v4.2.0](docs/RELEASE_NOTES_v4.2.0.md)
-- [Release notes v4.1.0](docs/RELEASE_NOTES_v4.1.0.md)
+Current v5 documents:
 
-Backward-compatible links:
+- [v5 production-kernel reform plan](docs/V5_PRODUCTION_KERNEL_REFORM_PLAN.md)
+- [v5 TargetTask design](docs/V5_TARGET_TASK_DESIGN.md)
+- [v5 Seurat validation project](docs/V5_SEURAT_VALIDATION_PROJECT.md)
+- [R environment setup](docs/R_ENVIRONMENT_SETUP_ZH.md)
+- [v5 baseline truth](docs/V5_BASELINE_TRUTH.md)
+- [v5 productivity scorecard](docs/V5_PRODUCTIVITY_SCORECARD.md)
+- [v5 release notes](docs/RELEASE_NOTES_v5.0.0.md)
 
-- [AI harness interaction guide](docs/AI_HARNESS_INTERACTION_GUIDE_ZH.md)
-- [Clinician and graduate student guide](docs/CLINICIAN_GRADUATE_USER_GUIDE_ZH.md)
-
-Those two files now point to the unified V4.3 Chinese operation guide.
-
-## Verification
-
-Recommended maintainer checks:
-
-```bash
-python -m compileall -q src
-python scripts/ci_quality_check.py
-python scripts/ci_cli_smoke.py
-python -m pytest -q
-python -m paper_workflow.cli validate-contract --strict
-python -m paper_workflow.cli doctor --json
-```
-
-For source-tree validation without an editable install, set `PYTHONPATH=src`
-before CLI commands.
-
-## License
-
-MIT License. See [LICENSE](LICENSE).
+Historical v4.x architecture and release notes remain in `docs/` as archives, not as the current operating contract.

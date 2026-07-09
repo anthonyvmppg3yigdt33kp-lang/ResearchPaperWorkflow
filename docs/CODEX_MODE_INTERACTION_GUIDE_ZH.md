@@ -32,7 +32,7 @@ python -m paper_workflow.cli.main doctor --json
 
 ```text
 Mode: exploration_mode
-Canonical root: C:\Users\HP\Documents\论文\ResearchPaperWorkflow
+Canonical root: %USERPROFILE%\Documents\论文\ResearchPaperWorkflow
 Goal: 扫描当前 workflow、skill、agent、配置和旧版本残余，输出问题清单
 Allowed inputs: AGENTS.md, README.md, ARCHITECTURE.md, config/, src/, tests/, docs/
 Forbidden actions: 不运行分析、不安装包、不下载数据库、不改 papers/results 生成数据
@@ -49,7 +49,7 @@ Closeout: completed / in-progress / blockers / next safe action
 
 ```text
 Mode: analysis_design_mode
-Canonical root: C:\Users\HP\Documents\IgG4-ROD  vs  MALT-L
+Canonical root: %USERPROFILE%\Documents\IgG4-ROD  vs  MALT-L
 Goal: 为 bulk RNA-seq 差异分析设计最小可执行方案
 Allowed inputs: data inventory, current_run.yaml, prior run_manifest, method contract
 Forbidden actions: 不运行分析、不安装包、不下载数据库、不写最终结果
@@ -66,7 +66,7 @@ Closeout: 明确哪些内容需要我批准后才能执行
 
 ```text
 Mode: execution_mode
-Canonical root: C:\Users\HP\Documents\IgG4-ROD  vs  MALT-L
+Canonical root: %USERPROFILE%\Documents\IgG4-ROD  vs  MALT-L
 Approved design: papers/<paper_id>/results/runs/bulk_de_20260707_v1/analysis_design.yaml
 Run id: bulk_de_20260707_v1
 Allowed inputs: design 中锁定的数据和参数
@@ -84,7 +84,7 @@ Closeout: 说明输出是 exploratory、analysis-ready 还是 manuscript-ready
 
 ```text
 Mode: closeout_audit_mode
-Canonical root: C:\Users\HP\Documents\论文\ResearchPaperWorkflow
+Canonical root: %USERPROFILE%\Documents\论文\ResearchPaperWorkflow
 Goal: 投稿或发布前检查 contract、CI、文档、版本、release note 和旧版本残余
 Allowed inputs: workflow_contract.yaml, config/, docs/, tests/, GitHub PR/CI 状态
 Forbidden actions: 不创建 release tag，除非我明确批准
@@ -101,7 +101,7 @@ Closeout: 列出 blockers、未发布原因、下一步 release 条件
 
 ```text
 Mode: ppt_briefing_mode
-Canonical root: C:\Users\HP\Documents\IgG4-ROD  vs  MALT-L
+Canonical root: %USERPROFILE%\Documents\IgG4-ROD  vs  MALT-L
 Goal: 基于已验证 figure source map 生成 10 页科研汇报结构
 Allowed inputs: brief/SLIDE_BRIEF.md, brief/FIGURE_STORYLINE.md, figure_source_map.yaml
 Forbidden actions: 不新增分析、不猜 figure 来源、不使用未映射图片作最终证据
@@ -118,7 +118,7 @@ Closeout: 标出缺图、弱证据、需要补分析的位置
 
 ```text
 Mode: retrospective_mode
-Canonical root: C:\Users\HP\Documents\论文\ResearchPaperWorkflow
+Canonical root: %USERPROFILE%\Documents\论文\ResearchPaperWorkflow
 Goal: 把 fast-context 不可用、skill/agent 检查和模式路由问题固化进仓库
 Allowed inputs: AGENTS.md, config/workflow_modes.yaml, src/paper_workflow/routing/, docs/
 Forbidden actions: 不改 memory，除非我明确要求；不改生成结果

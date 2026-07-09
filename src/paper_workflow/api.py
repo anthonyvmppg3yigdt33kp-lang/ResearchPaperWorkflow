@@ -390,6 +390,7 @@ class WorkflowAPI:
             "diagnose_gate_failures", "run_aigc_humanizer", "list_papers",
             "route_task", "doctor", "list_capabilities", "list_modules",
             "inspect_module", "plan_analysis", "run_analysis", "evaluate_run",
+            "target_task",
         }
         supported_cli_commands = {
             "ai", "ai-harness", "create-project", "status", "run-pipeline",
@@ -401,7 +402,7 @@ class WorkflowAPI:
             "new-run", "set-current-run", "brief-status", "evaluate-run",
             "plan-analysis", "run-analysis", "list-modules", "inspect-module",
             "list-capabilities", "list-envs", "inspect-env", "doctor-env",
-            "validate-env",
+            "validate-env", "target",
         }
         required_top_level = {"command_entrypoint", "default_max_stages_per_turn", "command_catalog", "scenario_routes"}
         for key in sorted(required_top_level - set(ai_harness)):
