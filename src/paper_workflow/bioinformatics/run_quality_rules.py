@@ -51,6 +51,22 @@ class BioinformaticsRunQualityRules:
         "subset_column",
         "subset_value",
     }
+    REQUIRED_SUBCLUSTER_MARKER_COLUMNS = {
+        "gene",
+        "cluster",
+        "p_val",
+        "avg_log2FC",
+        "pct.1",
+        "pct.2",
+        "p_val_adj",
+    }
+    REQUIRED_SUBCLUSTER_FIGURES = (
+        "figures/tcell_subset_umap.png",
+        "figures/resolution_grid_umap.png",
+        "figures/subcluster_marker_heatmap.png",
+        "figures/program_score_violin.png",
+        "figures/program_score_dotplot.png",
+    )
 
     def __init__(self, run_dir: Path):
         self.run_dir = Path(run_dir)
@@ -112,6 +128,8 @@ class BioinformaticsRunQualityRules:
                 checks.extend(self._check_findmarkers_node(node_id, artifacts, next_plan))
             if "limma_voom" in module_id:
                 checks.extend(self._check_limma_node(node_id, artifacts, next_plan))
+            if "seurat_subcluster_programs" in module_id:
+                checks.extend(self._check_subcluster_node(node_id, artifacts, next_plan))
         return checks
 
     def _check_findmarkers_node(self, node_id: str, artifacts: list[Path], next_plan: dict[str, Any]) -> list[dict[str, Any]]:
@@ -144,6 +162,67 @@ class BioinformaticsRunQualityRules:
             checks.append(self._check(f"{node_id}.limma_adj_p_present", "adj.P.Val" in columns, "missing adj.P.Val column", "needs_fix"))
         checks.append(self._check(f"{node_id}.design_summary_exists", bool(self._artifact_path(artifacts, "qc/design_summary.csv")), "missing qc/design_summary.csv", "needs_fix"))
         next_plan["recommended_next_modules"].append("ranked-gene enrichment after DE table review")
+        return checks
+
+    def _check_subcluster_node(self, node_id: str, artifacts: list[Path], next_plan: dict[str, Any]) -> list[dict[str, Any]]:
+        checks = []
+        markers = self._artifact_path(artifacts, "tables/subcluster_markers.csv")
+        checks.append(self._check(f"{node_id}.subcluster_markers_exists", bool(markers), "missing tables/subcluster_markers.csv", "blocked"))
+        if markers:
+            rows, columns = self._read_csv(markers)
+            missing = sorted(self.REQUIRED_SUBCLUSTER_MARKER_COLUMNS - set(columns))
+            checks.append(self._check(f"{node_id}.subcluster_markers_nonempty", bool(rows), "subcluster_markers.csv is empty", "blocked"))
+            checks.append(self._check(f"{node_id}.subcluster_marker_columns", not missing, f"missing columns: {', '.join(missing)}", "blocked"))
+            if "p_val_adj" in columns:
+                valid_fdr = all(self._is_fdr(row.get("p_val_adj", "")) for row in rows if row.get("p_val_adj", "") != "")
+                checks.append(self._check(f"{node_id}.subcluster_marker_fdr_range", valid_fdr, "p_val_adj values must be numeric between 0 and 1", "blocked"))
+
+        programs = self._artifact_path(artifacts, "tables/program_score_summary.csv")
+        checks.append(self._check(f"{node_id}.program_score_summary_exists", bool(programs), "missing tables/program_score_summary.csv", "blocked"))
+        if programs:
+            rows, columns = self._read_csv(programs)
+            required = {"subcluster", "program", "mean_score", "median_score", "n_cells"}
+            missing = sorted(required - set(columns))
+            valid_scores = bool(rows) and all(self._is_number(row.get("mean_score", "")) for row in rows)
+            checks.append(self._check(f"{node_id}.program_score_summary_nonempty", bool(rows), "program_score_summary.csv is empty", "blocked"))
+            checks.append(self._check(f"{node_id}.program_score_columns", not missing, f"missing columns: {', '.join(missing)}", "blocked"))
+            checks.append(self._check(f"{node_id}.program_scores_numeric", valid_scores, "program mean_score values are missing or non-numeric", "blocked"))
+
+        resolutions = self._artifact_path(artifacts, "tables/resolution_summary.csv")
+        checks.append(self._check(f"{node_id}.resolution_summary_exists", bool(resolutions), "missing tables/resolution_summary.csv", "needs_fix"))
+        if resolutions:
+            rows, columns = self._read_csv(resolutions)
+            selected_count = sum(str(row.get("selected", "")).lower() in {"true", "1", "yes"} for row in rows)
+            valid_clusters = all(self._is_number(row.get("n_subclusters", "")) and float(row["n_subclusters"]) >= 2 for row in rows)
+            checks.append(self._check(f"{node_id}.resolution_grid_has_multiple_values", len(rows) >= 2, "resolution_summary.csv must contain at least two tested resolutions", "needs_fix"))
+            checks.append(self._check(f"{node_id}.resolution_summary_columns", {"resolution", "n_subclusters", "selected"}.issubset(columns), "resolution_summary.csv missing required columns", "needs_fix"))
+            checks.append(self._check(f"{node_id}.resolution_single_selection", selected_count == 1, "resolution_summary.csv must identify exactly one selected resolution", "needs_fix"))
+            checks.append(self._check(f"{node_id}.resolution_cluster_counts", valid_clusters, "each tested resolution must contain at least two subclusters", "needs_fix"))
+
+        quality_path = self._artifact_path(artifacts, "qc/subcluster_quality_report.yaml")
+        quality = read_yaml(quality_path) if quality_path else {}
+        quality_status = str(quality.get("status", "missing"))
+        checks.append(self._check(f"{node_id}.subcluster_quality_pass", quality_status == "pass", f"subcluster quality status is {quality_status}", "blocked"))
+        subset_cells = self._numeric_value(quality.get("subset_cells"))
+        input_cells = self._numeric_value(quality.get("input_cells"))
+        subcluster_count = self._numeric_value(quality.get("subcluster_count"))
+        subset_fraction = self._numeric_value(quality.get("subset_fraction"))
+        checks.append(self._check(f"{node_id}.subset_cells_positive", subset_cells is not None and subset_cells > 0, "subcluster QC must report a positive subset cell count", "blocked"))
+        checks.append(self._check(f"{node_id}.subcluster_count_valid", subcluster_count is not None and subcluster_count >= 2, "subcluster QC must report at least two subclusters", "blocked"))
+        checks.append(self._check(f"{node_id}.input_cell_count_valid", input_cells is not None and subset_cells is not None and input_cells >= subset_cells, "subcluster QC must report an input cell count not smaller than the subset", "needs_fix"))
+        checks.append(self._check(f"{node_id}.subset_fraction_valid", subset_fraction is not None and 0 < subset_fraction <= 1, "subcluster QC must report subset_fraction between 0 and 1", "needs_fix"))
+        checks.append(self._check(f"{node_id}.subset_not_near_global", subset_fraction is not None and subset_fraction <= 0.9, "marker-driven subset contains more than 90% of input cells; review subset specificity", "needs_review"))
+        checks.append(self._check(f"{node_id}.subset_rule_documented", bool(str(quality.get("subset_rule", "")).strip()), "subcluster QC missing subset_rule", "needs_fix"))
+        if "marker" in str(quality.get("subset_rule", "")).lower():
+            anchor_count = self._numeric_value(quality.get("min_anchor_markers"))
+            checks.append(self._check(f"{node_id}.anchor_markers_documented", bool(str(quality.get("anchor_markers", "")).strip()), "marker-driven subset QC missing anchor_markers", "needs_fix"))
+            checks.append(self._check(f"{node_id}.anchor_threshold_valid", anchor_count is not None and anchor_count >= 1, "marker-driven subset QC missing a positive min_anchor_markers threshold", "needs_fix"))
+        checks.append(self._check(f"{node_id}.subcluster_object_exists", bool(self._artifact_path(artifacts, "objects/subcluster_seurat.rds")), "missing objects/subcluster_seurat.rds", "needs_fix"))
+        checks.append(self._check(f"{node_id}.session_info_exists", bool(self._artifact_path(artifacts, "logs/sessionInfo.txt")), "missing logs/sessionInfo.txt", "needs_fix"))
+        for figure in self.REQUIRED_SUBCLUSTER_FIGURES:
+            figure_name = Path(figure).stem
+            checks.append(self._check(f"{node_id}.{figure_name}_exists", bool(self._artifact_path(artifacts, figure)), f"missing or empty {figure}", "needs_fix"))
+        next_plan["recommended_next_modules"].append("review subcluster stability and biological annotation before downstream differential claims")
         return checks
 
     def _check_source_maps(self, next_plan: dict[str, Any]) -> list[dict[str, Any]]:
@@ -209,6 +288,24 @@ class BioinformaticsRunQualityRules:
         except ValueError:
             return False
         return 0 <= parsed <= 1
+
+    @staticmethod
+    def _is_number(value: str) -> bool:
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            return False
+        return parsed == parsed and parsed not in {float("inf"), float("-inf")}
+
+    @staticmethod
+    def _numeric_value(value: Any) -> float | None:
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            return None
+        if parsed != parsed or parsed in {float("inf"), float("-inf")}:
+            return None
+        return parsed
 
     @staticmethod
     def _overall_status(checks: list[dict[str, Any]]) -> str:

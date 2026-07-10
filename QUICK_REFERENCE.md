@@ -1,35 +1,46 @@
-# Quick Reference v4.3
+# Quick Reference v5.1
 
-Use natural-language requests through Codex or Claude as the default interface.
+## Start From A Scientific Question
 
-## Start A New Project
-
-```text
-I have not started yet. Create a ResearchPaperWorkflow project for [topic],
-targeting [journal]. Stop at the first checkpoint and report the paper_id,
-initial research question, missing inputs, and decision I need to approve.
+```bash
+paper-workflow research start --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research status --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
 ```
 
-## Continue One Safe Step
+Review `scientific_assessment.yaml`, `strategy_simulation.yaml`, `FIGURE_PLAN.md`, and `RESEARCH_DASHBOARD.md`. No biological analysis runs at this step.
 
-```text
-Continue paper_id [id] by one safe workflow step. Stop at checkpoint, missing
-input, pending harness, quality-gate failure, or stale artifact. Report current
-stage truth and next action.
+## Execute An Approved Intent
+
+```bash
+paper-workflow research analyze \
+  --intent intents/examples/pbmc3k_t_subcluster_intent.yaml \
+  --approved \
+  --execute
 ```
 
-## Validate State
+The command may still return `blocked` when data, environment, module, or QA gates fail.
 
-```text
-Audit paper_id [id]. Confirm completed stages have real outputs, stage results,
-quality-gate results, checkpoint approval where required, and no unpropagated
-artifact drift.
+## Expert TargetTask Control
+
+```bash
+paper-workflow target validate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target plan --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target run --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target evaluate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
+paper-workflow target package --target targets/examples/pbmc3k_t_subcluster_v5.yaml
 ```
+
+## Continue The Paper Lifecycle
+
+Use the 20-stage PaperLoop only after the analysis evidence is mapped into the project truth layer. Continue one bounded stage per turn and stop at checkpoints, missing inputs, failed gates, or stale artifacts.
 
 ## Current References
 
 - `README.md`
 - `USER_GUIDE.md`
 - `ARCHITECTURE.md`
-- `docs/OPERATION_GUIDE_ZH.md`
-- `docs/NEXT_GEN_V4_TRUTH_LAYER.md`
+- `AGENTS.md`
+- `AGENT_ROLES.md`
+- `workflow_contract.yaml`
+- `docs/V5_1_RESEARCHER_EXPERIENCE_TUNING_PLAN.md`
+- `docs/V5_1_ACCEPTANCE_MATRIX.md`

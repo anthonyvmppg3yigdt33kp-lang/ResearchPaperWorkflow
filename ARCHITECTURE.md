@@ -1,9 +1,9 @@
-# ResearchPaperWorkflow v5 Architecture
+# ResearchPaperWorkflow v5.1 Architecture
 
 v5 is organized around one invariant:
 
 ```text
-scientific output = TargetTask contract + executable graph + environment truth + source maps + fail-closed evaluation + claim boundary
+scientific output = Research Intent + scientific strategy + TargetTask contract + executable graph + environment truth + source maps + fail-closed evaluation + claim boundary
 ```
 
 The system still supports the broader paper workflow, but production analysis and manuscript-facing output now pass through the v5 production kernel.
@@ -12,7 +12,10 @@ The system still supports the broader paper workflow, but production analysis an
 
 ```mermaid
 flowchart TB
-    U["Human researcher"] --> T["TargetTask YAML"]
+    U["Human researcher"] --> I["Research Intent YAML"]
+    I --> S["Scientific assessment and strategy simulation"]
+    S --> F["Figure-first plan and dashboard"]
+    F --> T["Compiled TargetTask YAML"]
     T --> V["target validate"]
     V --> P["target plan"]
     P --> G["AnalysisGraph"]
@@ -27,6 +30,7 @@ flowchart TB
 
 | Package | Responsibility |
 |---|---|
+| `paper_workflow.research_intent` | Validates the scientific question, compares methods, applies experience reminders, plans figures, compiles TargetTask, and writes the dashboard. |
 | `paper_workflow.target_task` | Loads TargetTask YAML, validates schema, plans graph, runs or blocks execution, writes target package. |
 | `paper_workflow.bioinformatics` | Module registry, environment registry, strategy evaluation, graph execution, run-specific QA. |
 | `paper_workflow.outputs` | Run layout, source-map validation, evaluation reports, fail-closed status. |
@@ -64,6 +68,20 @@ Every `code_library/module_registry.yaml` entry has explicit v5 fields:
 `ModuleRegistry.production_gate()` is the local truth for whether a module can enter a production-visible graph. Environment-blocked modules remain visible in audit reports but cannot pass the production gate.
 
 ## TargetTask Artifact Layout
+
+Before TargetTask execution, the researcher layer writes:
+
+```text
+papers/<project_id>/research_plan/
+  research_intent_resolved.yaml
+  scientific_assessment.yaml
+  strategy_simulation.yaml
+  figure_plan.yaml
+  FIGURE_PLAN.md
+  target_task.yaml
+  research_dashboard.yaml
+  RESEARCH_DASHBOARD.md
+```
 
 A TargetTask run writes:
 

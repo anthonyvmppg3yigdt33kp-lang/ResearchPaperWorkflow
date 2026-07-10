@@ -1,14 +1,18 @@
-# Workflow Patterns v4.3
+# Workflow Patterns v5.1
 
-V4.3 patterns are natural-language operating modes for Codex or Claude. The
-model calls the AI harness; the user supplies scientific decisions and inputs.
-All patterns preserve the same truth-layer path.
+v5.1 patterns start from Research Intent for scientific analysis and retain the
+20-stage PaperLoop for manuscript lifecycle control. The model may call the AI
+harness, but the user supplies scientific decisions and execution approval.
+All patterns preserve the same fail-closed truth path.
 
 ## Pattern Map
 
 ```mermaid
 flowchart TB
-    N["New project"] --> R["Research design"]
+    I["Scientific question"] --> RI["Research Intent and strategy simulation"]
+    RI --> T["TargetTask production kernel"]
+    T --> R["Verified analysis evidence"]
+    N["New paper project"] --> R
     R --> A["Data and analysis"]
     A --> W["Writing from verified outputs"]
     W --> Q["AIGC hygiene and integrity"]
@@ -17,6 +21,24 @@ flowchart TB
     X --> A
     X --> W
 ```
+
+## Pattern 0: Rapid Scientific Intent
+
+Use when the researcher knows the question and data context but should not need
+to choose module identifiers.
+
+```text
+Compile this research_intent.yaml into a scientific assessment, method
+alternatives, Figure-first plan, TargetTask, and dashboard. Do not execute
+until I review the blockers and approve the target.
+```
+
+Expected boundary:
+
+- statistical unit and missing replicate metadata are explicit;
+- recommended, deferred, and planning-only methods are separated;
+- the figure story precedes downstream module stacking;
+- real execution still requires TargetTask approval and all production gates.
 
 ## Pattern 1: New Project
 

@@ -1,4 +1,8 @@
-# QUALITY GATES — 7类41规则质量门体系 (v3.0)
+# ARCHIVED QUALITY GATES v3.0
+
+> Historical 41-gate description. The current configured gate set and
+> fail-closed TargetTask contract live in `config/default_config.yaml`,
+> `workflow_contract.yaml`, and `src/paper_workflow/bioinformatics/run_quality_rules.py`.
 
 **Version**: 3.0.0 | **Total Gates**: 41 | **Severities**: CRITICAL(17) + HIGH(21) + MEDIUM(3)
 

@@ -57,6 +57,9 @@ parameters:
     resolution: 0.5
   subclustering:
     subset_markers: CD3D,CD3E,IL7R,CCR7,S100A4,CD8A,NKG7,GNLY
+    min_subset_markers: 2
+    subset_anchor_markers: CD3D,CD3E,NKG7,GNLY
+    min_anchor_markers: 2
     resolutions: 0.2,0.4,0.6,0.8
     npcs: 10
   marker_detection:

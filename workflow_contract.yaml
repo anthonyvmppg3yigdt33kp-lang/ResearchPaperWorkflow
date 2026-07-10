@@ -1,5 +1,5 @@
-version: "1.0.0"
-description: "Truth-layer contract for the 20-stage ResearchPaperWorkflow pipeline."
+version: "1.1.0"
+description: "Truth-layer contract for the 20-stage PaperLoop and v5 TargetTask production kernel."
 mode_routing_policy:
   resolver: "paper_workflow.routing.mode_resolver"
   default_fuzzy_mode: exploration_mode
@@ -27,6 +27,46 @@ truth_policy:
     - template
     - pending_harness
     - needs_input
+target_task_contract:
+  schema_version: target_task_contract.v1
+  entrypoint: "paper-workflow target"
+  fail_closed: true
+  final_status_order:
+    - blocked
+    - needs_fix
+    - degraded_exploratory
+    - pass
+  required_outputs:
+    - run_manifest.yaml
+    - analysis_graph.yaml
+    - target_task_resolved.yaml
+    - strategy_decision.yaml
+    - evaluation_report.yaml
+    - qc/bioinformatics_quality_report.yaml
+    - qc/fail_closed_decision.yaml
+    - qc/next_analysis_plan.yaml
+    - tables/evidence_matrix.tsv
+    - manuscript/methods_draft.md
+    - manuscript/results_skeleton.md
+    - figure_source_map.yaml
+    - table_source_map.yaml
+  truth_bridge:
+    run_analysis:
+      source: target_task_run_report.yaml
+      requires_real_execution: true
+    verify_methods:
+      source: evaluation_report.yaml
+      required_final_status: pass
+    write_methods:
+      source: manuscript/methods_draft.md
+      requires_source_maps: true
+    write_results:
+      source: manuscript/results_skeleton.md
+      requires_fail_closed_pass: true
+  claim_policy:
+    blocked_or_needs_fix: no_claim
+    workflow_test: exploratory_only
+    result_paragraph_requires_final_status: pass
 claim_evidence_audit_interface:
   inputs:
     - claim_ledger.jsonl

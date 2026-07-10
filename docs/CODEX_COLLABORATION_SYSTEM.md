@@ -1,6 +1,6 @@
 # Codex Collaboration System
 
-Created: 2026-07-07
+Created: 2026-07-07 | Updated: 2026-07-10
 
 This document defines a durable collaboration architecture for the user's local
 research and software work. It is based on live local evidence, current Codex
@@ -73,6 +73,12 @@ Closeout requirement:
 If the user gives a fuzzy request, Codex must first convert it into this packet
 before acting. Fuzzy requests are not a license to scan everything or write
 everything.
+
+For scientific analysis, v5.1 persists the approved form as
+`research_intent.v1`. The intent is compiled to a scientific assessment,
+strategy alternatives, Figure-first plan, TargetTask, and dashboard. This
+keeps natural-language collaboration above the production kernel without
+bypassing data, environment, approval, or QA gates.
 
 ### Layer 2: Intake Router
 

@@ -1,0 +1,39 @@
+schema_version: research_intent_schema.v1
+purpose: Researcher-facing scientific intent compiled into a fail-closed TargetTask.
+
+required_top_level:
+  - schema_version
+  - project_id
+  - title
+  - question
+  - project_goal
+  - claim_boundary
+  - data
+  - expected_outputs
+
+project_id_pattern: "^[a-z][a-z0-9_-]{2,80}$"
+
+required_data_fields:
+  - dataset_id
+  - modality
+  - format
+  - input_path
+
+supported_project_goals:
+  - discovery
+  - validation
+  - mechanistic
+  - translational
+  - workflow_test
+
+scientific_guardrails:
+  disease_group_inference_requires:
+    - sample_id_column
+    - condition_column
+    - biological_replicates
+  mechanism_claim_requires:
+    - orthogonal_validation
+  all_execution_routes_require:
+    - fail_closed_target_task
+    - source_maps
+    - claim_boundary

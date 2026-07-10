@@ -1,8 +1,21 @@
-# ResearchPaperWorkflow v5 User Guide
+# ResearchPaperWorkflow v5.1 User Guide
 
-Use v5 when you want a bounded research workflow that can plan, execute, evaluate, and package a scientific analysis without promoting incomplete evidence into manuscript claims.
+Use v5.1 when you want to start from a research question and obtain a bounded plan, real execution route, quality decision, and manuscript packet without promoting incomplete evidence into claims.
 
-## Basic Pattern
+## Researcher Pattern
+
+```bash
+paper-workflow research validate --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research start --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research analyze --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research review --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research write --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research status --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+```
+
+Start writes the scientific assessment, method alternatives, Figure plan, compiled TargetTask, and dashboard. Analyze without `--execute` remains a graph dry run. Analyze with `--approved --execute` uses the production kernel and may still block on data, environment, module, or QA gates.
+
+## TargetTask Expert Pattern
 
 ```bash
 paper-workflow target validate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
@@ -61,6 +74,19 @@ Copy `targets/examples/pbmc3k_t_subcluster_v5.yaml` and change:
 - `quality_gates`
 
 Keep `quality_gates.fail_closed`, `require_source_maps`, `require_claim_boundary`, and `require_no_personal_paths` set to `true`.
+
+## Add A Research Intent
+
+Copy `intents/examples/pbmc3k_t_subcluster_intent.yaml` and set:
+
+- the scientific question and project goal;
+- data path, modality, format, sample mapping, and replicate status;
+- expected figures, tables, and reports;
+- optional required modules only when method review has already occurred;
+- Figure messages and required evidence;
+- the strongest defensible claim boundary.
+
+Review `strategy_simulation.yaml` before approving execution. A deferred method is a scientific or environment requirement, not an invitation to silently substitute a weaker method.
 
 ## Add A New Module
 

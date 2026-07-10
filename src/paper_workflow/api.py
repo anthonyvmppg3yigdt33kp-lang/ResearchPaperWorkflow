@@ -232,6 +232,8 @@ class WorkflowAPI:
             ai_command_catalog=ai_command_catalog,
             config_stages=set(config_stages),
         )
+        target_contract = contract.get("target_task_contract", {}) or {}
+        self._validate_target_task_contract(issues, target_contract)
 
         for mismatch in required_output_mismatches:
             issues.append({
@@ -254,6 +256,7 @@ class WorkflowAPI:
                 "stage_quality_gate_refs": len(gate_refs),
                 "ai_harness_routes": len(ai_routes),
                 "ai_harness_commands": len(ai_command_catalog),
+                "target_task_required_outputs": len(target_contract.get("required_outputs", []) or []),
             },
             "stage_ids": {
                 "config": config_stages,
@@ -390,7 +393,7 @@ class WorkflowAPI:
             "diagnose_gate_failures", "run_aigc_humanizer", "list_papers",
             "route_task", "doctor", "list_capabilities", "list_modules",
             "inspect_module", "plan_analysis", "run_analysis", "evaluate_run",
-            "target_task",
+            "target_task", "research_intent",
         }
         supported_cli_commands = {
             "ai", "ai-harness", "create-project", "status", "run-pipeline",
@@ -402,7 +405,7 @@ class WorkflowAPI:
             "new-run", "set-current-run", "brief-status", "evaluate-run",
             "plan-analysis", "run-analysis", "list-modules", "inspect-module",
             "list-capabilities", "list-envs", "inspect-env", "doctor-env",
-            "validate-env", "target",
+            "validate-env", "target", "research",
         }
         required_top_level = {"command_entrypoint", "default_max_stages_per_turn", "command_catalog", "scenario_routes"}
         for key in sorted(required_top_level - set(ai_harness)):
@@ -455,6 +458,52 @@ class WorkflowAPI:
                     "code": "ai_harness_route_unknown_stage",
                     "message": f"AI harness scenario route references unknown stage: {route_name} -> {stage}",
                     "details": {"route": route_name, "stage": stage},
+                })
+
+    @staticmethod
+    def _validate_target_task_contract(
+        issues: list[dict[str, Any]],
+        target_contract: dict[str, Any],
+    ) -> None:
+        if not target_contract:
+            issues.append({
+                "code": "missing_target_task_contract",
+                "message": "workflow_contract.yaml must bind TargetTask to the truth layer.",
+            })
+            return
+        if target_contract.get("fail_closed") is not True:
+            issues.append({
+                "code": "target_task_contract_not_fail_closed",
+                "message": "target_task_contract.fail_closed must be true.",
+            })
+        required_outputs = set(target_contract.get("required_outputs", []) or [])
+        minimum_outputs = {
+            "run_manifest.yaml",
+            "analysis_graph.yaml",
+            "target_task_resolved.yaml",
+            "strategy_decision.yaml",
+            "evaluation_report.yaml",
+            "qc/bioinformatics_quality_report.yaml",
+            "qc/fail_closed_decision.yaml",
+            "tables/evidence_matrix.tsv",
+            "manuscript/methods_draft.md",
+            "manuscript/results_skeleton.md",
+            "figure_source_map.yaml",
+            "table_source_map.yaml",
+        }
+        for output in sorted(minimum_outputs - required_outputs):
+            issues.append({
+                "code": "target_task_contract_missing_output",
+                "message": f"TargetTask truth contract missing required output: {output}",
+                "details": {"output": output},
+            })
+        truth_bridge = target_contract.get("truth_bridge", {}) or {}
+        for stage in ("run_analysis", "verify_methods", "write_methods", "write_results"):
+            if stage not in truth_bridge:
+                issues.append({
+                    "code": "target_task_contract_missing_stage_bridge",
+                    "message": f"TargetTask truth contract missing stage bridge: {stage}",
+                    "details": {"stage": stage},
                 })
 
     def _resolve_checkpoint_blockers(

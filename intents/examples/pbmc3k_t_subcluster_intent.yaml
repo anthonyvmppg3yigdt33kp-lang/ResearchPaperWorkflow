@@ -1,0 +1,66 @@
+schema_version: research_intent.v1
+project_id: pbmc3k_t_subcluster
+title: PBMC3K T-cell-like subcluster refinement
+question: Refine T-cell-like PBMC populations and identify exploratory expression programs.
+project_goal: workflow_test
+claim_boundary: Official tutorial workflow validation only; no disease, clinical, treatment, or causal claim.
+
+data:
+  dataset_id: pbmc3k_10x_v1
+  modality: single_cell
+  format: 10x_mtx
+  input_path: data/raw/pbmc3k/filtered_gene_bc_matrices/hg19
+  role: tutorial_fixture
+  biological_replicates: not_required_for_tutorial
+
+scientific_questions:
+  - cell_state_identification
+  - subcluster_refinement
+
+workflow:
+  required_modules:
+    - single_cell.seurat_pbmc3k_basic.v1
+    - single_cell.seurat_subcluster_programs.v1
+  steps:
+    - seurat_qc_preprocess
+    - global_clustering
+    - t_cell_subset
+    - subcluster_reanalysis
+    - subcluster_marker_detection
+    - program_scoring
+    - figure_generation
+    - qa_fail_closed
+    - manuscript_pack
+
+figure_goals:
+  - figure_id: figure_1
+    scientific_message: Show the global PBMC structure and the reviewed T-cell-like subset.
+    required_evidence: [global_umap, t_cell_subset_umap, subset_cell_counts]
+  - figure_id: figure_2
+    scientific_message: Show exploratory subcluster markers and program scores.
+    required_evidence: [resolution_summary, subcluster_marker_heatmap, program_score_dotplot]
+
+expected_outputs:
+  figures: [global_umap, t_cell_subset_umap, resolution_grid_umap, subcluster_marker_heatmap, program_score_dotplot]
+  tables: [qc_metrics, subcluster_cell_counts, resolution_summary, subcluster_markers, program_score_summary]
+  reports: [scientific_assessment, strategy_simulation, evaluation_report, evidence_matrix, methods_draft, results_skeleton]
+
+analysis_parameters:
+  qc: {min_features: 200, max_features: 2500, max_mt: 5}
+  t_cell_subset:
+    minimum_detected_markers: 2
+    anchor_markers: [CD3D, CD3E, NKG7, GNLY]
+    minimum_detected_anchors: 2
+  subclustering: {resolutions: [0.2, 0.4, 0.6, 0.8], npcs: 10}
+  marker_detection: {method: FindAllMarkers, only_pos: true, min_pct: 0.1, logfc_threshold: 0.25}
+  programs:
+    naive_memory_like: [IL7R, CCR7, TCF7, LTB]
+    cytotoxic_like: [NKG7, GNLY, PRF1, GZMB]
+    interferon_like: [ISG15, IFIT1, IFIT3, MX1]
+    stress_ribosomal_like: [FOS, JUN, RPLP0, RPS3]
+
+constraints:
+  target_id: pbmc3k_t_subcluster_20260710_v4
+  evidence_grade: workflow_test
+  required_envs: [r_seurat_v5]
+  forbidden_claims: [disease mechanism, clinical biomarker, treatment response, causal immune state]

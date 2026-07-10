@@ -38,6 +38,12 @@ execution:
     - "{run_id}"
     - "--subset-markers"
     - "{subset_markers}"
+    - "--min-subset-markers"
+    - "{min_subset_markers}"
+    - "--subset-anchor-markers"
+    - "{subset_anchor_markers}"
+    - "--min-anchor-markers"
+    - "{min_anchor_markers}"
     - "--resolutions"
     - "{resolutions}"
     - "--npcs"
@@ -50,19 +56,29 @@ execution:
     - "{min_pct}"
     - "--logfc-threshold"
     - "{logfc_threshold}"
+    - "--program-spec"
+    - "{program_spec}"
 default_parameters:
   subset_markers: CD3D,CD3E,IL7R,CCR7,S100A4,CD8A,NKG7,GNLY
+  min_subset_markers: 2
+  subset_anchor_markers: CD3D,CD3E,NKG7,GNLY
+  min_anchor_markers: 2
   resolutions: 0.2,0.4,0.6,0.8
   npcs: 10
   marker_method: wilcox
   only_pos: "true"
   min_pct: 0.1
   logfc_threshold: 0.25
+  program_spec: ""
 input_schema:
   required:
     - {name: seurat_rds, type: seurat_rds}
   optional:
     - {name: subset_markers, type: comma_separated_gene_symbols}
+    - {name: min_subset_markers, type: integer}
+    - {name: subset_anchor_markers, type: comma_separated_gene_symbols}
+    - {name: min_anchor_markers, type: integer}
+    - {name: program_spec, type: semicolon_separated_program_gene_sets}
     - {name: resolutions, type: comma_separated_numbers}
 output_schema:
   artifacts:

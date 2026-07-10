@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -285,6 +287,100 @@ def validate_method_asset_registries(root: Path) -> list[str]:
     return issues
 
 
+def validate_research_experience(root: Path) -> list[str]:
+    issues: list[str] = []
+    knowledge_path = root / "code_library" / "method_knowledge_base.yaml"
+    intent_schema = root / "config" / "research_intent.schema.yaml"
+    example_intent = root / "intents" / "examples" / "pbmc3k_t_subcluster_intent.yaml"
+    for path in (knowledge_path, intent_schema, example_intent):
+        if not path.exists():
+            issues.append(f"missing researcher-experience contract: {path.relative_to(root).as_posix()}")
+    if issues:
+        return issues
+    try:
+        knowledge = load_yaml(knowledge_path) or {}
+        intent = load_yaml(example_intent) or {}
+    except Exception as exc:
+        return [f"researcher-experience YAML parse failed: {type(exc).__name__}: {exc}"]
+    methods = knowledge.get("methods") or []
+    if not isinstance(methods, list) or not methods:
+        issues.append("method_knowledge_base must contain methods")
+    modules = (load_yaml(root / "code_library" / "module_registry.yaml") or {}).get("modules", {}) or {}
+    required = {"id", "question_types", "solves", "not_for", "statistical_unit", "prerequisites", "module_ids", "reviewer_risks", "claim_boundary"}
+    for method in methods:
+        missing = sorted(required - set(method or {}))
+        if missing:
+            issues.append(f"method knowledge entry {method.get('id', '<missing>')} missing fields: {missing}")
+        for module_id in method.get("module_ids", []) or []:
+            if module_id not in modules:
+                issues.append(f"method knowledge entry {method.get('id')} references missing module: {module_id}")
+    if intent.get("schema_version") != "research_intent.v1":
+        issues.append("example research intent must use research_intent.v1")
+    return issues
+
+
+def validate_version_consistency(root: Path) -> list[str]:
+    issues: list[str] = []
+    config = load_yaml(root / "config" / "default_config.yaml") or {}
+    config_version = str(config.get("version", ""))
+    pipeline_version = str((config.get("pipeline") or {}).get("version", ""))
+    pyproject_text = (root / "pyproject.toml").read_text(encoding="utf-8")
+    package_text = (root / "src" / "paper_workflow" / "__init__.py").read_text(encoding="utf-8")
+    readme_text = (root / "README.md").read_text(encoding="utf-8")
+    pyproject_match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject_text, flags=re.MULTILINE)
+    package_match = re.search(r'^__version__\s*=\s*"([^"]+)"', package_text, flags=re.MULTILINE)
+    readme_match = re.search(r'^# ResearchPaperWorkflow v([^\s]+)', readme_text)
+    versions = {
+        "config": config_version,
+        "pipeline": pipeline_version,
+        "pyproject": pyproject_match.group(1) if pyproject_match else "missing",
+        "package": package_match.group(1) if package_match else "missing",
+        "readme": readme_match.group(1) if readme_match else "missing",
+    }
+    if len(set(versions.values())) != 1:
+        issues.append(f"active version mismatch: {versions}")
+    return issues
+
+
+def validate_pbmc3k_real_evidence(root: Path) -> list[str]:
+    summary_path = root / "validation" / "pbmc3k_v5_1" / "validation_summary.yaml"
+    manifest_path = root / "validation" / "pbmc3k_v5_1" / "artifact_manifest.tsv"
+    if not summary_path.exists() or not manifest_path.exists():
+        return ["missing v5.1 PBMC3K real-execution evidence packet"]
+    summary = load_yaml(summary_path) or {}
+    issues: list[str] = []
+    evaluation = summary.get("evaluation") or {}
+    metrics = summary.get("scientific_metrics") or {}
+    execution = summary.get("execution") or {}
+    if summary.get("execution_mode") != "real" or summary.get("status") != "pass":
+        issues.append("PBMC3K evidence must record a real execution pass")
+    if summary.get("evidence_grade") != "workflow_test":
+        issues.append("PBMC3K evidence must remain workflow_test grade")
+    for key in ("workflow_completeness_status", "scientific_quality_status", "environment_status", "final_status"):
+        if evaluation.get(key) != "pass":
+            issues.append(f"PBMC3K evidence evaluation.{key} must be pass")
+    if evaluation.get("source_map_valid") is not True or evaluation.get("bioinformatics_quality_status") != "pass":
+        issues.append("PBMC3K evidence requires valid source maps and bioinformatics QA pass")
+    if not isinstance(execution.get("total_runtime_seconds"), (int, float)) or execution.get("total_runtime_seconds", 0) <= 0:
+        issues.append("PBMC3K evidence must record a positive runtime")
+    fraction = metrics.get("subset_fraction")
+    if not isinstance(fraction, (int, float)) or not 0 < fraction <= 0.9:
+        issues.append("PBMC3K evidence subset_fraction must be within (0, 0.9]")
+    if int(metrics.get("marker_rows", 0) or 0) <= 0 or int(metrics.get("program_rows", 0) or 0) <= 0:
+        issues.append("PBMC3K evidence requires non-empty marker and program tables")
+    text = summary_path.read_text(encoding="utf-8") + manifest_path.read_text(encoding="utf-8")
+    if re.search(r"[A-Za-z]:[/\\]Users[/\\]", text, flags=re.IGNORECASE):
+        issues.append("PBMC3K evidence packet contains a personal Windows path")
+    with manifest_path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle, delimiter="\t"))
+    if len(rows) < 10:
+        issues.append("PBMC3K evidence artifact manifest is unexpectedly small")
+    for row in rows:
+        if not re.fullmatch(r"[0-9a-f]{64}", str(row.get("sha256", ""))):
+            issues.append(f"PBMC3K evidence has invalid SHA-256: {row.get('relative_path', '<unknown>')}")
+    return issues
+
+
 def _validate_enum(issues: list[str], module_id: str, module: dict[str, Any], key: str, allowed: set[str]) -> None:
     value = str(module.get(key, ""))
     if value and value not in allowed:
@@ -311,6 +407,9 @@ def run_checks(root: Path, max_bytes: int) -> dict[str, Any]:
         "bioinformatics_method_contract": validate_analysis_contract(root),
         "code_library_registry": validate_code_library_registry(root),
         "method_asset_registries": validate_method_asset_registries(root),
+        "researcher_experience": validate_research_experience(root),
+        "version_consistency": validate_version_consistency(root),
+        "pbmc3k_real_evidence": validate_pbmc3k_real_evidence(root),
         "large_files": validate_large_files(root, max_bytes),
     }
     issue_count = sum(len(v) for v in checks.values())

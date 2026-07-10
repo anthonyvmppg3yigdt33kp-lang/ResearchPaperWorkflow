@@ -2,6 +2,7 @@ schema_version: project_pattern_registry.v1
 patterns:
   - id: tutorial_fixture_validation
     scope: official tutorial data used to validate workflow mechanics
+    project_goals: [workflow_test]
     allowed_claims:
       - workflow validation
       - exploratory method demonstration
@@ -11,6 +12,7 @@ patterns:
       - causal state
   - id: imported_de_table_postprocessing
     scope: external DE table cleanup and enrichment handoff
+    project_goals: [discovery, validation]
     required_before_claims:
       - upstream statistical model review
       - replicate unit review

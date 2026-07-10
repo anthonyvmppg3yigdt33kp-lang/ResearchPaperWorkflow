@@ -1,4 +1,8 @@
-# CASE STUDIES — 真实项目案例研究
+# ARCHIVED CASE STUDIES v2.0
+
+> Historical examples. Do not use their stage counts or outputs as current
+> workflow truth. Current validation examples are the PBMC3K Research Intent
+> and TargetTask contracts under `intents/examples/` and `targets/examples/`.
 
 **Version**: 2.0.0 | **Cases**: 3 real + 1 test
 

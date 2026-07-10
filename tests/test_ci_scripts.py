@@ -53,6 +53,15 @@ def test_ci_pbmc3k_target_task_smoke_passes():
     assert payload["fake_pass"] is False
 
 
+def test_ci_research_experience_smoke_passes():
+    result = run_script("ci_research_experience.py")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "pass"
+    assert payload["harness_intent"] == "research_intent"
+    assert payload["missing"] == []
+
+
 def test_ci_performance_budget_passes():
     result = run_script("ci_performance_budget.py")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -88,6 +97,7 @@ def test_ci_workflow_declares_production_preflight_jobs():
         "cli-smoke-bulk:",
         "cli-smoke-graph-dry-run:",
         "target-task-pbmc3k:",
+        "researcher-experience:",
         "r-method-contract:",
         "security-light:",
     ]:
@@ -95,4 +105,5 @@ def test_ci_workflow_declares_production_preflight_jobs():
     assert "ci_module_grade_audit.py --strict" in workflow
     assert "ci_supervision_failure_cases.py" in workflow
     assert "ci_performance_budget.py --json" in workflow
+    assert "ci_research_experience.py" in workflow
     assert "actions/upload-artifact@v4" in workflow

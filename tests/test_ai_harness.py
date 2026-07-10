@@ -18,8 +18,8 @@ def test_validate_contract_checks_ai_harness_routes():
     result = WorkflowAPI(repo_root).validate_contract()
 
     assert result["valid"], result
-    assert result["counts"]["ai_harness_routes"] == 5
-    assert result["counts"]["ai_harness_commands"] == 21
+    assert result["counts"]["ai_harness_routes"] == 6
+    assert result["counts"]["ai_harness_commands"] == 22
 
 
 def test_ai_harness_dry_run_routes_static_check_without_state_change():

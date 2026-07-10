@@ -2,13 +2,36 @@ schema_version: tuning_lessons.v1
 lessons:
   - id: do_not_promote_external_scaffold
     lesson: External code intake must remain planning or post-processing until a real executable wrapper and source maps exist.
+    applies_to: [marker_discovery, pathway_analysis, general_discovery]
     enforced_by:
       - production_capability_grade
       - strategy_visibility
       - claim_permission
   - id: target_task_short_path
     lesson: A researcher-facing workflow should start from one TargetTask file and fail closed before producing manuscript claims.
+    applies_to: []
     enforced_by:
       - paper-workflow target validate
       - paper-workflow target run
       - paper-workflow target evaluate
+  - id: avoid_single_cell_pseudoreplication
+    lesson: Cell-level marker tests cannot replace sample-level inference when the scientific claim concerns patients or disease groups.
+    applies_to: [cell_type_differential_expression, disease_group_comparison, marker_discovery]
+    enforced_by:
+      - statistical_unit
+      - pseudobulk prerequisite checks
+      - exploratory claim boundary
+  - id: network_methods_are_secondary
+    lesson: WGCNA, CellChat, and NicheNet organize or prioritize hypotheses; they do not replace primary contrasts or prove mechanism.
+    applies_to: [network_analysis, communication_analysis]
+    enforced_by:
+      - method knowledge not_for rules
+      - reviewer risk output
+      - claim boundary
+  - id: figure_story_precedes_module_stack
+    lesson: Define the scientific message and required evidence for each figure before adding downstream analysis modules.
+    applies_to: [cell_state_identification, pathway_analysis, network_analysis, communication_analysis, general_discovery]
+    enforced_by:
+      - figure_plan.yaml
+      - FIGURE_PLAN.md
+      - evidence matrix
