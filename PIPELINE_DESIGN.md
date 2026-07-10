@@ -1,4 +1,8 @@
-# PIPELINE DESIGN — 调度管线与工作路径设计
+# ARCHIVED PIPELINE DESIGN v2.0
+
+> Historical 18-stage design reference. It is not the current operating
+> contract. Use `ARCHITECTURE.md`, `workflow_contract.yaml`, and
+> `docs/V5_1_RESEARCHER_EXPERIENCE_TUNING_PLAN.md` for v5.1.
 
 **Version**: 2.0.0 | **Total Stages**: 18 | **Total Phases**: 6 | **Max Parallelism**: min(16, cpu-2)
 

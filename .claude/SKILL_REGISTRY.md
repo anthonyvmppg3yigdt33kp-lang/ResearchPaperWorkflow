@@ -1,8 +1,13 @@
 # Skill Registry -- Research Paper Workflow Framework
 
-**Version**: 4.0.0 | **Last Updated**: 2026-06-21 | **Total Skills Mapped**: 31
+**Version**: 5.1.0 | **Last Updated**: 2026-07-10 | **Total Skills Mapped**: 31
 
-> V4 addendum: the core pipeline is now 20 stages. New Stage 15
+> v5.1 operating addendum: `research_intent.v1` is the researcher-facing entry
+> contract. It produces a scientific assessment, method comparison,
+> Figure-first plan, TargetTask, and dashboard before any approved execution.
+> TargetTask remains the fail-closed production kernel, while the 20-stage
+> PaperLoop remains the manuscript lifecycle truth chain. The legacy skill map
+> below is retained for stage routing. Stage 15
 > `aigc_humanizer_review` runs after `assemble_manuscript` and before
 > `integrity_check`. It is owned by `aigc_humanizer_reviewer` and uses
 > `ai-writing-detection`, `humanizer`, and the bundled
@@ -75,7 +80,7 @@ Comprehensive skill-to-stage mapping for the 20-stage Paper Loop Engine, 13 agen
 
 ### Primary Mapping
 
-| # | Skill | 18-Stage Mapping (Primary) | 10-Stage Mapping | Category | Priority |
+| # | Skill | 20-Stage Mapping (Primary) | 10-Stage Mapping | Category | Priority |
 |---|-------|---------------------------|------------------|----------|----------|
 | 1 | `academic-paper` | 9,10,11,12,13,16 | 2 (WRITE), 4 (REVISE) | Core Writing | CRITICAL |
 | 2 | `academic-paper-polish` | 9,10,11,12,13,16,18 | 2 (WRITE), 4 (REVISE), 5 (FINALIZE) | Language | HIGH |

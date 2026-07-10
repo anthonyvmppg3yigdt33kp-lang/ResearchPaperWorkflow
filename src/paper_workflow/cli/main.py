@@ -23,6 +23,7 @@ from paper_workflow.bioinformatics.module_feedback import ModuleFeedbackManager
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.module_selector import MethodSelector
 from paper_workflow.outputs.result_run_manager import ResultRunManager
+from paper_workflow.research_intent import ResearchWorkflowOrchestrator
 from paper_workflow.routing.mode_resolver import ModeResolver
 from paper_workflow.routing.tool_doctor import ToolDoctor, format_doctor_report
 from paper_workflow.strategy.research_strategy import ResearchStrategyManager
@@ -913,6 +914,72 @@ def cmd_target(args):
             sys.exit(1)
 
 
+def cmd_research(args):
+    orchestrator = ResearchWorkflowOrchestrator(get_root())
+    intent_path = args.intent
+    try:
+        if args.research_command == "start" and not intent_path:
+            required = {
+                "project_id": args.project_id,
+                "question": args.question,
+                "modality": args.modality,
+                "input": args.input,
+                "dataset_id": args.dataset_id,
+                "format": args.format,
+            }
+            missing = [key for key, value in required.items() if not value]
+            if missing:
+                raise ValueError(f"research start without --intent requires: {', '.join(missing)}")
+            intent_path = str(orchestrator.create_intent(
+                project_id=args.project_id,
+                question=args.question,
+                modality=args.modality,
+                input_path=args.input,
+                dataset_id=args.dataset_id,
+                data_format=args.format,
+                project_goal=args.project_goal,
+                claim_boundary=args.claim_boundary,
+            ))
+        if not intent_path:
+            raise ValueError("--intent is required for this research command")
+
+        if args.research_command == "validate":
+            payload = orchestrator.validate(intent_path)
+        elif args.research_command == "start":
+            payload = orchestrator.start(intent_path)
+        elif args.research_command == "analyze":
+            payload = orchestrator.analyze(intent_path, approved=args.approved, execute=args.execute)
+        elif args.research_command == "review":
+            payload = orchestrator.review(intent_path)
+        elif args.research_command == "write":
+            payload = orchestrator.write(intent_path)
+        elif args.research_command == "package":
+            payload = orchestrator.package(intent_path)
+        elif args.research_command == "status":
+            payload = orchestrator.status(intent_path)
+        else:
+            raise ValueError("research subcommand is required")
+    except (ValueError, FileNotFoundError, PermissionError) as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(1)
+
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        print(f"Research command: {args.research_command}")
+        print(f"Status: {payload.get('status', 'valid' if payload.get('valid') else 'invalid')}")
+        project_id = payload.get("project_id") or (payload.get("research_plan") or {}).get("project_id")
+        if project_id:
+            print(f"Project: {project_id}")
+        dashboard = payload.get("dashboard") or {}
+        if dashboard.get("dashboard_markdown"):
+            print(f"Dashboard: {dashboard['dashboard_markdown']}")
+    if args.strict:
+        status = payload.get("status")
+        if payload.get("valid") is False or status in {"blocked", "needs_fix", "needs_input", "failed", "error"}:
+            sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Paper Workflow CLI")
     sub = parser.add_subparsers(dest="command")
@@ -1147,6 +1214,33 @@ def main():
         if name == "evaluate":
             sp.add_argument("--fail-closed", action="store_true")
 
+    p = sub.add_parser("research", help="Researcher-facing intent, analysis, review, and writing workflow.")
+    research_sub = p.add_subparsers(dest="research_command")
+    for name in ["validate", "start", "analyze", "review", "write", "package", "status"]:
+        sp = research_sub.add_parser(name)
+        sp.add_argument("--intent")
+        sp.add_argument("--json", action="store_true")
+        sp.add_argument("--strict", action="store_true")
+        if name == "start":
+            sp.add_argument("--project-id")
+            sp.add_argument("--question")
+            sp.add_argument("--modality")
+            sp.add_argument("--input")
+            sp.add_argument("--dataset-id")
+            sp.add_argument("--format")
+            sp.add_argument(
+                "--project-goal",
+                default="discovery",
+                choices=["discovery", "validation", "mechanistic", "translational", "workflow_test"],
+            )
+            sp.add_argument(
+                "--claim-boundary",
+                default="Exploratory analysis until replicate-aware inference, source maps, and fail-closed QA pass.",
+            )
+        if name == "analyze":
+            sp.add_argument("--approved", action="store_true")
+            sp.add_argument("--execute", action="store_true")
+
     p = sub.add_parser(
         "ai",
         aliases=["ai-harness"],
@@ -1204,7 +1298,7 @@ def main():
      "apply-module-improvement": cmd_apply_module_improvement,
      "list-envs": cmd_list_envs, "inspect-env": cmd_inspect_env,
      "doctor-env": cmd_doctor_env, "validate-env": cmd_validate_env,
-     "target": cmd_target,
+     "target": cmd_target, "research": cmd_research,
      "ai": cmd_ai_harness, "ai-harness": cmd_ai_harness}[args.command](args)
 
 

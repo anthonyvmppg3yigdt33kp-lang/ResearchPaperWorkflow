@@ -1,13 +1,62 @@
-# ResearchPaperWorkflow v5.0.0
+# ResearchPaperWorkflow v5.1.0
 
-ResearchPaperWorkflow v5.0.0 is a fail-closed research production workflow kernel. It keeps paper writing, omics analysis, evidence synthesis, and release work in one auditable system, but it does not treat a plan, scaffold, dry-run wrapper, or attractive draft as current scientific truth.
+ResearchPaperWorkflow v5.1.0 is a researcher-facing, fail-closed workflow for biomedical and bioinformatics projects. A scientific question is compiled into a method comparison, Figure-first plan, TargetTask, real execution graph, quality decision, evidence matrix, and manuscript packet. Plans, dry runs, scaffolds, and tutorial fixtures are never promoted to scientific truth.
 
-[![Version](https://img.shields.io/badge/Version-5.0.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/Version-5.1.0-blue.svg)]()
 [![Kernel](https://img.shields.io/badge/TargetTask-fail--closed-green.svg)]()
+[![Research](https://img.shields.io/badge/Research_Intent-v1-teal.svg)]()
 
-## What Changed In v5
+## Researcher Short Path
 
-v5 replaces the previous "complex framework with many components" posture with a concrete TargetTask execution path:
+Start from a scientific intent rather than module names:
+
+```bash
+paper-workflow research validate --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research start --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research analyze --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research review --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research write --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research package --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research status --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+```
+
+`research start` writes the following project-scoped artifacts before execution:
+
+- `scientific_assessment.yaml`: facts, assumptions, unknowns, decisions, missing prerequisites, and claim boundary;
+- `strategy_simulation.yaml`: recommended, deferred, and planning-only methods with statistical units and reviewer risks;
+- `figure_plan.yaml` and `FIGURE_PLAN.md`: scientific message and evidence requirements before module stacking;
+- `target_task.yaml`: the compiled production contract;
+- `RESEARCH_DASHBOARD.md`: current evidence, blockers, next best actions, and publication readiness.
+
+An intent can also be initialized from the command line:
+
+```bash
+paper-workflow research start \
+  --project-id my_scrna_project \
+  --question "Identify disease-associated immune cell states" \
+  --modality single_cell \
+  --input data/my_project.rds \
+  --dataset-id my_scrna_v1 \
+  --format seurat_rds
+```
+
+This creates a reviewable intent and plan. It does not run analysis. Real execution still requires `research analyze --approved --execute`.
+
+## What Changed In v5.1
+
+- connected `AIWorkflowHarness` to TargetTask and Research Intent execution instead of declaration-only routing;
+- added a method knowledge base that records what each method solves, does not solve, requires, and may claim;
+- activated reusable local experience reminders for pseudoreplication, network overclaim, external scaffolds, and Figure-first design;
+- added researcher-facing strategy simulation, Figure-first planning, and a compact project dashboard;
+- bound TargetTask artifacts to `workflow_contract.yaml` and its 20-stage truth chain;
+- fixed FindMarkers classification as exploratory cell-level DE rather than bulk DE;
+- added fail-closed Seurat subcluster QA for marker columns, program scores, resolution selection, figures, objects, and session information;
+- replaced the previous maximum-cluster resolution choice with a documented lower-resolution plateau preference;
+- added CI coverage for the complete Research Intent to TargetTask planning path.
+
+## TargetTask Expert Path
+
+The lower-level production kernel remains available:
 
 ```bash
 paper-workflow target validate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
@@ -17,27 +66,26 @@ paper-workflow target evaluate --target targets/examples/pbmc3k_t_subcluster_v5.
 paper-workflow target package --target targets/examples/pbmc3k_t_subcluster_v5.yaml
 ```
 
-The v5 production kernel adds:
+The production kernel enforces module grades, environment gates, data contracts, approval, source maps, scientific QA, and claim boundaries. Adapter contracts, scaffolds, planning contracts, and environment-blocked modules cannot enter real production execution.
 
-- fail-closed evaluation through `qc/fail_closed_decision.yaml`;
-- explicit module grades: `production_capable_real_wrapper`, `validated_workflow_pilot`, `dry_run_contract`, `adapter_contract`, `scaffold_only`, `planning_contract`, `blocked_environment`, `retired`;
-- environment-aware graph execution so blocked R/Bioconductor modules do not enter production-visible plans;
-- a PBMC3K Seurat TargetTask fixture that validates the workflow mechanics on official tutorial data without making disease or clinical claims;
-- a real Seurat subcluster/program wrapper and a real external DE-table standardizer;
-- evidence-bound manuscript packet generation: methods draft, results skeleton, figure storyline, evidence matrix, claim ledger, reviewer risk report;
-- CI gates for module grading, fail-closed supervision cases, TargetTask smoke, and productivity budget.
+## Scientific Boundaries
 
-## Current Claim Boundary
+- `FindMarkers` supports exploratory cell-level marker screening; it does not replace sample-level disease inference.
+- Replicate-aware pseudobulk is preferred for cell-type disease contrasts when sample mapping and biological replicates exist.
+- Enrichment requires a reviewed ranked-gene statistic and database provenance.
+- WGCNA does not replace primary differential expression.
+- CellChat, NicheNet, and related network methods are hypothesis-generating without orthogonal validation.
+- PBMC3K is an official tutorial fixture. It cannot support disease, clinical, treatment, or causal claims.
 
-The included PBMC3K workflow is a tutorial-fixture validation project. It can support workflow validation and exploratory tutorial subcluster structure. It cannot support disease mechanism, clinical biomarker, treatment response, or causal immune-state claims.
-
-If Seurat, Rscript, PBMC3K data, source maps, session info, data registry hash, or claim boundaries are missing, v5 must report `blocked` or `needs_fix`; it must not produce a final pass or manuscript conclusion paragraph.
+Missing data, R packages, source maps, session information, claim boundaries, or required result columns produce `blocked` or `needs_fix`; they never produce a final pass.
 
 ## Install
 
 ```bash
 python -m pip install -e ".[dev]"
 ```
+
+The package uses a `src/` layout. Run `paper-workflow` after installation. For source-local diagnostics without installation, set `PYTHONPATH=src` so an older global checkout cannot be imported accidentally.
 
 Optional R checks:
 
@@ -46,7 +94,7 @@ Rscript scripts/check_r_environment.R --json
 Rscript scripts/check_r_bioc_environment.R --json
 ```
 
-The bootstrap scripts print approved install plans; they do not silently mutate the machine environment:
+Bootstrap scripts print install plans; they do not silently modify the machine:
 
 ```bash
 Rscript scripts/bootstrap_r_seurat_env.R
@@ -54,58 +102,50 @@ Rscript scripts/bootstrap_r_bulk_env.R
 Rscript scripts/bootstrap_r_pseudobulk_env.R
 ```
 
-## PBMC3K TargetTask
+## PBMC3K Validation
 
-Download the public tutorial data only when you intend to execute the real Seurat path:
+Download the public tutorial data only when real validation is intended:
 
 ```bash
 Rscript scripts/download_pbmc3k_data.R data/raw/pbmc3k
 ```
 
-Then run the v5 TargetTask:
+Then run either the researcher path or TargetTask path with `--approved --execute`. Without `--execute`, the workflow performs planning or graph packaging. Missing runtime packages or data must block execution instead of creating fake success artifacts.
 
-```bash
-paper-workflow target validate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
-paper-workflow target plan --target targets/examples/pbmc3k_t_subcluster_v5.yaml
-paper-workflow target run --target targets/examples/pbmc3k_t_subcluster_v5.yaml --approved --execute
-paper-workflow target evaluate --target targets/examples/pbmc3k_t_subcluster_v5.yaml
-paper-workflow target package --target targets/examples/pbmc3k_t_subcluster_v5.yaml
-```
+The v5.1 release evidence is summarized in [`validation/pbmc3k_v5_1/validation_summary.yaml`](validation/pbmc3k_v5_1/validation_summary.yaml). It records a real two-node Seurat run, fail-closed statuses, executed parameters, runtime, scientific workflow-test metrics, and hashes without committing the tutorial data or large RDS files.
 
-Without `--execute`, `target run` performs graph dry-run packaging. With `--execute`, missing runtime packages or data block the run instead of creating fake success artifacts.
-
-## Production Gates
-
-Run these before opening a release PR or publishing a tag:
+## Release Gates
 
 ```bash
 python -m compileall -q src scripts tests
 python scripts/ci_quality_check.py --json
 python scripts/ci_module_grade_audit.py --strict --json
 python scripts/ci_supervision_failure_cases.py --json
+python scripts/ci_research_experience.py --json
 python scripts/ci_graph_dry_run.py --json
 python scripts/ci_pbmc3k_target_task.py --json
 python scripts/ci_performance_budget.py --json
-python -m pytest -q
+python -m paper_workflow.cli.main validate-contract --strict
+python -m pytest --basetemp .pytest_tmp -q
 ```
 
-R-dependent checks are separate because they depend on local R availability:
+R-dependent checks:
 
 ```bash
+Rscript scripts/ci_r_method_contract.R
 Rscript scripts/ci_seurat_subcluster_smoke.R
 Rscript scripts/ci_pbmc3k_target_task.R
 ```
 
 ## Documentation
 
-Current v5 documents:
-
-- [v5 production-kernel reform plan](docs/V5_PRODUCTION_KERNEL_REFORM_PLAN.md)
+- [v5.1 tuning plan](docs/V5_1_RESEARCHER_EXPERIENCE_TUNING_PLAN.md)
+- [v5.1 acceptance matrix](docs/V5_1_ACCEPTANCE_MATRIX.md)
+- [v5.1 productivity scorecard](docs/V5_1_PRODUCTIVITY_SCORECARD.md)
+- [v5.1 release notes](docs/RELEASE_NOTES_v5.1.0.md)
 - [v5 TargetTask design](docs/V5_TARGET_TASK_DESIGN.md)
 - [v5 Seurat validation project](docs/V5_SEURAT_VALIDATION_PROJECT.md)
 - [R environment setup](docs/R_ENVIRONMENT_SETUP_ZH.md)
-- [v5 baseline truth](docs/V5_BASELINE_TRUTH.md)
-- [v5 productivity scorecard](docs/V5_PRODUCTIVITY_SCORECARD.md)
-- [v5 release notes](docs/RELEASE_NOTES_v5.0.0.md)
+- [v5.0 baseline truth](docs/V5_BASELINE_TRUTH.md)
 
-Historical v4.x architecture and release notes remain in `docs/` as archives, not as the current operating contract.
+Historical versioned documents remain as archives. `README.md`, `AGENTS.md`, `AGENT_ROLES.md`, `workflow_contract.yaml`, and `config/default_config.yaml` define the current operating contract.

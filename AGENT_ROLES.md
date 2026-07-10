@@ -1,8 +1,24 @@
-# Agent Roles v4.5
+# Agent Roles v5.1
 
-This document describes the current V4.5 agent collaboration model. Agent
-routing is configured in `config/default_config.yaml`; stage completion is
-verified through `workflow_contract.yaml`, `StageResult`, and `PaperLoopEngine`.
+This document describes the current v5.1 collaboration model. Agent routing is
+configured in `config/default_config.yaml`; scientific intent is compiled into
+TargetTask by `paper_workflow.research_intent`; stage completion is verified
+through `workflow_contract.yaml`, `StageResult`, and `PaperLoopEngine`.
+
+## Research Team Overlay
+
+v5.1 keeps the configured agents stable and presents them to researchers as a
+role-based team. The overlay changes orchestration and responsibility, not the
+truth layer or the configured agent identifiers.
+
+| Research role | Configured agents | Responsibility |
+|---|---|---|
+| Principal investigator | `research_strategist` | Define the question, novelty target, claim boundary, and stop conditions; does not execute code. |
+| Bioinformatics lead | `analysis_executor`, `code_librarian`, `multi_omics_integrator` | Translate the question into production-graded modules and an analysis graph. |
+| Statistical reviewer | `statistician` | Protect the statistical unit, replicate structure, contrasts, covariates, and multiplicity control. |
+| Data engineer | `data_auditor`, `pipeline_engineer` | Validate data registries, immutable inputs, environments, manifests, and reproducibility. |
+| Manuscript scientist | `figure_planner`, `report_writer` | Build the figure story and evidence-bound methods/results packet. |
+| Independent reviewer | `integrity_checker`, `team_orchestrator` | Apply fail-closed quality and reviewer-risk gates before claims advance. |
 
 ## Collaboration Model
 

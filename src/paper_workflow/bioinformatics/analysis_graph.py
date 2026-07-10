@@ -294,17 +294,20 @@ def build_graph_from_selected_modules(
     input_dir: str = "",
     input_paths: list[str] | None = None,
     statistical_unit: str = "sample",
+    parameter_overrides: dict[str, dict[str, Any]] | None = None,
 ) -> AnalysisGraph:
     nodes: list[AnalysisGraphNode] = []
     prior_id = ""
     data_bindings = build_data_bindings(input_paths=input_paths, input_dir=input_dir)
     available_bindings: dict[str, tuple[str, str]] = {}
     module_by_node: dict[str, str] = {}
+    parameter_overrides = parameter_overrides or {}
     for idx, module in enumerate(selected_modules, start=1):
         module_id = str(module.get("id") or module.get("module_id"))
         step = str(module.get("step") or f"step{idx}").replace(" ", "_")
         node_id = f"{step}_{idx}" if step in {node.node_id for node in nodes} else step
         default_parameters = dict(module.get("default_parameters", {}) or {})
+        default_parameters.update(parameter_overrides.get(module_id, {}))
         if idx == 1 and data_bindings.get("input_dir") and "input_dir" not in default_parameters:
             default_parameters["input_dir"] = data_bindings["input_dir"]
         node_inputs = build_node_input_contract(module, default_parameters, data_bindings)

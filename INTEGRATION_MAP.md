@@ -1,4 +1,8 @@
-# INTEGRATION MAP — 技能集成映射与工具矩阵
+# ARCHIVED INTEGRATION MAP v2.0
+
+> Historical skill and MCP inventory. Current routing is defined by
+> `AGENTS.md`, `AGENT_ROLES.md`, `config/default_config.yaml`, and the v5.1
+> Research Intent to TargetTask path.
 
 **Version**: 2.0.0 | **Internal Skills**: 12 | **External Skills**: 28 | **MCP Servers**: 5
 

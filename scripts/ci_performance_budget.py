@@ -22,11 +22,13 @@ def criteria(root: Path) -> dict[str, bool]:
         root / "docs" / "V5_TARGET_TASK_DESIGN.md",
         root / "docs" / "V5_SEURAT_VALIDATION_PROJECT.md",
         root / "docs" / "V5_PRODUCTIVITY_SCORECARD.md",
-        root / "docs" / "RELEASE_NOTES_v5.0.0.md",
+        root / "docs" / "V5_1_RESEARCHER_EXPERIENCE_TUNING_PLAN.md",
+        root / "docs" / "RELEASE_NOTES_v5.1.0.md",
     ]
     return {
         "fail_closed": (root / "src" / "paper_workflow" / "bioinformatics" / "run_quality_rules.py").exists(),
         "target_task_entry": (root / "src" / "paper_workflow" / "target_task" / "orchestrator.py").exists() and (root / "targets" / "examples" / "pbmc3k_t_subcluster_v5.yaml").exists(),
+        "research_intent_layer": (root / "src" / "paper_workflow" / "research_intent" / "planner.py").exists() and (root / "code_library" / "method_knowledge_base.yaml").exists(),
         "production_module_ratio": production_visible >= 3,
         "environment_truth": (root / "scripts" / "check_r_environment.R").exists() and (root / "scripts" / "check_r_bioc_environment.R").exists(),
         "seurat_validation": "single_cell.seurat_subcluster_programs.v1" in registry.modules,

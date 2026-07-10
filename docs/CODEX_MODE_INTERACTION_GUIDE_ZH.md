@@ -1,6 +1,6 @@
 # Codex 模式化交互实践指南
 
-Created: 2026-07-07
+Created: 2026-07-07 | Updated: 2026-07-10
 
 本指南用于把模糊请求转换成可执行、可验证、可恢复的 Codex 任务。核心模板是：
 
@@ -9,6 +9,18 @@ Created: 2026-07-07
 ```
 
 先路由，再执行。不要直接说“全面优化”或“继续推进”。
+
+## 0. 科研人员最短入口
+
+当用户表达的是科研问题而不是工程命令时，先写 `research_intent.v1`，再运行：
+
+```powershell
+paper-workflow research validate --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research start --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+paper-workflow research status --intent intents/examples/pbmc3k_t_subcluster_intent.yaml
+```
+
+`research start` 只生成科学评估、方法比较、Figure 计划、TargetTask 和 Dashboard，不会真实分析。真实执行必须使用 `research analyze --approved --execute`，并继续接受 TargetTask、环境和 fail-closed QA 的全部约束。
 
 ## 1. 先让 Codex 路由任务
 

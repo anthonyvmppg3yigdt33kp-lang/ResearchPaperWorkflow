@@ -14,12 +14,13 @@ Usage:
     wf.run()
 """
 
-__version__ = "5.0.0"
+__version__ = "5.1.0"
 __author__ = "Research Paper Workflow Framework"
 
 from paper_workflow.workflow import PaperWorkflow, WorkflowState, create_and_run_paper
 from paper_workflow.api import WorkflowAPI
 from paper_workflow.ai_harness import AIWorkflowHarness
+from paper_workflow.research_intent import ResearchWorkflowOrchestrator
 from paper_workflow.utils.config_loader import ConfigLoader
 from paper_workflow.outputs import StageResult, ArtifactRecord, StageStatus, RESULT_SCHEMA_VERSION
 
@@ -27,6 +28,7 @@ __all__ = [
     "PaperWorkflow",
     "WorkflowAPI",
     "AIWorkflowHarness",
+    "ResearchWorkflowOrchestrator",
     "WorkflowState",
     "create_and_run_paper",
     "ConfigLoader",

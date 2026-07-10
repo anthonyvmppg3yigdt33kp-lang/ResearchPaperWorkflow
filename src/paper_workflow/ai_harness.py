@@ -22,8 +22,10 @@ from paper_workflow.api import WorkflowAPI
 from paper_workflow.bioinformatics.module_registry import ModuleRegistry
 from paper_workflow.bioinformatics.module_selector import MethodSelector
 from paper_workflow.outputs.result_run_manager import ResultRunManager
+from paper_workflow.research_intent import ResearchWorkflowOrchestrator
 from paper_workflow.routing.mode_resolver import ModeResolver
 from paper_workflow.routing.tool_doctor import ToolDoctor
+from paper_workflow.target_task import TargetTaskOrchestrator
 
 
 class AIWorkflowHarness:
@@ -53,6 +55,7 @@ class AIWorkflowHarness:
         "run_analysis",
         "evaluate_run",
         "target_task",
+        "research_intent",
     }
 
     INTENT_COMMANDS = {
@@ -77,6 +80,7 @@ class AIWorkflowHarness:
         "run_analysis": "run-analysis",
         "evaluate_run": "evaluate-run",
         "target_task": "target",
+        "research_intent": "research",
     }
 
     STAGE_IDS = (
@@ -182,7 +186,7 @@ class AIWorkflowHarness:
         )
         intent = self.classify_request(request, paper_id=resolved_paper.get("paper_id"))
         intent = self._apply_route_guard(intent, request=request, route=route, resolved_paper=resolved_paper)
-        route = self._method_asset_route(intent, route)
+        route = self._method_asset_route(intent, route, request=request)
         timeline_weeks = timeline_weeks or self._infer_timeline(request) or 8
         max_stages = (
             max_stages
@@ -241,6 +245,8 @@ class AIWorkflowHarness:
             "list_capabilities",
             "list_modules",
             "inspect_module",
+            "target_task",
+            "research_intent",
         }
         if intent not in paperless_intents and not resolved_paper.get("paper_id"):
             payload["status"] = "needs_input"
@@ -295,6 +301,47 @@ class AIWorkflowHarness:
         text = request.lower()
         compact = re.sub(r"\s+", "", request.lower())
 
+        if self._has_any(
+            text,
+            compact,
+            (
+                "research intent",
+                "research start",
+                "research analyze",
+                "research review",
+                "research write",
+                "research package",
+                "research status",
+                "科研意图",
+                "科研启动",
+                "科研分析",
+                "科研复核",
+                "科研写作",
+                "科研打包",
+                "科研状态",
+            ),
+        ):
+            return "research_intent"
+        if self._has_any(
+            text,
+            compact,
+            (
+                "target task",
+                "target-task",
+                "target validate",
+                "target plan",
+                "target run",
+                "target evaluate",
+                "target package",
+                "目标任务",
+                "目标校验",
+                "目标规划",
+                "目标执行",
+                "目标评价",
+                "目标打包",
+            ),
+        ):
+            return "target_task"
         if self._has_any(text, compact, ("route task", "route-task", "resolve mode", "mode/profile", "模式路由", "模式匹配")):
             return "route_task"
         if self._has_any(text, compact, ("doctor", "tool check", "fast-context", "fast_context", "skill check", "agent check", "工具不可用", "工具检查")):
@@ -474,6 +521,48 @@ class AIWorkflowHarness:
             return route
         if intent == "doctor":
             return ToolDoctor(self.project_root).run()
+        if intent == "target_task":
+            target_path = self._resolve_target_path(self._extract_target_path(request, notes=notes) or "")
+            subcommand = self._infer_target_subcommand(request)
+            orchestrator = TargetTaskOrchestrator(self.project_root)
+            if subcommand == "validate":
+                return orchestrator.validate(target_path, require_packages=self._target_package_check_requested(request))
+            if subcommand == "plan":
+                return orchestrator.plan(target_path)
+            if subcommand == "run":
+                return orchestrator.run(
+                    target_path,
+                    approved=self._has_approval_phrase(request),
+                    execute=self._target_execute_requested(request),
+                )
+            if subcommand == "evaluate":
+                return orchestrator.evaluate(target_path, fail_closed=True)
+            if subcommand == "package":
+                return orchestrator.package(target_path)
+            raise ValueError(f"Unsupported TargetTask subcommand: {subcommand}")
+        if intent == "research_intent":
+            intent_path = self._resolve_target_path(self._extract_research_intent_path(request, notes=notes) or "")
+            subcommand = self._infer_research_subcommand(request)
+            orchestrator = ResearchWorkflowOrchestrator(self.project_root)
+            if subcommand == "validate":
+                return orchestrator.validate(intent_path)
+            if subcommand == "start":
+                return orchestrator.start(intent_path)
+            if subcommand == "analyze":
+                return orchestrator.analyze(
+                    intent_path,
+                    approved=self._has_approval_phrase(request),
+                    execute=self._target_execute_requested(request),
+                )
+            if subcommand == "review":
+                return orchestrator.review(intent_path)
+            if subcommand == "write":
+                return orchestrator.write(intent_path)
+            if subcommand == "package":
+                return orchestrator.package(intent_path)
+            if subcommand == "status":
+                return orchestrator.status(intent_path)
+            raise ValueError(f"Unsupported research subcommand: {subcommand}")
         if intent == "list_capabilities":
             modality = self._infer_modality(request)
             paper_dir = self.api.papers_dir / paper_id if paper_id else None
@@ -701,6 +790,30 @@ class AIWorkflowHarness:
                 "--write-report",
                 "--json",
             ])
+        elif intent == "target_task":
+            subcommand = self._infer_target_subcommand(kwargs["request"])
+            target_path = self._extract_target_path(kwargs["request"], notes=kwargs.get("notes", "")) or "<target.yaml>"
+            args.extend([subcommand, "--target", target_path])
+            if subcommand == "validate" and self._target_package_check_requested(kwargs["request"]):
+                args.append("--require-packages")
+            if subcommand == "run":
+                if self._target_execute_requested(kwargs["request"]):
+                    args.append("--execute")
+                if self._has_approval_phrase(kwargs["request"]):
+                    args.append("--approved")
+            if subcommand == "evaluate":
+                args.append("--fail-closed")
+            args.append("--json")
+        elif intent == "research_intent":
+            subcommand = self._infer_research_subcommand(kwargs["request"])
+            intent_path = self._extract_research_intent_path(kwargs["request"], notes=kwargs.get("notes", "")) or "<research_intent.yaml>"
+            args.extend([subcommand, "--intent", intent_path])
+            if subcommand == "analyze":
+                if self._target_execute_requested(kwargs["request"]):
+                    args.append("--execute")
+                if self._has_approval_phrase(kwargs["request"]):
+                    args.append("--approved")
+            args.append("--json")
         elif intent == "complete_harness_invocation":
             args.extend(["--paper", kwargs["paper_id"] or "<paper_id>"])
             args.extend(["--invocation", kwargs["invocation"] or kwargs["stage"] or "<invocation>"])
@@ -754,6 +867,20 @@ class AIWorkflowHarness:
                 return "ok" if evaluation.get("status") in {"pass", "degraded_exploratory"} else str(evaluation.get("status", "ok"))
             if intent == "evaluate_run":
                 return "ok" if result.get("status") in {"pass", "degraded_exploratory"} else str(result.get("status", "ok"))
+            if intent == "target_task":
+                if result.get("valid") is False:
+                    return "failed"
+                status = result.get("status") or result.get("final_status") or result.get("environment_status")
+                if status in {"blocked", "needs_fix", "failed", "error"}:
+                    return str(status)
+                return "ok"
+            if intent == "research_intent":
+                if result.get("valid") is False:
+                    return "failed"
+                status = result.get("status")
+                if status in {"blocked", "needs_fix", "needs_input", "failed", "error"}:
+                    return str(status)
+                return "ok"
         return "ok"
 
     def _next_actions(self, intent: str, result: Any) -> list[str]:
@@ -786,6 +913,10 @@ class AIWorkflowHarness:
             return ["Evaluate the run report and inspect source maps before treating outputs as evidence."]
         if intent == "evaluate_run":
             return ["Fix blocked or missing run artifacts before promoting any manuscript claim."]
+        if intent == "target_task":
+            return ["Use the TargetTask status and fail-closed report to choose the next approved action."]
+        if intent == "research_intent":
+            return ["Review the scientific assessment, alternatives, figure plan, and dashboard before approving real execution."]
         if intent in {"list_capabilities", "list_modules", "inspect_module"}:
             return ["Select a compatible method asset, then create an analysis design before execution."]
         return ["Report the result to the user and ask for approval if a checkpoint is required."]
@@ -800,6 +931,8 @@ class AIWorkflowHarness:
             "list_capabilities",
             "list_modules",
             "inspect_module",
+            "target_task",
+            "research_intent",
         }
         if intent not in paperless_intents and not resolved_paper.get("paper_id"):
             return ["Ask the user for the paper_id or create a new project first."]
@@ -818,6 +951,12 @@ class AIWorkflowHarness:
             return f"Analysis execution finished with adapter_status={adapter.get('status')} and evaluation_status={evaluation.get('status')}."
         if intent == "evaluate_run" and isinstance(result, dict):
             return f"Run evaluation completed with status={result.get('status')}."
+        if intent == "target_task" and isinstance(result, dict):
+            status = result.get("status") or result.get("final_status") or result.get("environment_status") or ("valid" if result.get("valid") else "invalid")
+            return f"TargetTask command completed with status={status}."
+        if intent == "research_intent" and isinstance(result, dict):
+            status = result.get("status") or ("valid" if result.get("valid") else "invalid")
+            return f"Research workflow command completed with status={status}."
         if intent in {"list_capabilities", "list_modules", "inspect_module"}:
             return "Method-asset capability information has been returned in structured output."
         if intent == "create_project" and isinstance(result, dict):
@@ -852,8 +991,7 @@ class AIWorkflowHarness:
             return "status" if resolved_paper.get("paper_id") else "list_papers"
         return intent
 
-    @staticmethod
-    def _method_asset_route(intent: str, route: dict[str, Any]) -> dict[str, Any]:
+    def _method_asset_route(self, intent: str, route: dict[str, Any], *, request: str = "") -> dict[str, Any]:
         overrides = {
             "list_capabilities": "exploration_mode",
             "list_modules": "exploration_mode",
@@ -863,12 +1001,39 @@ class AIWorkflowHarness:
             "evaluate_run": "closeout_audit_mode",
         }
         mode = overrides.get(intent)
+        if intent == "target_task":
+            mode = {
+                "validate": "exploration_mode",
+                "plan": "analysis_design_mode",
+                "run": "execution_mode" if self._target_execute_requested(request) else "analysis_design_mode",
+                "evaluate": "closeout_audit_mode",
+                "package": "closeout_audit_mode",
+            }[self._infer_target_subcommand(request)]
+        if intent == "research_intent":
+            mode = {
+                "validate": "exploration_mode",
+                "start": "analysis_design_mode",
+                "analyze": "execution_mode" if self._target_execute_requested(request) else "analysis_design_mode",
+                "review": "closeout_audit_mode",
+                "write": "closeout_audit_mode",
+                "package": "closeout_audit_mode",
+                "status": "exploration_mode",
+            }[self._infer_research_subcommand(request)]
         if not mode:
             return route
-        updated = dict(route or {})
-        updated["mode"] = mode
-        updated.setdefault("profile", "method_asset_orchestration")
-        updated.setdefault("human_checkpoint", intent == "run_analysis")
+        profile = self.mode_resolver.resolve_profile(mode, request)
+        updated = self.mode_resolver.resolve_route(
+            request,
+            explicit_mode=mode,
+            explicit_profile=profile,
+            paper_id=(route or {}).get("paper_id") or None,
+            explicit_journal=((route or {}).get("journal_policy") or {}).get("explicit_target_journal") or None,
+        )
+        updated["human_checkpoint"] = (
+            intent == "run_analysis"
+            or (intent == "target_task" and self._target_execute_requested(request))
+            or (intent == "research_intent" and self._target_execute_requested(request))
+        )
         return updated
 
     def _method_asset_guard(
@@ -877,6 +1042,56 @@ class AIWorkflowHarness:
         request: str,
         resolved_paper: dict[str, Any],
     ) -> Optional[dict[str, Any]]:
+        if intent == "target_task":
+            target_path = self._extract_target_path(request)
+            required = []
+            if not target_path:
+                required.append("target_task_yaml")
+            elif not self._resolve_target_path(target_path).exists():
+                required.append("existing_target_task_yaml")
+            if (
+                self._infer_target_subcommand(request) == "run"
+                and self._target_execute_requested(request)
+                and not self._has_approval_phrase(request)
+            ):
+                required.append("explicit_user_approval")
+            if required:
+                message = f"target_task requires {', '.join(required)} before execution."
+                return {
+                    "status": "needs_input",
+                    "result": {"message": message, "required": required, "target": target_path},
+                    "next_model_actions": [
+                        "Provide an existing TargetTask YAML path.",
+                        "Use explicit approval only after reviewing the resolved target and environment gates.",
+                    ],
+                    "user_facing_reply": message,
+                }
+            return None
+        if intent == "research_intent":
+            intent_path = self._extract_research_intent_path(request)
+            required = []
+            if not intent_path:
+                required.append("research_intent_yaml")
+            elif not self._resolve_target_path(intent_path).exists():
+                required.append("existing_research_intent_yaml")
+            if (
+                self._infer_research_subcommand(request) == "analyze"
+                and self._target_execute_requested(request)
+                and not self._has_approval_phrase(request)
+            ):
+                required.append("explicit_user_approval")
+            if required:
+                message = f"research_intent requires {', '.join(required)} before execution."
+                return {
+                    "status": "needs_input",
+                    "result": {"message": message, "required": required, "intent": intent_path},
+                    "next_model_actions": [
+                        "Provide an existing research_intent.v1 YAML path or use research start to create one.",
+                        "Review the generated strategy and dashboard before real execution.",
+                    ],
+                    "user_facing_reply": message,
+                }
+            return None
         if intent not in {"run_analysis", "evaluate_run"}:
             return None
         paper_id = resolved_paper.get("paper_id")
@@ -1027,6 +1242,80 @@ class AIWorkflowHarness:
             if match:
                 return match.group(1)
         return None
+
+    @staticmethod
+    def _extract_target_path(request: str, *, notes: str = "") -> Optional[str]:
+        text = f"{request} {notes}".strip()
+        quoted = re.search(r"[\"']([^\"']+\.ya?ml)[\"']", text, flags=re.IGNORECASE)
+        if quoted:
+            return quoted.group(1)
+        unquoted = re.search(r"(?<![\w.-])([^\s,;]+\.ya?ml)(?![\w.-])", text, flags=re.IGNORECASE)
+        if unquoted:
+            return unquoted.group(1).strip("\"'")
+        if "pbmc3k" in text.lower():
+            return "targets/examples/pbmc3k_t_subcluster_v5.yaml"
+        return None
+
+    @staticmethod
+    def _extract_research_intent_path(request: str, *, notes: str = "") -> Optional[str]:
+        text = f"{request} {notes}".strip()
+        quoted = re.search(r"[\"']([^\"']+\.ya?ml)[\"']", text, flags=re.IGNORECASE)
+        if quoted:
+            return quoted.group(1)
+        unquoted = re.search(r"(?<![\w.-])([^\s,;]+\.ya?ml)(?![\w.-])", text, flags=re.IGNORECASE)
+        if unquoted:
+            return unquoted.group(1).strip("\"'")
+        if "pbmc3k" in text.lower():
+            return "intents/examples/pbmc3k_t_subcluster_intent.yaml"
+        return None
+
+    def _resolve_target_path(self, target_path: str) -> Path:
+        path = Path(target_path).expanduser()
+        return path if path.is_absolute() else self.project_root / path
+
+    @staticmethod
+    def _infer_target_subcommand(request: str) -> str:
+        text = request.lower()
+        if any(token in text for token in ("evaluate", "evaluation", "评估", "评价", "审核")):
+            return "evaluate"
+        if any(token in text for token in ("package", "打包", "归档")):
+            return "package"
+        if any(token in text for token in ("plan", "规划", "设计")):
+            return "plan"
+        if any(token in text for token in ("run", "execute", "执行", "运行")):
+            return "run"
+        return "validate"
+
+    @staticmethod
+    def _infer_research_subcommand(request: str) -> str:
+        text = request.lower()
+        if any(token in text for token in ("analyze", "analysis", "分析", "执行")):
+            return "analyze"
+        if any(token in text for token in ("review", "evaluate", "复核", "评估", "审核")):
+            return "review"
+        if any(token in text for token in ("write", "manuscript", "写作", "撰写")):
+            return "write"
+        if any(token in text for token in ("package", "打包", "归档")):
+            return "package"
+        if any(token in text for token in ("status", "dashboard", "状态", "进度", "驾驶舱")):
+            return "status"
+        if any(token in text for token in ("start", "plan", "启动", "规划")):
+            return "start"
+        return "validate"
+
+    @staticmethod
+    def _target_execute_requested(request: str) -> bool:
+        text = request.lower()
+        compact = re.sub(r"\s+", "", text)
+        return any(
+            token in text or token in compact
+            for token in ("--execute", "real execution", "execute target", "真实执行", "执行目标任务")
+        )
+
+    @staticmethod
+    def _target_package_check_requested(request: str) -> bool:
+        text = request.lower()
+        return "--require-packages" in text or "检查包" in text or "check packages" in text
 
     def _extract_module_id(self, request: str, *, notes: str = "") -> Optional[str]:
         text = f"{request} {notes}".strip()

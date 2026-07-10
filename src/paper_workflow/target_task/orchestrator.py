@@ -87,6 +87,7 @@ class TargetTaskOrchestrator:
             input_paths=[graph_input_path],
             input_dir=graph_input_path,
             statistical_unit="cell",
+            parameter_overrides=self._module_parameter_overrides(target),
         )
         graph.execution_policy.update({
             "require_user_approval": True,
@@ -158,6 +159,7 @@ class TargetTaskOrchestrator:
             input_paths=[self._paper_relative_or_text(paper_dir, self._resolved_input_path(target, paper_dir))],
             input_dir=self._paper_relative_or_text(paper_dir, self._resolved_input_path(target, paper_dir)),
             statistical_unit="cell",
+            parameter_overrides=self._module_parameter_overrides(target),
         )
         graph.execution_policy.update(read_yaml(run_dir / "analysis_graph.yaml").get("execution_policy", {}))
         result = AnalysisGraphExecutor(self.project_root).run(graph, run_dir, execute=execute, approval=approved)
@@ -228,6 +230,75 @@ class TargetTaskOrchestrator:
             modules.append(module)
         return modules
 
+    def _module_parameter_overrides(self, target: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        """Map researcher-facing parameter groups to concrete module arguments."""
+        parameters = target.get("parameters") or {}
+        explicit = parameters.get("module_overrides") or {}
+        overrides: dict[str, dict[str, Any]] = {
+            str(module_id): dict(values or {})
+            for module_id, values in explicit.items()
+            if isinstance(values, dict)
+        }
+
+        basic_id = "single_cell.seurat_pbmc3k_basic.v1"
+        basic = overrides.setdefault(basic_id, {})
+        basic.update(self._normalized_parameters(parameters.get("qc") or {}))
+        basic.update(self._normalized_parameters(parameters.get("clustering") or {}))
+
+        subcluster_id = "single_cell.seurat_subcluster_programs.v1"
+        subcluster = overrides.setdefault(subcluster_id, {})
+        subcluster.update(self._normalized_parameters(parameters.get("subclustering") or {}))
+
+        subset = parameters.get("t_cell_subset") or {}
+        subset_aliases = {
+            "minimum_detected_markers": "min_subset_markers",
+            "anchor_markers": "subset_anchor_markers",
+            "minimum_detected_anchors": "min_anchor_markers",
+        }
+        for key, value in subset.items():
+            subcluster[subset_aliases.get(str(key), str(key))] = self._command_value(value)
+
+        marker = parameters.get("marker_detection") or {}
+        supported_tests = {"wilcox", "bimod", "roc", "t", "negbinom", "poisson", "lr", "mast", "deseq2"}
+        for key, value in marker.items():
+            normalized_key = str(key)
+            if normalized_key == "method":
+                # FindAllMarkers describes the operation; test.use still defaults to wilcox.
+                if str(value).lower() in supported_tests:
+                    subcluster["marker_method"] = value
+                continue
+            if normalized_key in {"test", "test_use", "test.use"}:
+                subcluster["marker_method"] = value
+                continue
+            subcluster[normalized_key] = self._command_value(value)
+
+        programs = (parameters.get("program_scoring") or {}).get("programs") or parameters.get("programs") or {}
+        if programs:
+            subcluster["program_spec"] = self._program_spec(programs)
+
+        required = set(self._required_modules(target))
+        return {module_id: values for module_id, values in overrides.items() if module_id in required and values}
+
+    @classmethod
+    def _normalized_parameters(cls, values: dict[str, Any]) -> dict[str, Any]:
+        return {str(key): cls._command_value(value) for key, value in values.items()}
+
+    @staticmethod
+    def _command_value(value: Any) -> Any:
+        if isinstance(value, bool):
+            return str(value).lower()
+        if isinstance(value, (list, tuple)):
+            return ",".join(str(item) for item in value)
+        return value
+
+    @classmethod
+    def _program_spec(cls, programs: dict[str, Any]) -> str:
+        return ";".join(
+            f"{name}={cls._command_value(genes)}"
+            for name, genes in programs.items()
+            if str(name).strip() and genes
+        )
+
     def _paper_dir(self, target: dict[str, Any]) -> Path:
         target_id = str(target.get("target_id", "target_task"))
         paper_id = re.sub(r"_\d{8}_v\d+$", "", target_id)
@@ -290,6 +361,8 @@ class TargetTaskOrchestrator:
             "resolved_input_path": self._project_relative_or_text(data_path),
             "required_modules": [module.get("id") or module.get("module_id") for module in modules],
             "quality_gates": target.get("quality_gates", {}),
+            "parameters": target.get("parameters", {}),
+            "module_parameter_overrides": self._module_parameter_overrides(target),
             "resolved_at": utc_now(),
         }
 

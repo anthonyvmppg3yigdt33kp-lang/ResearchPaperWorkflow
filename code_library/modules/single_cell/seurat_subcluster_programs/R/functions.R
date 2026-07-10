@@ -163,11 +163,60 @@ program_sets <- function() {
   )
 }
 
+parse_program_spec <- function(value) {
+  if (is.null(value) || !nzchar(trimws(value))) {
+    return(program_sets())
+  }
+  chunks <- strsplit(value, ";", fixed = TRUE)[[1]]
+  result <- list()
+  for (chunk in chunks) {
+    parts <- strsplit(chunk, "=", fixed = TRUE)[[1]]
+    if (length(parts) < 2 || !nzchar(trimws(parts[1]))) {
+      stop(paste("Invalid --program-spec entry:", chunk))
+    }
+    genes <- split_csv(paste(parts[-1], collapse = "="))
+    if (length(genes) > 0) {
+      result[[trimws(parts[1])]] <- genes
+    }
+  }
+  if (length(result) == 0) {
+    stop("--program-spec did not contain any usable gene set")
+  }
+  result
+}
+
+select_subcluster_resolution <- function(resolution_summary) {
+  ordered <- order(resolution_summary$resolution)
+  resolution_summary <- resolution_summary[ordered, , drop = FALSE]
+  eligible <- which(resolution_summary$n_subclusters >= 2)
+  if (length(eligible) == 0) {
+    stop("no tested resolution produced at least two subclusters")
+  }
+  plateau_candidates <- eligible[eligible < nrow(resolution_summary)]
+  plateau <- plateau_candidates[
+    resolution_summary$n_subclusters[plateau_candidates] ==
+      resolution_summary$n_subclusters[plateau_candidates + 1]
+  ]
+  if (length(plateau) > 0) {
+    index <- plateau[[1]]
+    reason <- "first stable cluster-count plateau; lower resolution preferred"
+  } else {
+    index <- eligible[[ceiling(length(eligible) / 2)]]
+    reason <- "middle eligible resolution; no cluster-count plateau detected"
+  }
+  list(summary = resolution_summary, index = index, reason = reason)
+}
+
 write_dry_run <- function(output_dir, run_id) {
   prepare_dirs(output_dir)
   counts <- data.frame(subcluster = c("0", "1", "2"), n_cells = c(120, 95, 80))
   utils::write.csv(counts, file.path(output_dir, "tables", "subcluster_cell_counts.csv"), row.names = FALSE, quote = TRUE)
-  res <- data.frame(resolution = c(0.2, 0.4, 0.6, 0.8), n_subclusters = c(2, 3, 3, 4), selected = c(FALSE, TRUE, FALSE, FALSE))
+  res <- data.frame(
+    resolution = c(0.2, 0.4, 0.6, 0.8),
+    n_subclusters = c(2, 3, 3, 4),
+    selected = c(FALSE, TRUE, FALSE, FALSE),
+    selection_reason = rep("first stable cluster-count plateau; lower resolution preferred", 4)
+  )
   utils::write.csv(res, file.path(output_dir, "tables", "resolution_summary.csv"), row.names = FALSE, quote = TRUE)
   markers <- data.frame(
     gene = c("IL7R", "CCR7", "NKG7", "GNLY", "ISG15", "FOS"),
@@ -200,7 +249,13 @@ write_dry_run <- function(output_dir, run_id) {
     c(
       "schema_version: subcluster_quality_report.v1",
       "status: pass",
+      "input_cells: 2700",
       "subset_cells: 295",
+      "subset_fraction: 0.109259",
+      "subset_rule: \"at least 2 declared markers and 2 lineage anchors detected\"",
+      "min_subset_markers: 2",
+      "anchor_markers: \"CD3D,CD3E,NKG7,GNLY\"",
+      "min_anchor_markers: 2",
       "subcluster_count: 3",
       "marker_table_valid: true",
       "program_scores_valid: true",
@@ -217,6 +272,9 @@ run_seurat_subcluster_programs <- function(
   output_dir,
   run_id,
   subset_markers,
+  min_subset_markers = 2,
+  subset_anchor_markers = c("CD3D", "CD3E", "NKG7", "GNLY"),
+  min_anchor_markers = 2,
   subset_column = NULL,
   subset_idents = NULL,
   resolutions = c(0.2, 0.4, 0.6, 0.8),
@@ -237,19 +295,36 @@ run_seurat_subcluster_programs <- function(
   set.seed(seed)
   obj <- if (is.character(seurat_object)) readRDS(seurat_object) else seurat_object
   metadata <- obj[[]]
+  input_cells <- ncol(obj)
   keep <- colnames(obj)
+  required_marker_count <- NA_integer_
+  required_anchor_count <- NA_integer_
+  subset_rule <- "all input cells"
   if (!is.null(subset_column) && nzchar(subset_column) && !is.null(subset_idents) && length(subset_idents) > 0) {
     if (!subset_column %in% colnames(metadata)) {
       stop(paste("subset_column not found in metadata:", subset_column))
     }
     keep <- rownames(metadata)[as.character(metadata[[subset_column]]) %in% as.character(subset_idents)]
+    subset_rule <- paste0("metadata ", subset_column, " in [", paste(subset_idents, collapse = ","), "]")
   } else {
     present_markers <- intersect(subset_markers, rownames(obj))
     if (length(present_markers) == 0) {
       stop("none of the subset markers are present in the Seurat object")
     }
     expr <- Seurat::GetAssayData(obj, layer = "data")[present_markers, , drop = FALSE]
-    keep <- colnames(obj)[Matrix::colSums(expr > 0) > 0]
+    required_marker_count <- max(1L, min(as.integer(min_subset_markers), length(present_markers)))
+    present_anchors <- intersect(subset_anchor_markers, present_markers)
+    if (length(present_anchors) == 0) {
+      stop("none of the subset anchor markers are present in the Seurat object")
+    }
+    required_anchor_count <- max(1L, min(as.integer(min_anchor_markers), length(present_anchors)))
+    marker_pass <- Matrix::colSums(expr > 0) >= required_marker_count
+    anchor_pass <- Matrix::colSums(expr[present_anchors, , drop = FALSE] > 0) >= required_anchor_count
+    keep <- colnames(obj)[marker_pass & anchor_pass]
+    subset_rule <- paste0(
+      "at least ", required_marker_count, " declared markers and ",
+      required_anchor_count, " lineage anchors detected"
+    )
   }
   if (length(keep) == 0) {
     stop("subset cells is zero; fail-closed before marker comparison")
@@ -269,13 +344,15 @@ run_seurat_subcluster_programs <- function(
     n_clusters <- length(unique(as.character(sub_obj[[column]][, 1])))
     resolution_rows[[length(resolution_rows) + 1]] <- data.frame(resolution = res, n_subclusters = n_clusters)
   }
-  resolution_summary <- do.call(rbind, resolution_rows)
-  selected_idx <- which.max(resolution_summary$n_subclusters)
+  resolution_choice <- select_subcluster_resolution(do.call(rbind, resolution_rows))
+  resolution_summary <- resolution_choice$summary
+  selected_idx <- resolution_choice$index
   selected_resolution <- resolution_summary$resolution[selected_idx]
   sub_obj <- Seurat::FindClusters(sub_obj, resolution = selected_resolution, verbose = FALSE)
   sub_obj <- Seurat::RunUMAP(sub_obj, dims = 1:npcs, verbose = FALSE, seed.use = seed)
   sub_obj$target_subcluster <- as.character(Seurat::Idents(sub_obj))
   resolution_summary$selected <- resolution_summary$resolution == selected_resolution
+  resolution_summary$selection_reason <- resolution_choice$reason
   utils::write.csv(resolution_summary, file.path(output_dir, "tables", "resolution_summary.csv"), row.names = FALSE, quote = TRUE)
   counts <- as.data.frame(table(subcluster = sub_obj$target_subcluster))
   names(counts) <- c("subcluster", "n_cells")
@@ -288,6 +365,14 @@ run_seurat_subcluster_programs <- function(
     stop("fewer than two subclusters; marker comparison blocked")
   }
   markers <- Seurat::FindAllMarkers(sub_obj, test.use = marker_method, only.pos = only_pos, min.pct = min_pct, logfc.threshold = logfc_threshold)
+  if (nrow(markers) == 0) {
+    write_yaml_lines(
+      file.path(output_dir, "qc", "subcluster_quality_report.yaml"),
+      c("schema_version: subcluster_quality_report.v1", "status: blocked", "block_reason: no subcluster markers passed configured thresholds")
+    )
+    capture.output(sessionInfo(), file = file.path(output_dir, "logs", "sessionInfo.txt"))
+    stop("no subcluster markers passed configured thresholds")
+  }
   if (!"gene" %in% colnames(markers)) {
     markers$gene <- rownames(markers)
   }
@@ -332,6 +417,14 @@ run_seurat_subcluster_programs <- function(
   }
   program_summary <- if (length(score_rows)) do.call(rbind, score_rows) else data.frame(subcluster = character(), program = character(), mean_score = numeric(), median_score = numeric(), n_cells = integer())
   utils::write.csv(program_summary, file.path(output_dir, "tables", "program_score_summary.csv"), row.names = FALSE, quote = TRUE)
+  if (nrow(program_summary) == 0 || any(!is.finite(program_summary$mean_score))) {
+    write_yaml_lines(
+      file.path(output_dir, "qc", "subcluster_quality_report.yaml"),
+      c("schema_version: subcluster_quality_report.v1", "status: blocked", "block_reason: program scores are empty or non-finite")
+    )
+    capture.output(sessionInfo(), file = file.path(output_dir, "logs", "sessionInfo.txt"))
+    stop("program scores are empty or non-finite")
+  }
   mapping <- data.frame(program = rep(names(program_gene_sets), lengths(program_gene_sets)), gene = unlist(program_gene_sets, use.names = FALSE))
   utils::write.csv(mapping, file.path(output_dir, "tables", "marker_program_mapping.csv"), row.names = FALSE, quote = TRUE)
   grDevices::png(file.path(output_dir, "figures", "tcell_subset_umap.png"), width = 1000, height = 800)
@@ -369,10 +462,18 @@ run_seurat_subcluster_programs <- function(
     c(
       "schema_version: subcluster_quality_report.v1",
       "status: pass",
+      paste0("input_cells: ", input_cells),
       paste0("subset_cells: ", ncol(sub_obj)),
+      paste0("subset_fraction: ", signif(ncol(sub_obj) / input_cells, 6)),
+      paste0("subset_rule: \"", subset_rule, "\""),
+      paste0("min_subset_markers: ", ifelse(is.na(required_marker_count), 0, required_marker_count)),
+      paste0("anchor_markers: \"", paste(subset_anchor_markers, collapse = ","), "\""),
+      paste0("min_anchor_markers: ", ifelse(is.na(required_anchor_count), 0, required_anchor_count)),
       paste0("subcluster_count: ", nrow(counts)),
+      paste0("selected_resolution: ", selected_resolution),
+      paste0("selection_reason: \"", resolution_choice$reason, "\""),
       "marker_table_valid: true",
-      paste0("program_scores_valid: ", tolower(as.character(!any(is.na(program_summary$mean_score))))),
+      paste0("program_scores_valid: ", tolower(as.character(nrow(program_summary) > 0 && all(is.finite(program_summary$mean_score))))),
       paste0("claim_boundary: \"", SUBCLUSTER_CLAIM_BOUNDARY, "\"")
     )
   )
@@ -400,6 +501,9 @@ run_seurat_subcluster_programs_cli <- function(args) {
     output_dir = output_dir,
     run_id = run_id,
     subset_markers = split_csv(get_arg(args, "--subset-markers", "CD3D,CD3E,IL7R,CCR7,S100A4,CD8A,NKG7,GNLY")),
+    min_subset_markers = as.integer(get_arg(args, "--min-subset-markers", "2")),
+    subset_anchor_markers = split_csv(get_arg(args, "--subset-anchor-markers", "CD3D,CD3E,NKG7,GNLY")),
+    min_anchor_markers = as.integer(get_arg(args, "--min-anchor-markers", "2")),
     subset_column = get_arg(args, "--subset-column", ""),
     subset_idents = split_csv(get_arg(args, "--subset-idents", "")),
     resolutions = as.numeric(split_csv(get_arg(args, "--resolutions", "0.2,0.4,0.6,0.8"))),
@@ -408,7 +512,7 @@ run_seurat_subcluster_programs_cli <- function(args) {
     only_pos = truthy(get_arg(args, "--only-pos", "true")),
     min_pct = as.numeric(get_arg(args, "--min-pct", "0.1")),
     logfc_threshold = as.numeric(get_arg(args, "--logfc-threshold", "0.25")),
-    program_gene_sets = program_sets(),
+    program_gene_sets = parse_program_spec(get_arg(args, "--program-spec", "")),
     seed = as.integer(get_arg(args, "--seed", "1234"))
   )
 }

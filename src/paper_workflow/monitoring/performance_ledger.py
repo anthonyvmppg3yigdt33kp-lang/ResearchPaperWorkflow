@@ -11,6 +11,7 @@ import yaml
 DEFAULT_WEIGHTS = {
     "fail_closed": 20,
     "target_task_entry": 15,
+    "research_intent_layer": 10,
     "production_module_ratio": 15,
     "environment_truth": 15,
     "seurat_validation": 15,
@@ -33,6 +34,8 @@ def score_productivity(criteria: dict[str, bool], weights: dict[str, int] | None
     score = round((achieved / total) * 100, 1) if total else 0.0
     return {
         "schema_version": "productivity_scorecard.v1",
+        "score_type": "release_gate_completion",
+        "interpretation": "Binary engineering release gates; not a scientific productivity or publication-readiness score.",
         "score": score,
         "target_score": 75,
         "status": "pass" if score >= 75 else "needs_fix",

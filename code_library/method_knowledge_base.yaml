@@ -1,0 +1,148 @@
+schema_version: method_knowledge_base.v1
+updated_at: "2026-07-10"
+methods:
+  - id: seurat_subcluster_programs
+    label: Seurat subcluster refinement and program scoring
+    question_types: [cell_state_identification, subcluster_refinement]
+    solves:
+      - refine a reviewed parent cell population into exploratory subclusters
+      - identify subcluster markers and score declared gene programs
+    not_for:
+      - patient-level disease inference
+      - causal cell-state claims
+    statistical_unit: cell for exploration; sample or donor for disease inference
+    prerequisites:
+      - quality-controlled Seurat object
+      - reviewed parent-population definition
+      - declared marker and program gene sets
+    module_ids:
+      - single_cell.seurat_subcluster_programs.v1
+    figure_examples: [subset_umap, marker_heatmap, program_score_dotplot]
+    reviewer_risks:
+      - resolution choice and parent-population purity require biological review
+    claim_boundary: exploratory subcluster structure and program scores only
+
+  - id: seurat_findmarkers_cell_level
+    label: Seurat FindMarkers cell-level screening
+    question_types: [cell_type_differential_expression, marker_discovery]
+    solves:
+      - rapid marker screening between reviewed cell groups
+      - exploratory differential-expression ranking
+    not_for:
+      - treating cells as independent patients
+      - confirmatory disease-group inference without replicate-aware analysis
+    statistical_unit: cell, exploratory
+    prerequisites:
+      - reviewed group labels
+      - explicit exploratory claim boundary
+    module_ids:
+      - single_cell.seurat_findmarkers_group_de.v1
+    alternatives: [pseudobulk_deseq2]
+    figure_examples: [volcano, marker_dotplot]
+    reviewer_risks:
+      - pseudoreplication if interpreted as patient-level evidence
+    claim_boundary: exploratory marker or differential-expression screening
+
+  - id: pseudobulk_deseq2
+    label: Replicate-aware pseudobulk differential expression
+    question_types: [cell_type_differential_expression, disease_group_comparison]
+    solves:
+      - sample-level differential expression within a cell type
+    not_for:
+      - analyses without sample or donor mapping
+      - cell annotation
+    statistical_unit: biological sample or donor
+    prerequisites:
+      - sample_id-to-cell mapping
+      - condition labels
+      - at least two biological replicates per group
+      - DESeq2-capable environment
+    module_ids:
+      - single_cell.pseudobulk_aggregate.v1
+      - single_cell.pseudobulk_deseq2.v1
+    alternatives: [limma_voom, edgeR]
+    figure_examples: [volcano, sample_level_heatmap]
+    reviewer_risks:
+      - low replicate count and unmodeled covariates weaken inference
+    claim_boundary: sample-level association after design and replicate review
+
+  - id: limma_voom
+    label: limma-voom bulk RNA-seq differential expression
+    question_types: [bulk_differential_expression, disease_group_comparison]
+    solves:
+      - replicate-aware group contrasts for bulk count data
+    not_for:
+      - unreplicated comparisons
+      - direct single-cell disease inference
+    statistical_unit: biological sample
+    prerequisites:
+      - raw count matrix
+      - sample metadata and contrast
+      - edgeR and limma environment
+    module_ids:
+      - bulk_rnaseq.limma_voom_de_real.v1
+    alternatives: [DESeq2, edgeR]
+    figure_examples: [voom_mean_variance, volcano, sample_heatmap]
+    reviewer_risks:
+      - design-matrix and contrast errors invalidate downstream results
+    claim_boundary: association within the declared sample-level design
+
+  - id: ranked_gene_enrichment
+    label: Ranked-gene pathway enrichment
+    question_types: [pathway_analysis]
+    solves:
+      - pathway interpretation after a reviewed ranked-gene analysis
+    not_for:
+      - replacing differential-expression modeling
+      - analyses without a gene universe or ranking provenance
+    statistical_unit: gene-set enrichment over a reviewed ranking
+    prerequisites:
+      - ranked gene statistic
+      - gene identifier mapping
+      - database and version declaration
+    module_ids:
+      - bulk_rnaseq.fgsea_enrichment.v1
+    figure_examples: [enrichment_dotplot, running_score_plot]
+    reviewer_risks:
+      - database redundancy and biased gene universes can overstate biology
+    claim_boundary: pathway-level association, not mechanism proof
+
+  - id: wgcna_module_trait
+    label: WGCNA module-trait analysis
+    question_types: [network_analysis]
+    solves:
+      - module-trait structure and candidate hub prioritization
+    not_for:
+      - replacing a primary group contrast
+      - small underpowered sample collections
+    statistical_unit: biological sample
+    prerequisites:
+      - normalized sample-level expression matrix
+      - reviewed traits
+      - sufficient sample count
+    module_ids:
+      - bulk_rnaseq.wgcna.v1
+    figure_examples: [module_trait_heatmap, eigengene_plot]
+    reviewer_risks:
+      - unstable modules in small cohorts
+    claim_boundary: exploratory co-expression structure
+
+  - id: communication_inference
+    label: Cell-cell communication inference
+    question_types: [communication_analysis]
+    solves:
+      - prioritize ligand-receptor or ligand-target hypotheses
+    not_for:
+      - proving signaling or causality
+    statistical_unit: inferred interaction between reviewed cell groups
+    prerequisites:
+      - validated cell identities
+      - reviewed expression and database coverage
+      - orthogonal validation plan
+    module_ids:
+      - single_cell.cellchat_communication.v1
+      - single_cell.nichenet_ligand_target.v1
+    figure_examples: [interaction_network, ligand_target_heatmap]
+    reviewer_risks:
+      - database-driven predictions are hypothesis-generating only
+    claim_boundary: hypothesis-generating communication evidence

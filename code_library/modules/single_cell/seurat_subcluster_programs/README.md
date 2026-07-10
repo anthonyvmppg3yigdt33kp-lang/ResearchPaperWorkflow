@@ -6,6 +6,13 @@ declared marker panel or metadata identity, explores a resolution grid, computes
 subcluster markers, scores simple gene programs, and writes source maps plus QA
 manifests.
 
+Marker-driven subsetting requires at least two declared markers and two
+T/NK lineage anchors (`CD3D`, `CD3E`, `NKG7`, `GNLY`) per cell by default.
+Both thresholds and the anchor panel are configurable. Metadata-based subsetting remains available
+when a reviewed parent identity is already stored in the object. Resolution
+selection prefers the first stable cluster-count plateau and otherwise uses the
+middle eligible resolution; the selected value and reason are written to QC.
+
 Boundary: this is a workflow-test and exploratory single-cell module. PBMC3K is
 an official tutorial fixture, so outputs cannot support disease mechanism,
 clinical biomarker, treatment-response, or causal immune-state claims.

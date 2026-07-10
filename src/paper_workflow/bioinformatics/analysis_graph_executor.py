@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import subprocess
 import shutil
 import sys
@@ -110,14 +111,37 @@ class AnalysisGraphExecutor:
             block_reasons.append("data_registry_invalid")
 
         node_records = []
+        node_metrics = []
         if not errors:
             for node in graph.topological_nodes():
+                node_started_at = utc_now()
+                node_start = perf_counter()
                 record = self._run_node(graph, node.to_dict(), run_dir, paper_dir, execute=execute)
+                record["started_at"] = node_started_at
+                record["completed_at"] = utc_now()
+                record["runtime_seconds"] = round(perf_counter() - node_start, 6)
+                node_dir = run_dir / "nodes" / str(record.get("node_id", "node"))
+                record["input_size_bytes"] = self._input_size_bytes(record.get("input_contract", {}))
+                record["output_size_bytes"] = self._tree_size_bytes(node_dir)
+                self._write_node_manifest(node_dir, paper_dir, record)
+                node_metrics.append({
+                    "node_id": record.get("node_id", ""),
+                    "module_id": record.get("module_id", ""),
+                    "start_time": record["started_at"],
+                    "end_time": record["completed_at"],
+                    "runtime_seconds": record["runtime_seconds"],
+                    "input_size_bytes": record["input_size_bytes"],
+                    "output_size_bytes": record["output_size_bytes"],
+                    "status": record.get("status", "unknown"),
+                })
                 node_records.append(record)
                 warnings.extend(record.get("warnings", []) or [])
                 errors.extend(record.get("errors", []) or [])
                 for rel in record.get("artifacts", []) or []:
                     artifacts.append(_artifact(paper_dir / rel, paper_dir))
+
+        for path in self._write_performance_artifacts(run_dir, graph.run_id, node_metrics):
+            artifacts.append(_artifact(path, paper_dir))
 
         source_map_status = self._write_aggregate_source_maps(graph, run_dir, paper_dir, node_records, artifacts)
         artifacts.append(_artifact(run_dir / "figure_source_map.yaml", paper_dir))
@@ -185,6 +209,80 @@ class AnalysisGraphExecutor:
             "blocked_node_count": len([n for n in node_records if n.get("status") == "blocked"]),
         }
         return GraphRunResult(status=status, run_id=graph.run_id, artifacts=artifacts, metrics=metrics, warnings=warnings, errors=errors)
+
+    def _write_performance_artifacts(
+        self,
+        run_dir: Path,
+        run_id: str,
+        node_metrics: list[dict[str, Any]],
+    ) -> list[Path]:
+        performance_dir = run_dir / "performance"
+        performance_dir.mkdir(parents=True, exist_ok=True)
+        timing_path = performance_dir / "node_timing.yaml"
+        size_path = performance_dir / "output_size_report.yaml"
+        ledger_path = performance_dir / "performance_ledger.tsv"
+        write_yaml(timing_path, {
+            "schema_version": "node_timing.v1",
+            "run_id": run_id,
+            "total_runtime_seconds": round(sum(float(item.get("runtime_seconds", 0)) for item in node_metrics), 6),
+            "nodes": node_metrics,
+        })
+        write_yaml(size_path, {
+            "schema_version": "output_size_report.v1",
+            "run_id": run_id,
+            "total_input_size_bytes": sum(int(item.get("input_size_bytes", 0)) for item in node_metrics),
+            "total_output_size_bytes": sum(int(item.get("output_size_bytes", 0)) for item in node_metrics),
+            "nodes": [
+                {
+                    "node_id": item.get("node_id", ""),
+                    "input_size_bytes": item.get("input_size_bytes", 0),
+                    "output_size_bytes": item.get("output_size_bytes", 0),
+                }
+                for item in node_metrics
+            ],
+        })
+        fields = [
+            "node_id", "module_id", "start_time", "end_time", "runtime_seconds",
+            "input_size_bytes", "output_size_bytes", "status",
+        ]
+        with ledger_path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t")
+            writer.writeheader()
+            writer.writerows({field: item.get(field, "") for field in fields} for item in node_metrics)
+        return [timing_path, size_path, ledger_path]
+
+    def _input_size_bytes(self, input_contract: dict[str, Any]) -> int:
+        total = 0
+        seen: set[Path] = set()
+        for item in (input_contract or {}).values():
+            if not isinstance(item, dict) or item.get("status") != "bound":
+                continue
+            value = item.get("value")
+            if value in ("", None, []):
+                continue
+            path = Path(str(value))
+            if not path.is_absolute():
+                path = self.project_root / path
+            try:
+                resolved = path.resolve()
+            except OSError:
+                continue
+            if resolved in seen or not resolved.exists():
+                continue
+            seen.add(resolved)
+            total += self._tree_size_bytes(resolved)
+        return total
+
+    @staticmethod
+    def _tree_size_bytes(path: Path) -> int:
+        try:
+            if path.is_file():
+                return path.stat().st_size
+            if path.is_dir():
+                return sum(item.stat().st_size for item in path.rglob("*") if item.is_file())
+        except OSError:
+            return 0
+        return 0
 
     def _run_node(
         self,

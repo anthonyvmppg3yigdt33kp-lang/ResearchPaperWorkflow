@@ -54,6 +54,14 @@ class StrategyEvaluator:
                 if n_samples and n_samples < 15:
                     risks.append("WGCNA is underpowered for small sample counts; use only as exploratory support")
                     fit -= 0.18
+            elif method_family == "cell_level_de_exploratory":
+                fit = 0.74
+                prerequisites.extend([
+                    "reviewed cell identities and group labels",
+                    "explicit statement that cells are not independent biological replicates",
+                ])
+                risks.append("cell-level differential testing is exploratory unless replicate-aware inference is documented")
+                comparison_notes.append("Use FindMarkers for marker screening or exploratory cell-state contrasts; prefer sample-level pseudobulk for disease-group inference when biological replicates are available.")
             elif "differential-expression" in tags:
                 fit = 0.78
             elif method_family in {"qc", "visualization", "pseudobulk_aggregation"}:
@@ -158,6 +166,8 @@ class StrategyEvaluator:
         step = str(module.get("step", "")).lower()
         if "pseudobulk" in tags or "pseudobulk" in step:
             return "pseudobulk_de" if "deseq" in step or "differential-expression" in tags else "pseudobulk_aggregation"
+        if "findmarkers" in step or any("findmarkers" in tag for tag in tags):
+            return "cell_level_de_exploratory"
         if "wgcna" in tags or "wgcna" in step:
             return "coexpression_network"
         if "deseq2" in tags or "limma" in tags or "differential-expression" in tags:

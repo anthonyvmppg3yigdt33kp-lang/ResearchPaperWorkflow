@@ -1,10 +1,10 @@
 # Architecture
 
-The maintained v5 architecture reference is the root document:
+The maintained v5.1 architecture reference is the root document:
 
 `ARCHITECTURE.md`
 
-Use that file for the current TargetTask production kernel, fail-closed run
+Use that file for the Research Intent layer, TargetTask production kernel, fail-closed run
 evaluation, module production grading, environment-aware graph execution,
 evidence-bound manuscript packet generation, and release gates.
 
