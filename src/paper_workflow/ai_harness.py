@@ -1276,6 +1276,8 @@ class AIWorkflowHarness:
     @staticmethod
     def _infer_target_subcommand(request: str) -> str:
         text = request.lower()
+        text = re.sub(r"([\"']).+?\.ya?ml\1", " ", text)
+        text = re.sub(r"\S+\.ya?ml", " ", text)
         if any(token in text for token in ("evaluate", "evaluation", "评估", "评价", "审核")):
             return "evaluate"
         if any(token in text for token in ("package", "打包", "归档")):
@@ -1289,6 +1291,8 @@ class AIWorkflowHarness:
     @staticmethod
     def _infer_research_subcommand(request: str) -> str:
         text = request.lower()
+        text = re.sub(r"([\"']).+?\.ya?ml\1", " ", text)
+        text = re.sub(r"\S+\.ya?ml", " ", text)
         if any(token in text for token in ("analyze", "analysis", "分析", "执行")):
             return "analyze"
         if any(token in text for token in ("review", "evaluate", "复核", "评估", "审核")):

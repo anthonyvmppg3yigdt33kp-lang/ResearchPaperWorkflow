@@ -10,7 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def copy_target_fixture(tmp_path: Path) -> tuple[Path, Path]:
-    root = tmp_path / "repo"
+    # GitHub Actions paths contain "runner"; embedded path text is not a command.
+    root = tmp_path / "runner" / "repo"
     shutil.copytree(REPO_ROOT / "code_library", root / "code_library")
     shutil.copytree(REPO_ROOT / "targets", root / "targets")
     shutil.copytree(REPO_ROOT / "config", root / "config")
