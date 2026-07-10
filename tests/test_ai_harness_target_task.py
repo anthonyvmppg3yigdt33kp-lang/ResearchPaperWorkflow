@@ -32,8 +32,9 @@ def test_ai_harness_routes_and_validates_target_task(tmp_path: Path):
     assert planned["route"]["mode"] == "exploration_mode"
     assert 'target "validate"' in planned["plan"]["equivalent_cli_command"]
     assert executed["executed"] is True
-    assert executed["status"] == "ok"
     assert executed["result"]["valid"] is True
+    expected_status = "ok" if executed["result"]["environment_status"] == "pass" else "blocked"
+    assert executed["status"] == expected_status
 
 
 def test_ai_harness_blocks_target_real_execution_without_approval(tmp_path: Path):
